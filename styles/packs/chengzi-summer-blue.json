@@ -401,8 +401,8 @@
       "lineDxa": 300,
       "lineRule": "auto",
       "lineMultiple": 1.25,
-      "beforeDxa": 300,
-      "afterDxa": 165,
+      "beforeDxa": 233,
+      "afterDxa": 232,
       "alignment": "left",
       "keepNext": true,
       "keepLines": false,
@@ -466,15 +466,15 @@
       "lineDxa": 300,
       "lineRule": "auto",
       "lineMultiple": 1.25,
-      "beforeDxa": 40,
-      "afterDxa": 30,
+      "beforeDxa": 60,
+      "afterDxa": 10,
       "alignment": "left",
       "keepNext": true,
       "keepLines": false,
       "pageBreakBefore": false,
       "widowControl": true,
       "contextualSpacing": false,
-      "leftIndentDxa": 200,
+      "leftIndentDxa": 0,
       "rightIndentDxa": 0,
       "firstLineDxa": 0,
       "hangingDxa": 0,
@@ -496,44 +496,6 @@
         "fontAscii": "adjudication:使用方 2026-08-15 定「标题用黑体」。中西文配对 黑体+Arial,两者在 FONT_FAMILY_CLASS 里同为 sans,过中西文同族门。★实测确认可用,不重蹈圆体-简的覆辙(那次声明了但本机只有按需 Subsets,画不出):本机 Hei.ttf 在 PreinstalledAssetsV2/InstallWithOs 下(预装非按需);样张经 Word 导出后 PDF 里嵌入的是 SimHei 与 Arial-BoldMT 实体子集,不是回退字体。**先量后声明。**",
         "fontCs": "adjudication:使用方 2026-08-15 定「标题用黑体」。中西文配对 黑体+Arial,两者在 FONT_FAMILY_CLASS 里同为 sans,过中西文同族门。★实测确认可用,不重蹈圆体-简的覆辙(那次声明了但本机只有按需 Subsets,画不出):本机 Hei.ttf 在 PreinstalledAssetsV2/InstallWithOs 下(预装非按需);样张经 Word 导出后 PDF 里嵌入的是 SimHei 与 Arial-BoldMT 实体子集,不是回退字体。**先量后声明。**",
         "name": "adjudication:使用方 2026-08-15 定。样式的显示名与它实际所在的大纲级别差一级——「橙子讲次标题」占着 w:outlineLvl=0(第 1 级)却不叫「一级标题」,于是其下每一个「橙子N级标题」都坐在第 N+1 级上。★这不是排版错,大纲级别、字号、底纹、竖线都对;错的是人读样式名时会数错一级——我本人就据此答错过一次「一、光的直线传播是几级」。★另一重错一并纠正:原名写「讲次」而它实际用在「章」上(第四章 光),「讲」用的反倒是「一级标题」。现按 大纲级别+1 = 名字里的数字 统一。只改显示名,不改 styleId:styleId 被 40 个文件、上千处引用,其中大半是服务另外 6 本册子的生产脚本;级联改 id 与「其他书暂挂」相冲,且 styleId 是机器标识、不宣称级数。"
-      },
-      "paragraphBorders": {
-        "left": {
-          "val": "single",
-          "sz": 24,
-          "space": 10,
-          "color": "0C4396"
-        },
-        "top": {
-          "val": "none",
-          "sz": 0,
-          "space": 0,
-          "color": "auto"
-        },
-        "bottom": {
-          "val": "none",
-          "sz": 0,
-          "space": 0,
-          "color": "auto"
-        },
-        "right": {
-          "val": "none",
-          "sz": 0,
-          "space": 0,
-          "color": "auto"
-        },
-        "between": {
-          "val": "none",
-          "sz": 0,
-          "space": 0,
-          "color": "auto"
-        },
-        "bar": {
-          "val": "none",
-          "sz": 0,
-          "space": 0,
-          "color": "auto"
-        }
       }
     },
     "CZ_Heading4": {
