@@ -31,6 +31,7 @@ import argparse
 import json
 import re
 import shutil
+import subprocess
 import sys
 import zipfile
 from pathlib import Path
@@ -99,6 +100,12 @@ def self_check(package: dict) -> list[dict]:
                                  "why": "包里写死本机绝对路径,等于把一台机器的布局"
                                         "编进方法——换台机器就废,而废的方式是"
                                         "「找不到文件」,看起来像别的问题。"})
+    # 三个入口壳的正文必须一致——不同宿主读不同文件,漂了就是给不同智能体两套说明。
+    r = subprocess.run([sys.executable, str(ROOT / "method/scripts/sync_entrypoints.py"), "--check"],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        findings.append({"check": "entrypoints-agree", "kind": "drift", "detail": r.stdout.strip()[:200],
+                         "why": "README/SKILL/AGENTS 正文不一致。只改 README.md,再跑 sync_entrypoints.py。"})
     return findings
 
 
@@ -137,7 +144,7 @@ def main() -> int:
     # 产品布局(使用方 2026-08-15 定):PRODUCT = skill 的上一层。
     # 默认档:skill/ 全部 + styles/<id>/(不含 renders/——渲染图不进包)+ runtime/ 的声明与向导 + 顶层清单。
     PRODUCT = ROOT.parent if (ROOT.parent / "styles").exists() else ROOT
-    for name in ("SKILL.md", "PACKAGE.json", "VERSION"):
+    for name in ("README.md", "SKILL.md", "AGENTS.md", "PACKAGE.json", "VERSION"):
         src = PRODUCT / name if (PRODUCT / name).exists() else ROOT / name
         if src.exists():
             shutil.copy2(src, staging / name); carried.append(name)
