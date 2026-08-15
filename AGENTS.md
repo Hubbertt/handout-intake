@@ -10,6 +10,64 @@ Codex 特别注意:
 
 ---
 
+## 需要什么
+
+| | 必需 | 用途 |
+|---|---|---|
+| **macOS + Microsoft Word** | ✅ | 净开探针、目录域、PDF 导出、页面审计全走 Word 原生引擎（LibreOffice 会误判字距，不可替代） |
+| Adobe Acrobat | 付印时 | 成品转曲（0 残留字体、0 可提取文本，印刷厂机器无关）。没有它可出装订件预览，不能付印 |
+| Python ≥ 3.12 + 5 个包 | ✅ | 安装向导探测并帮你装（lxml / python-docx / PyMuPDF / pypdf / Pillow / openpyxl） |
+
+其它平台未验证。所有验证在一台 Apple Silicon Mac 上完成，含一次 `env -i` 干净沙盒。
+
+## 三条命令跑起来
+
+```bash
+unzip handout-intake-*.zip && cd handout-intake
+python3 runtime/install_wizard.py        # 探测环境、逐项征得同意后安装、装好自动渲一遍样式预览
+```
+看 `styles/renders/<模板>/*.png` 挑样式（预览是在**你的机器**上渲的，不是包里带的图）。
+
+```bash
+mkdir -p volumes/my-book && python3 skill/method/scripts/init_workspace.py --workspace volumes/my-book --volume my-book
+# 把源 Word / cover.pdf / back.svg 放进 volumes/my-book/inputs/,切分规则放 carve-rules-provisional/
+# 打开生成的 bindings.json,只填带 <…> 的几处
+python3 skill/method/scripts/run_chain.py --workspace volumes/my-book --volume my-book
+```
+成品在 `volumes/my-book/output/`：`.docx` 与 `print-master.pdf`。每次运行的逐步记录在 `runs/<时间戳>/`。
+
+## 它是怎么工作的
+
+```
+skill/       方法:工序表(36 步,拓扑排序,每步产物带 sha256,上游一变下游自动失效)+ 引擎 + 门 + 种子
+styles/      样式:1 个全局默认根 × N 个局部偏离包 = 一组模板;根与包独立、任意组合、三层可命名
+runtime/     环境:依赖声明 + 安装向导(探测→授权→安装→渲预览)
+volumes/     每册一个目录:inputs / work / output / decisions / runs   ← 你的东西,不在包里
+experience/  经验层:规律 / 观察 / 否决,准入门守着(每条须配一道门 + 一次破坏性自证)
+```
+
+三条设计纪律，全部由数据与门强制而非靠人记得：
+- **跳步在结构上不可能**——输入产物不存在就拒绝运行
+- **不猜**——不确定的停下报状态，不填一个看着合理的值
+- **每次改样式都渲一次**——渲染图不进包，在目标环境渲一次才算数
+
+## 给不同宿主的入口
+
+任何能开 shell、读文件的智能体或人都能用；包对智能体零依赖。宿主认哪个入口文件：
+
+| 宿主 | 读 |
+|---|---|
+| Claude Code | `SKILL.md` |
+| Codex | `AGENTS.md` |
+| Kimi / 其他 / 人 | 本 `README.md` |
+
+三份正文相同，只改 README，`skill/method/scripts/sync_entrypoints.py` 同步。
+
+## 状态
+
+`VERSION` 是当前版本。`PACKAGE.json` 记录每一版的验收证据（全新安装、沙盒、对账）与所有已知缺口——**包能不能用不看目录建得漂不漂亮，看空手复现能不能跑完并对上账**。
+---
+
 ## 适用的智能体
 
 任何能开 shell、能读文件的智能体都能用:Claude Code、Codex、Kimi、或人。

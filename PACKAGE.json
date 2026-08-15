@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.4.0",
+ "version": "2.4.1",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -149,5 +149,16 @@
    "seeds/examples/schema.deviation.chemistry-g08.json(23 键,拆合无损;缺 id/status/hierarchy/fingerprint,基底拒绝合成直到补上)"
   ],
   "honestNote": "物理偏离 17.5K vs 全量 18.0K,只省 3%——现在能抽出的通用部分就这么多。基底的价值在骨架与拒绝,不在体积;第三本书来时通用部分会自然长。"
- }
+ },
+ "fixes": [
+  {
+   "at": "2026-08-16",
+   "what": "成品表格无线框(源文 tblBorders 六边 single)",
+   "rootCause": "清理步 strip_inherited_unused_styles 的引用扫描只看 pStyle/rStyle,**不看 tblStyle**——16 张表都挂着 CZ_Table_Standard,扫描看不见,判「没人用」删掉;样式一删 Word 再把表上的引用剥了,于是「擦了源的边框、又没挂上自己的」。",
+   "notAStyleModelBug": "★不是根/包的漏洞:参数表 tables.visibleBorders 六边 single 一直写得好好的,编译器也插了 tblStyle 并写了样式。丢在清理步。",
+   "shape": "链上三处各自都「对」,而每一步自己都没报错——缺陷落在没人看的接缝上,与验收项对账、代次串联同形。",
+   "fix": "strip 的 used 集合纳入 tblStyle/numStyleLink;registry.objects 算 declared;新增 GATE_TABLE_BORDERS(读成品 docx:每张语义表须挂带可见边框的表样式或自带非 nil 边框,选项排版表排除)",
+   "proof": "修前成品 16/16 无框门 fail;修后重出 16/16 有框门 pass;PDF 目视线框全回。"
+  }
+ ]
 }

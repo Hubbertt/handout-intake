@@ -1,52 +1,69 @@
-# handout-intake · 讲义入库
+# handout-intake
 
-把 Word 讲义/教辅原稿按私有排版规范切分、重排、编制成 Word 与付印 PDF。
+**把 Word 讲义原稿变成付印 PDF 的可安装工具包** —— 切分 → 按样式重排 → Word → 装订转曲。
+给三样东西（源 Word、封面、封底）和这一册的切分规则，它出成品；遇到不敢猜的会停下来问你。
 
-**这份 README 是所有智能体与人的通用入口。** 同一正文另有两个入口壳:
-`SKILL.md`(Claude Code 技能格式)、`AGENTS.md`(Codex 约定)。三者正文相同,由 `skill/method/scripts/sync_entrypoints.py` 从本文件生成——**只改本文件**。
+> 面向有固定版式约定的成套教辅资料（讲义、练习册、知识清单）。由橙子教室在真实生产中打磨出来，
+> 首个用例是一本 118 页的八年级物理讲义。方法、引擎、门、样式模板与切分规则全部随包分发；**不含任何来源原文**。
 
-## 使用说明(给人看的一页)
+---
 
-**这是什么。** 一个把 Word 讲义原稿变成付印 PDF 的工具包:切分 → 按样式重排 → Word → 装订转曲。
-你给三样东西(源 Word、封面、封底)+ 这一册的切分规则,它出成品;遇到不敢猜的会停下问你。
+## 需要什么
 
-**需要什么。** 一台装了 Microsoft Word 的 Mac(付印转曲还要 Adobe Acrobat)。其余依赖安装向导会探测并帮你装。
+| | 必需 | 用途 |
+|---|---|---|
+| **macOS + Microsoft Word** | ✅ | 净开探针、目录域、PDF 导出、页面审计全走 Word 原生引擎（LibreOffice 会误判字距，不可替代） |
+| Adobe Acrobat | 付印时 | 成品转曲（0 残留字体、0 可提取文本，印刷厂机器无关）。没有它可出装订件预览，不能付印 |
+| Python ≥ 3.12 + 5 个包 | ✅ | 安装向导探测并帮你装（lxml / python-docx / PyMuPDF / pypdf / Pillow / openpyxl） |
 
-**第一次用(5 分钟)。**
+其它平台未验证。所有验证在一台 Apple Silicon Mac 上完成，含一次 `env -i` 干净沙盒。
+
+## 三条命令跑起来
+
 ```bash
-unzip handout-intake-x.y.z.zip && cd handout-intake
-python3 runtime/install_wizard.py            # 探测环境,缺什么逐项问你,同意就装;装好自动渲一遍样式预览
+unzip handout-intake-*.zip && cd handout-intake
+python3 runtime/install_wizard.py        # 探测环境、逐项征得同意后安装、装好自动渲一遍样式预览
 ```
-装完看 `styles/renders/<模板>/*.png` 挑样式——预览是在你这台机器上渲的,不是包里带的图。
+看 `styles/renders/<模板>/*.png` 挑样式（预览是在**你的机器**上渲的，不是包里带的图）。
 
-**做一册(每次)。**
 ```bash
-mkdir -p volumes/<册名> && python3 skill/method/scripts/init_workspace.py --workspace volumes/<册名> --volume <册id>
+mkdir -p volumes/my-book && python3 skill/method/scripts/init_workspace.py --workspace volumes/my-book --volume my-book
+# 把源 Word / cover.pdf / back.svg 放进 volumes/my-book/inputs/,切分规则放 carve-rules-provisional/
+# 打开生成的 bindings.json,只填带 <…> 的几处
+python3 skill/method/scripts/run_chain.py --workspace volumes/my-book --volume my-book
 ```
-把源 Word、`cover.pdf`、`back.svg` 放进 `volumes/<册名>/inputs/`;切分规则放 `carve-rules-provisional/`;真值图放 `quality/`。
-打开生成的 `bindings.json`,只填带 `<…>` 的几处(源文件名、选哪组样式、输出名、册主题)。然后:
-```bash
-python3 skill/method/scripts/run_chain.py --workspace volumes/<册名> --volume <册id>
+成品在 `volumes/my-book/output/`：`.docx` 与 `print-master.pdf`。每次运行的逐步记录在 `runs/<时间戳>/`。
+
+## 它是怎么工作的
+
 ```
-成品在 `volumes/<册名>/output/`:`.docx`(Word)与 `print-master.pdf`(付印件)。每次运行有记录在 `runs/<时间戳>/`。
-
-**改样式。** 样式 = 1 个全局默认根 + 1 个局部偏离包。改包(`styles/packs/<包>.json`)后:
-```bash
-python3 styles/new_template.py rerender --pack <包>     # 过门、重合成、重渲预览
+skill/       方法:工序表(36 步,拓扑排序,每步产物带 sha256,上游一变下游自动失效)+ 引擎 + 门 + 种子
+styles/      样式:1 个全局默认根 × N 个局部偏离包 = 一组模板;根与包独立、任意组合、三层可命名
+runtime/     环境:依赖声明 + 安装向导(探测→授权→安装→渲预览)
+volumes/     每册一个目录:inputs / work / output / decisions / runs   ← 你的东西,不在包里
+experience/  经验层:规律 / 观察 / 否决,准入门守着(每条须配一道门 + 一次破坏性自证)
 ```
-新增包/根:`new_template.py pack|root --from <既有> --id <新id> --name "<名字>"`。改名:`new_template.py rename …`。
 
-**新一册的切分规则。** 拷一份最像的偏离(`skill/seeds/examples/schema.deviation.*.json`),改角色清单/正则/层级/栏目名,放进册的 `carve-rules-provisional/schema/`;
-`compose_schema.py compose` 合成时缺 required 键会点名。
+三条设计纪律，全部由数据与门强制而非靠人记得：
+- **跳步在结构上不可能**——输入产物不存在就拒绝运行
+- **不猜**——不确定的停下报状态，不填一个看着合理的值
+- **每次改样式都渲一次**——渲染图不进包，在目标环境渲一次才算数
 
-**出了问题。** 先看 `volumes/<册名>/.handout-intake/volumes/<册id>/runs/<最新>/`:每步的状态、输入 hash、报错尾巴都在。
-链停在哪一步就看哪一步;它不会静默跳过。
+## 给不同宿主的入口
 
-**分享出去。** `python3 skill/method/scripts/export_package.py --out handout-intake-x.y.z.zip`——默认只带方法与样式,不带任何来源原文;
-要带册级裁决须同时给 `--include-grown --i-understand-copyright` 两个开关。
+任何能开 shell、读文件的智能体或人都能用；包对智能体零依赖。宿主认哪个入口文件：
 
-**它不做什么。** 不代装 Word/Acrobat/字体(涉及许可与管理员权限,给装法由你装);不联网 pip 之外的任何事;不猜——不确定就停。
+| 宿主 | 读 |
+|---|---|
+| Claude Code | `SKILL.md` |
+| Codex | `AGENTS.md` |
+| Kimi / 其他 / 人 | 本 `README.md` |
 
+三份正文相同，只改 README，`skill/method/scripts/sync_entrypoints.py` 同步。
+
+## 状态
+
+`VERSION` 是当前版本。`PACKAGE.json` 记录每一版的验收证据（全新安装、沙盒、对账）与所有已知缺口——**包能不能用不看目录建得漂不漂亮，看空手复现能不能跑完并对上账**。
 ---
 
 ## 适用的智能体

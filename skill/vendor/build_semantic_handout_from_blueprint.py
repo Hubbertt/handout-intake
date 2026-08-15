@@ -426,8 +426,15 @@ def strip_inherited_unused_styles(document, params: dict) -> list[str]:
                 roots.append(rel.target_part.element)
             except Exception:
                 continue
+    # ★2026-08-16 使用方指出成品表格无线框而源文有。查明:本函数的引用扫描只看 pStyle/rStyle,
+    #   **不看 tblStyle**——16 张表都挂着 CZ_Table_Standard,扫描看不见,判成「没人用」删掉;
+    #   样式一删,Word 打开时把表上的引用也剥了,于是「擦了源的边框、又没挂上自己的」。
+    #   表样式、编号样式的引用元素与段落/字符不同名,一并纳入。
     used = {el.get(qn("w:val")) for root in roots for el in root.iter()
-            if el.tag in (qn("w:pStyle"), qn("w:rStyle")) and el.get(qn("w:val"))}
+            if el.tag in (qn("w:pStyle"), qn("w:rStyle"), qn("w:tblStyle"), qn("w:numStyleLink"))
+            and el.get(qn("w:val"))}
+    # objects 里声明的(表样式等)也算 declared,与 paragraph/character 同等对待
+    declared |= set(registry.get("objects") or {})
 
     styles_el = document.styles.element
     removed: list[str] = []

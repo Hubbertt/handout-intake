@@ -10,7 +10,7 @@
   "builtBy": "建表流程(SKILL.md 开始一次任务 第2步)",
   "why": "指纹识别:沪科版化学模板表 huke-wusi-2024.v1 对本源仅覆盖 62.7%(670/1068),12 个角色零命中。按「不像→走建表流程,绝不强行套最像的那个」重建。",
   "censusReport": "../../census/block-census.v1.json",
-  "sourceOriginal": "/Users/Shared/ChengziClass/projects/shared-assets/CZClassRoom/data/teaching-materials/source-originals/2026-06-29-physics-grade8-summer-source-evidence/橙子教室-八年级物理暑假班-学生版.docx",
+  "sourceOriginal": "<来源 Word 原稿:橙子教室-八年级物理暑假班-学生版.docx>(内部资料,不随包分发;仅作溯源标识)",
   "sourceSha256": "65d3521c68b3ad7b546a00726ec609ba5ff8d1ab525868cbebf08dbb8e47701b",
   "censusScope": "模板表是模板级,普查覆盖全册 19 讲;本轮裁决只做第10-14讲。"
  },

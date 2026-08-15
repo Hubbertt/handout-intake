@@ -1,0 +1,63 @@
+{
+ "schemaVersion": "handout-intake.style-catalog.v2",
+ "model": "1 个全局默认根 + 1 个局部偏离包 = 一组样式模板;根与包独立,任意组合。使用方 2026-08-15 定。",
+ "roots": {
+  "docDefaults1": {
+   "id": "docDefaults1",
+   "name": "橙子暑假班基线根",
+   "version": "1-inert",
+   "what": "我们自己完整编写的全局默认样式(继承根)。样式包模板 = 本根 + 一个偏离包。",
+   "sha256": "1de061cf31900b4b2c39ae84a7919b2b8c52806ece05bd1ab5952d0d63c9539f"
+  }
+ },
+ "packs": {
+  "chengzi-summer": {
+   "id": "chengzi-summer",
+   "name": "橙子暑假班版式(物理化学共用)",
+   "title": "橙子暑假班统一版式:黑体标题;三级整行底纹(exact 20pt 文字居中);四级蓝字不换页(380/110);五级黑粗;六级备化学用;名字里的数字=大纲级别",
+   "version": "1",
+   "styles": 107,
+   "sha256": "f8c4815de67edd1868c1c8a3e0dd89d07f5ea6a2b0cf5ac932e7d3f0f343c412"
+  }
+ },
+ "howToChoose": "册级绑定 params 指向 compositions/<root>+<pack>/params.json;没有的组合先 compose.py --root X --pack Y。",
+ "what": "样式模板清单。每个模板的预览在本机渲染,附 params 的 sha256;参数一变预览即过期。",
+ "note": "★预览图不进包:renderedOn 记着是哪台机器渲的。发给别人时只发 styles/<id>/(不含 renders/),对方装好后自己渲一次。",
+ "templates": {
+  "docDefaults1+chengzi-summer": {
+   "id": "docDefaults1+chengzi-summer",
+   "name": "橙子暑假班版式(物理化学共用) × 橙子暑假班基线根",
+   "description": null,
+   "kind": "base",
+   "derivedFrom": null,
+   "paramsSha256": "60e15814a08706e22a1f1b7914793fa8ade96b99781789afe57161bd5193bfe0",
+   "renderedAt": "2026-08-16T02:55:06+08:00",
+   "renderedOn": "CZClass-Mac-mini.local",
+   "engine": "/Users/czclass/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+   "scenes": [
+    {
+     "scene": "headings",
+     "title": "六级标题梯队",
+     "status": "ok",
+     "png": "renders/docDefaults1+chengzi-summer/headings.png",
+     "blocks": 9
+    },
+    {
+     "scene": "body-and-lists",
+     "title": "正文与题目",
+     "status": "ok",
+     "png": "renders/docDefaults1+chengzi-summer/body-and-lists.png",
+     "blocks": 5
+    },
+    {
+     "scene": "mid-page-flow",
+     "title": "四级标题在页中(不换页)时的上下间距",
+     "status": "ok",
+     "png": "renders/docDefaults1+chengzi-summer/mid-page-flow.png",
+     "blocks": 11
+    }
+   ],
+   "status": "ok"
+  }
+ }
+}
