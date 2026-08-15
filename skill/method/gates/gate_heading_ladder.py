@@ -57,6 +57,8 @@ def main() -> int:
                                   ("beforeDxa", before), ("afterDxa", after))
                    if v is None]
         rungs.append({"styleId": sid, "level": level, "sizePt": size,
+                      "lineRule": spec.get("lineRule"), "lineDxa": spec.get("lineDxa"),
+                      "shaded": bool(spec.get("paragraphShading")),
                       "lineMultiple": mult, "beforeDxa": before, "afterDxa": after,
                       "tocLevel": spec.get("tocLevel"), "missing": missing})
     rungs.sort(key=lambda r: r["level"])
@@ -70,9 +72,18 @@ def main() -> int:
                              "why": "这一级缺必填键,梯队关系无法判定。"
                                     "跳过它等于让「没写值」成为绕过本门的姿势。"})
             continue
-        r["nominalLineDxa"] = round(r["lineMultiple"] * r["sizePt"] * 20)
+        # exact 行距时行高就是 lineDxa(缇),不再是倍数×字号——带底纹的标题用 exact 让文字在色块里垂直居中
+        # (Word 段落底纹只覆盖行盒不含段前后,auto 行距下中文字形靠上,只有 exact 能居中)。
+        r["nominalLineDxa"] = (int(r["lineDxa"]) if r.get("lineRule") == "exact" and r.get("lineDxa")
+                               else round(r["lineMultiple"] * r["sizePt"] * 20))
         r["blockDxa"] = r["beforeDxa"] + r["nominalLineDxa"] + r["afterDxa"]
-        if r["beforeDxa"] < r["afterDxa"]:                       # ④
+        # ④ 段前 ≥ 段后:空白归上方,标题贴着自己管辖的内容。
+        # ★这条只对**没有底纹**的标题成立。带整行底纹时,段前段后都在色块**里面**,
+        #   色块外的白空间是 0——「贴不贴内容」与这两个数无关,它们只决定文字在色块里的上下位置。
+        #   而中文字形在 Word 行盒里本身靠上,要让文字视觉居中,恰恰需要 段后 > 段前 去抵消。
+        #   使用方 2026-08-16 两次指出「概念构建」偏上,实测偏 10px;门原先把这条套在带底纹的标题上,
+        #   等于禁止它居中。门写得对,适用范围写宽了——豁免带底纹的,不是放宽全部。
+        if r["beforeDxa"] < r["afterDxa"] and not r.get("shaded"):   # ④
             findings.append({"kind": "spacing-below-exceeds-above", "styleId": r["styleId"],
                              "beforeDxa": r["beforeDxa"], "afterDxa": r["afterDxa"],
                              "why": "段前 < 段后。空白应归属于上方,标题贴着自己管辖的内容。"})
