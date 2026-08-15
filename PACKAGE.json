@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.2.0",
+ "version": "2.3.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.2.0:样式收敛为 1 根 × 2 包(物理/化学);四级不换页 + 间距重调;三级底纹文字居中根因(段落底纹只覆盖行盒)。改名前后成品逐页相同。",
+ "versionWhy": "2.3.0:schema 基底 + 偏离(拆合无损两册自证);README 顶部加给人的一页使用说明。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -141,5 +141,14 @@
    "导出器现要求 ≥3.10 跑依赖审计——探不到引擎时记 unverifiable 并拒绝导出(导出前先跑向导)"
   ],
   "boundary": "方案 2 到不了:另一台没装 Word 的 Mac、不同 macOS/Word 版本、Word 容器按真实用户初始化。"
+ },
+ "schemaModel": {
+  "rule": "切分 schema = 公有基底 + 册级偏离,compose_schema.py 合成;与样式的 根×包 同一思想。",
+  "base": "skill/seeds/schema-base/schema-base.v1.json:15 键骨架 + 真通用默认(2 角色、7 诊断)。**不是两册并集**——4 个交集角色的正则有意不同(各自源文的真实差异),硬融会让识别靠猜。",
+  "deviations": [
+   "seeds/examples/schema.deviation.physics-g08-summer.json(30 键,拆合无损)",
+   "seeds/examples/schema.deviation.chemistry-g08.json(23 键,拆合无损;缺 id/status/hierarchy/fingerprint,基底拒绝合成直到补上)"
+  ],
+  "honestNote": "物理偏离 17.5K vs 全量 18.0K,只省 3%——现在能抽出的通用部分就这么多。基底的价值在骨架与拒绝,不在体积;第三本书来时通用部分会自然长。"
  }
 }

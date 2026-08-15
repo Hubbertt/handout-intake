@@ -1,0 +1,148 @@
+{
+ "schemaVersion": "handout-intake.schema-base.v1",
+ "what": "切分 schema 的公有基底。每册的 schema = 基底 + 该册偏离(carve-rules/schema.deviation.json),由 compose_schema.py 合成。",
+ "why": "2026-08-16 逐键比对物理与化学两份 schema:逐字相同的只有 rule/schemaVersion 与 2 个角色;4 个交集角色**正则不同且是有意的**(物理编号项收三种分隔符因源里三种都用;化学选项行要求两个以上标号因源里有一行漏写 A．)。这些不是漂移,是每册源文的真实差异。所以基底**不是两份的并集**——硬融会让识别靠猜哪条适用,正是「宁可拒绝不可猜」要防的。基底给的是:结构骨架(哪些键必须有、什么形状)+ 真通用的默认(可继承、可覆写)+ 每键的语义说明。偏离里写该册自己的角色清单、正则、层级映射、栏目名。",
+ "rule": "Every rule the carve applies lives here, not in code. Adding a role, a banner or a tag is a data change. Order matters: within roles the first match wins, so the list is written most specific first.",
+ "keys": {
+  "id": {
+   "required": true,
+   "shape": "string",
+   "doc": "册级 schema 的 id,与 carve-rules 目录同名。"
+  },
+  "status": {
+   "required": true,
+   "shape": "provisional|accepted",
+   "doc": "定稿前一律 provisional。"
+  },
+  "questionNumberRegex": {
+   "required": true,
+   "shape": "regex",
+   "doc": "题号识别。**各册不同**:源文用什么分隔符就收什么,不通用。",
+   "default": null
+  },
+  "optionMarkers": {
+   "required": true,
+   "shape": "object",
+   "doc": "选项标号定义。两册结构相同但内容有差(化学多收了漏写 A．的情形),不给默认,册自写;骨架见 examples。",
+   "default": null
+  },
+  "sectionBanners": {
+   "required": true,
+   "shape": "list[{label,caption?,style,level}]",
+   "doc": "栏目横幅——**体例特有**,每册自己写(探新知/概念构建…)。"
+  },
+  "subModules": {
+   "required": false,
+   "shape": "list",
+   "doc": "子模块横幅(即学即练/基础达标…),有就写。"
+  },
+  "calloutHeads": {
+   "required": false,
+   "shape": "list[string]",
+   "doc": "提示框头(特别提醒/解题要点/【探究归纳】…)。"
+  },
+  "roles": {
+   "required": true,
+   "shape": "list[{id,kind,pattern,sortOrder,note?}]",
+   "doc": "块角色清单。**基底只给两个真通用的**(中文编号标题、圈号项,两册逐字相同);其余各册自写,正则以该册源文为准。",
+   "default": [
+    {
+     "id": "中文编号标题",
+     "kind": "section",
+     "pattern": "^[一二三四五六七八九十]+[、．.]\\s*\\S",
+     "sortOrder": 12
+    },
+    {
+     "id": "圈号项",
+     "kind": "body",
+     "pattern": "^[①-⑳]",
+     "sortOrder": 42
+    }
+   ]
+  },
+  "hierarchy": {
+   "required": true,
+   "shape": "{levels:[…],mapping:{role→level}}",
+   "doc": "本册的层级树与角色→层级映射。**体例特有**。"
+  },
+  "tags": {
+   "required": false,
+   "shape": "list",
+   "doc": "块标签。"
+  },
+  "diagnostics": {
+   "required": true,
+   "shape": "object{CODE→{severity,rule,…}}",
+   "doc": "切分诊断项。**这一层通用性最高**:两册 12 个诊断键全部共有、7 个定义逐字相同——进默认;另 5 个两册措辞有差,只进骨架(册须自写)。",
+   "skeleton": [
+    "ANSWER_STARTS_WITH_NUMBER",
+    "ARROW_UNPLACED",
+    "FIELD_UNRENDERED",
+    "FIGURE_ASSET_MISSING",
+    "FIGURE_UNATTRIBUTED",
+    "MISSING_ANSWER",
+    "OPTIONS_OUT_OF_ORDER",
+    "OPTION_GAP",
+    "OPTION_LABEL_MISSING",
+    "SUBANSWER_SHARED",
+    "SUBANSWER_UNPAIRED",
+    "UNATTRIBUTED_BLOCK"
+   ],
+   "default": {
+    "OPTIONS_OUT_OF_ORDER": {
+     "severity": "error",
+     "detail": "选项标号未按顺序出现"
+    },
+    "OPTION_GAP": {
+     "severity": "warning",
+     "detail": "选项标号不连续"
+    },
+    "UNATTRIBUTED_BLOCK": {
+     "severity": "error",
+     "detail": "块没有任何角色归属"
+    },
+    "FIGURE_UNATTRIBUTED": {
+     "severity": "error",
+     "detail": "题内有图片没有归属到选项/小问/题干"
+    },
+    "FIGURE_ASSET_MISSING": {
+     "severity": "error",
+     "detail": "题内图片有归属但没有取到图片实体"
+    },
+    "FIELD_UNRENDERED": {
+     "severity": "error",
+     "detail": "Word 域没有结果文本且未登记渲染,内容会丢失"
+    },
+    "OPTION_LABEL_MISSING": {
+     "severity": "warning",
+     "detail": "选项行首个选项没有标号,按后一个标号推出所缺标号并保留其正文"
+    }
+   }
+  },
+  "embeddedObjects": {
+   "required": true,
+   "shape": "object",
+   "doc": "嵌入对象(图/公式/表)如何处理。默认:图保留、公式转原生、表保留;册可覆写。"
+  },
+  "fieldRenderings": {
+   "required": false,
+   "shape": "object",
+   "doc": "域(STYLEREF/PAGE)的渲染约定。"
+  },
+  "sourceDefects": {
+   "required": false,
+   "shape": "list",
+   "doc": "源文已知缺陷(漏写 A．/全半角混用…),记下来让判据不被它绊倒。"
+  },
+  "fingerprint": {
+   "required": true,
+   "shape": "{sha256,paragraphs,…}",
+   "doc": "源文指纹,由 s1b 写入;基底不给值。"
+  }
+ },
+ "deviationRule": "册级偏离只写与基底不同的键;合成时 偏离覆盖基底、缺的键取基底默认、基底 required 而偏离与默认都没有的 → 合成拒绝并点名。**不猜**:一册没写 hierarchy,不是「沿用上一册的」,是「这册还没定」。",
+ "examples": {
+  "chemistry-g08": "seeds/examples/handout-carve.chemistry-g08.v1.json(全量,拆前)",
+  "physics-g08-summer": "volumes/<册>/carve-rules-provisional/schema/(全量,拆前)"
+ }
+}

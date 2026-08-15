@@ -5,6 +5,50 @@
 **这份 README 是所有智能体与人的通用入口。** 同一正文另有两个入口壳:
 `SKILL.md`(Claude Code 技能格式)、`AGENTS.md`(Codex 约定)。三者正文相同,由 `skill/method/scripts/sync_entrypoints.py` 从本文件生成——**只改本文件**。
 
+## 使用说明(给人看的一页)
+
+**这是什么。** 一个把 Word 讲义原稿变成付印 PDF 的工具包:切分 → 按样式重排 → Word → 装订转曲。
+你给三样东西(源 Word、封面、封底)+ 这一册的切分规则,它出成品;遇到不敢猜的会停下问你。
+
+**需要什么。** 一台装了 Microsoft Word 的 Mac(付印转曲还要 Adobe Acrobat)。其余依赖安装向导会探测并帮你装。
+
+**第一次用(5 分钟)。**
+```bash
+unzip handout-intake-x.y.z.zip && cd handout-intake
+python3 runtime/install_wizard.py            # 探测环境,缺什么逐项问你,同意就装;装好自动渲一遍样式预览
+```
+装完看 `styles/renders/<模板>/*.png` 挑样式——预览是在你这台机器上渲的,不是包里带的图。
+
+**做一册(每次)。**
+```bash
+mkdir -p volumes/<册名> && python3 skill/method/scripts/init_workspace.py --workspace volumes/<册名> --volume <册id>
+```
+把源 Word、`cover.pdf`、`back.svg` 放进 `volumes/<册名>/inputs/`;切分规则放 `carve-rules-provisional/`;真值图放 `quality/`。
+打开生成的 `bindings.json`,只填带 `<…>` 的几处(源文件名、选哪组样式、输出名、册主题)。然后:
+```bash
+python3 skill/method/scripts/run_chain.py --workspace volumes/<册名> --volume <册id>
+```
+成品在 `volumes/<册名>/output/`:`.docx`(Word)与 `print-master.pdf`(付印件)。每次运行有记录在 `runs/<时间戳>/`。
+
+**改样式。** 样式 = 1 个全局默认根 + 1 个局部偏离包。改包(`styles/packs/<包>.json`)后:
+```bash
+python3 styles/new_template.py rerender --pack <包>     # 过门、重合成、重渲预览
+```
+新增包/根:`new_template.py pack|root --from <既有> --id <新id> --name "<名字>"`。改名:`new_template.py rename …`。
+
+**新一册的切分规则。** 拷一份最像的偏离(`skill/seeds/examples/schema.deviation.*.json`),改角色清单/正则/层级/栏目名,放进册的 `carve-rules-provisional/schema/`;
+`compose_schema.py compose` 合成时缺 required 键会点名。
+
+**出了问题。** 先看 `volumes/<册名>/.handout-intake/volumes/<册id>/runs/<最新>/`:每步的状态、输入 hash、报错尾巴都在。
+链停在哪一步就看哪一步;它不会静默跳过。
+
+**分享出去。** `python3 skill/method/scripts/export_package.py --out handout-intake-x.y.z.zip`——默认只带方法与样式,不带任何来源原文;
+要带册级裁决须同时给 `--include-grown --i-understand-copyright` 两个开关。
+
+**它不做什么。** 不代装 Word/Acrobat/字体(涉及许可与管理员权限,给装法由你装);不联网 pip 之外的任何事;不猜——不确定就停。
+
+---
+
 ## 适用的智能体
 
 任何能开 shell、能读文件的智能体都能用:Claude Code、Codex、Kimi、或人。
