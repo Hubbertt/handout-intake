@@ -135,7 +135,13 @@ def probe_apps() -> list[dict]:
 def probe_fonts() -> list[dict]:
     """从样式模板目录里所有参数表的 fontStandard.declared 收集字体名并逐个探测实体文件。"""
     declared: dict[str, set] = {}
-    for params in (ROOT / "styles").glob("*/params.json"):
+    # 字体属于**包**(styles/packs/*.json,真源),不属于组合(投影)。直接探包:
+    # 不依赖 compositions/ 是否已合成——首版探组合,而探测发生在合成之前,于是永远探到空。
+    # ★探不到东西又不吭声,和恒假的门同形;现在找不到包就明说。
+    found_params = sorted((ROOT / "styles" / "packs").glob("*.json"))
+    if not found_params:
+        print("  ⚠ styles/packs/ 下没有任何包——样式库是空的。")
+    for params in found_params:
         try:
             d = json.loads(params.read_text(encoding="utf-8"))
         except Exception:
@@ -145,7 +151,7 @@ def probe_fonts() -> list[dict]:
         # Cambria Math(Word 公式引擎自带,不是系统字体,没有任何样式引用它)。
         # 首版按 declared 判,三个模板在本机全被判「不可用」,而它们明明渲得出来。
         # ★判据看错了表,报出来的「缺」就是假的——比漏报更坏,它让人去装不需要的东西。
-        reg = d.get("wordStyleRegistry") or {}
+        reg = d if "paragraphStyles" in d else (d.get("wordStyleRegistry") or {})
         for coll in ("paragraphStyles", "characterStyles"):
             for spec in (reg.get(coll) or {}).values():
                 if not isinstance(spec, dict) or spec.get("visualPassThrough"):
@@ -153,7 +159,7 @@ def probe_fonts() -> list[dict]:
                 for key in ("fontCn", "fontAscii", "fontCs"):
                     f = spec.get(key)
                     if f:
-                        declared.setdefault(str(f), set()).add(params.parent.name)
+                        declared.setdefault(str(f), set()).add(params.stem)
     ALIASES = {"宋体": ["Songti", "SimSun", "STSong"], "黑体": ["Hei", "SimHei", "STHeiti", "Heiti"],
                "Times New Roman": ["Times New Roman", "TimesNewRoman"], "Arial": ["Arial"],
                "Cambria Math": ["Cambria Math", "CambriaMath"], "圆体-简": ["Yuanti", "STYuanti"]}
@@ -170,7 +176,11 @@ def probe_fonts() -> list[dict]:
                 hits += [str(p) for p in d.rglob(f"*{pat}*") if p.suffix.lower() in (".ttf", ".ttc", ".otf")]
         # 只在按需目录(非 InstallWithOs)命中的算「按需 Subsets」,不算实体
         real = [h for h in hits if "AssetsV2" not in h or "InstallWithOs" in h]
+        # 优先常规字重:glob 命中的第一个可能是「Times New Roman Bold Italic.ttf」——
+        # 字形覆盖无差,但当「这个字体的文件」给出去就不对。
+        real.sort(key=lambda h: (any(w in h for w in ("Bold", "Italic", "Light", "Black")), len(Path(h).name)))
         rows.append({"font": font, "usedBy": sorted(users), "files": real[:3],
+                     "file": real[0] if real else None,
                      "ok": bool(real),
                      "why": "参数表声明的字体必须是本机实体字体,不是按需 Subsets——"
                             "圆体-简那次声明了却画不出。" if not real else ""})
@@ -287,7 +297,10 @@ def main() -> int:
                 or (m["kind"] == "app" and m.get("role") == "必需")]
     advisory = [m for m in still if m not in blocking]
     ready = not blocking
-    report = {"schemaVersion": "handout-intake.probe-report.v1",
+    # fontFiles:字体名 → 实体文件。它是这台机器的事实,由向导探一次、写在这里;
+    # 字形门读它,不再要求每册的 bindings 各写一份(拷来的 fontFiles 是别的机器的)。
+    font_files = {f["font"]: f["file"] for f in fonts if f.get("file")}
+    report = {"schemaVersion": "handout-intake.probe-report.v1", "fontFiles": font_files,
               "probedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
               "python": py, "packages": pkgs, "applications": apps, "fonts": fonts,
               "usableTemplates": templates_ok, "unusableTemplates": templates_bad,

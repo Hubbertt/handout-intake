@@ -65,7 +65,7 @@ VOLUME_BINDINGS_TEMPLATE = {
 }
 
 
-def initialise(workspace: Path, force: bool) -> dict[str, Any]:
+def initialise(workspace: Path, force: bool, volume: str | None = None) -> dict[str, Any]:
     root = workspace / GROWTH_DIRNAME
     manifest_path = root / "MANIFEST.json"
     if manifest_path.exists() and not force:
@@ -99,8 +99,56 @@ def initialise(workspace: Path, force: bool) -> dict[str, Any]:
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=1) + "\n",
                              encoding="utf-8")
-    return {"status": "initialised", "root": str(root),
-            "skillVersion": manifest["skillVersion"], "seeds": len(manifest["seeds"])}
+    report = {"status": "initialised", "root": str(root),
+              "skillVersion": manifest["skillVersion"], "seeds": len(manifest["seeds"])}
+    if volume:
+        report["bindings"] = str(write_volume_bindings(root, volume, force))
+    return report
+
+
+def write_volume_bindings(root: Path, volume: str, force: bool) -> Path:
+    """写出这一册的 bindings.json——真文件,带 <…> 占位,用户只填占位。
+
+    ★不再让人「从现有册拷一份」:2026-08-15 全新安装实测,拷来的绑定带着别的机器的事实
+    (写死的解释器、通配的产物名、生产线的文件名),每一样都让链在别处失败。
+    模板里外部输入的公有默认取自工序表(seeds/ 与 skill 内的路径按包根算),用户不必知道它们。
+    """
+    vdir = root / "volumes" / volume
+    vdir.mkdir(parents=True, exist_ok=True)
+    target = vdir / "bindings.json"
+    if target.exists() and not force:
+        return target
+    product = SKILL_ROOT.parent if (SKILL_ROOT.parent / "styles").exists() else SKILL_ROOT
+    b = json.loads(json.dumps(VOLUME_BINDINGS_TEMPLATE))
+    b["schemaVersion"] = "handout-intake.bindings.v1"
+    b["volume"] = volume
+    b["paths"]["params"] = str(product / "styles" / "compositions" / "<根id>+<包id>" / "params.json")
+    b["paths"]["spec"] = str(next((product / "styles" / "base").glob("*.md"), product / "styles/base/<规范>.md"))
+    # 目录型外部输入要带 /*:resolve 按文件判定,裸目录会被判「不存在」(release.reviewRoot 那次同形)。
+    b["paths"]["seeds.templates"] = str(SKILL_ROOT / "seeds" / "templates" / "*.json")
+    b["paths"]["schema.reference"] = str(SKILL_ROOT / "seeds" / "examples" / "handout-carve.chemistry-g08.v1.json")
+    # 参照件是种子,随 skill 走。★曾指向生产线目录,每次「全新安装」都靠拷来的绑定悄悄继承,
+    # 真正陌生的机器上不存在,链在第 2、4 步就断。
+    b["paths"]["mapping.shared"] = str(SKILL_ROOT / "seeds" / "examples" / "private-spec-mapping.chemistry-g08.v1.json")
+    b["paths"]["matrix.reference"] = str(SKILL_ROOT / "seeds" / "examples" / "audit-matrix.chemistry-g08.v1.json")
+    # 册级文件的约定位置——用户按 README 放进这些目录即可,不必改绑定
+    b["paths"].update({
+        "truth-map": "quality/step0-truth-map.v1.md",
+        "schema": "carve-rules-provisional/schema/<册schema>.json",
+        "registry": "carve-rules-provisional/registry.json",
+        "mapping.own": "carve-rules-provisional/mapping/<册私有映射>.json",
+        "mapping.substitutions": "carve-rules-provisional/mapping/native-text-substitutions.v1.json",
+        "census": "census/block-census.v1.json",
+        "matrix": "quality/audit-matrix.<册>.json",
+        "source.stripped": "work/<源名>-已清零宽.docx",
+    })
+    b["_fillTheseOnly"] = ["paths.source", "paths.assets.cover", "paths.assets.back",
+                           "paths.params(选一组样式)", "paths.word(按规范命名)",
+                           "paths.schema / paths.mapping.own(册的切分规则文件名)",
+                           "paths.matrix / paths.source.stripped(册名)", "theme", "pdfKey"]
+    b["_doNotAdd"] = "interpreter.python——由安装向导探测,写死会把别的机器的事实带进这一册。"
+    target.write_text(json.dumps(b, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return target
 
 
 def main() -> int:
@@ -109,10 +157,11 @@ def main() -> int:
                         help="项目根目录;成长物写在它下面的 .handout-intake/")
     parser.add_argument("--force", action="store_true",
                         help="重新绑定到当前 skill 版本（不删除已有成长物）")
+    parser.add_argument("--volume", help="册 id;给了就同时写出该册的 bindings.json 模板")
     args = parser.parse_args()
     if not args.workspace.is_dir():
         raise SystemExit(f"工作区不存在:{args.workspace}")
-    report = initialise(args.workspace.resolve(), args.force)
+    report = initialise(args.workspace.resolve(), args.force, args.volume)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return 0
 

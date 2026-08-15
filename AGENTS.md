@@ -63,25 +63,35 @@ python3 styles/render_catalog.py       # 渲染所有模板的预览(按 params 
 
 ## 做一册
 
-1. 建目录 `volumes/<册名>/`,把源 Word 放进 `inputs/`
-2. 拷一份 `bindings.json`(可从现有册拷),改:源文路径、模板、输出位置(`output/` 可改成任何地方)、解释器(向导选定的)
-3. 跑:
+1. 初始化一册(会生成 `bindings.json` 模板,**不要从别的册拷**——拷来的带着别的机器的事实):
 
 ```bash
-python3 skill/method/scripts/run_chain.py --workspace volumes/<册名>
+python3 skill/method/scripts/init_workspace.py --workspace volumes/<册名> --volume <册id>
 ```
 
-它按工序表拓扑执行,每步产物带 sha256,上游一变下游自动失效。**它遇到不敢猜的会停**,把问题挂进 `volumes/<册名>/decisions/queue.json`。
+2. 用户只放三样进 `volumes/<册名>/inputs/`:源 Word、封面(`cover.pdf`)、封底(`back.svg` 或 `.pdf`)。
+   再放这一册的切分规则(`carve-rules-provisional/`,含私有规范映射)与真值图(`quality/step0-truth-map.v1.md`,人写)。
+3. 打开 `volumes/<册名>/.handout-intake/volumes/<册id>/bindings.json`,只改带 `<…>` 的几处:
+   源文件名、册主题、册键、**选一组样式**(`params` 指向 `styles/compositions/<根>+<包>/params.json`,
+   没有的组合先 `python3 styles/compose.py --root X --pack Y`)。输出默认落 `output/`,可改。
+   **不要写死解释器**——由安装向导探测(`runtime/probe-report.json`)。
+4. 跑:
 
-4. 有待裁的:把问题和选项讲给用户,用户定了就:
+```bash
+python3 skill/method/scripts/run_chain.py --workspace volumes/<册名> --volume <册id>
+```
+
+它按工序表拓扑执行,每步产物带 sha256,上游一变下游自动失效。**它遇到不敢猜的会停**并说明为什么。
+成品:`output/<按规范命名>.docx`(Word)与 `output/print-master.pdf`(付印件:装订+转曲,0 字体 0 文本)。
+没有 Acrobat 时付印步会明确拒绝——装订件 `output/print/standard-pdf/` 可预览校对,**不可付印**。
+
+5. 有待裁的:把问题和选项讲给用户,用户定了就:
 
 ```bash
 python3 skill/method/scripts/decisions.py decide --volume-dir volumes/<册名> --id <id> --choice <选项> --by <谁> --why "<理由>"
 ```
 
 理由必填——没有理由的裁决进不了经验层。裁完再跑链,它从队列里取已裁的,不再问。
-
-5. 跑到 `s6-pdf` 会停在外部交接:付印 PDF 四步目前需要本机既有生产线目录(见 `runtime/paths.json`)。这是**已声明的边界**,不是故障。Word 成品已在 `work/word/`。
 
 ---
 

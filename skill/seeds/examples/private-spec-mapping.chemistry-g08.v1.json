@@ -1,0 +1,490 @@
+{
+ "schemaVersion": "chengziclass.private-spec-mapping.v1",
+ "target": {
+  "compiler": "scripts/formal/build_semantic_handout_from_blueprint.py",
+  "blockStyles": [
+   "chapter",
+   "heading1",
+   "heading2",
+   "heading3",
+   "body",
+   "long_text",
+   "objective",
+   "callout_title",
+   "callout_body",
+   "callout_subpoint",
+   "exercise",
+   "choice",
+   "answer_line",
+   "caption",
+   "image",
+   "layout_spacer",
+   "table",
+   "page_break",
+   "exercise_group_title",
+   "exercise_continuation"
+  ],
+  "runStyles": [
+   "plain",
+   "emphasis",
+   "highlight",
+   "fill_blank",
+   "chemical_subscript",
+   "chemical_superscript",
+   "emphasis_underline",
+   "topic_label",
+   "section_banner",
+   "emphasis_mark"
+  ],
+  "note": "目标词表取自编译器的 BLOCK_STYLE_IDS 与 RUN_STYLE_IDS,不新造样式。映射表只做「源角色→目标样式」的对应,样式本体归编译器。"
+ },
+ "principles": {
+  "answersAreDataOnly": "答案与解析不进成品正文,只留在数据里;成品是学生版。",
+  "sourceArtworkNotReused": "栏目横幅按 label+caption 两个语义位重建,源位图只作来源指纹。",
+  "failClosed": "源侧出现未登记的角色或 run 类,编译必须停,不得回落到默认样式。"
+ },
+ "blocks": {
+  "专题标题": {
+   "style": "heading1",
+   "level": 2,
+   "normalizeTitle": true
+  },
+  "课题标题": {
+   "style": "heading2",
+   "level": 3,
+   "normalizeTitle": true
+  },
+  "课时标题": {
+   "style": "heading3",
+   "level": 4,
+   "note": "课时在课题之下。原先与课题同级,一个课题的三个课时就并排成了三个课题",
+   "normalizeTitle": true
+  },
+  "栏目横幅·探新知": {
+   "style": "heading4",
+   "level": 5,
+   "slots": {
+    "label": "探新知",
+    "caption": "教材知识解读"
+   },
+   "captionRunStyle": "section_banner"
+  },
+  "栏目横幅·揭规律": {
+   "style": "heading4",
+   "level": 5,
+   "slots": {
+    "label": "揭规律",
+    "caption": "讲透重点难点"
+   },
+   "captionRunStyle": "section_banner"
+  },
+  "栏目横幅·帮解题": {
+   "style": "heading4",
+   "level": 5,
+   "slots": {
+    "label": "帮解题",
+    "caption": "方法能力构建"
+   },
+   "captionRunStyle": "section_banner"
+  },
+  "栏目横幅·刷好题": {
+   "style": "heading4",
+   "level": 5,
+   "slots": {
+    "label": "刷好题",
+    "caption": "同步分层测评"
+   },
+   "captionRunStyle": "section_banner"
+  },
+  "标题·教学目标": {
+   "style": "heading4",
+   "slots": {
+    "label": "教学目标",
+    "caption": null
+   },
+   "note": "块标题而非分栏,其下的表格是教学目标正文。与四个栏目(探新知/揭规律/帮解题/刷好题)一样直接挂在课时下,所以同为 heading4。原来出 heading5,比它的同级小一号,而且在大纲里跳过了第 4 级——全书 10 处「教学目标」都跳级。",
+   "level": 5,
+   "adjudicatedBy": "用户 2026-08-08:「挂在课时下」"
+  },
+  "知识点标题": {
+   "style": "heading5",
+   "level": 6
+  },
+  "考点标题": {
+   "style": "heading5",
+   "level": 6
+  },
+  "中文编号标题": {
+   "style": "heading5",
+   "level": 6
+  },
+  "子模块横幅·即学即练": {
+   "style": "exercise_group_title",
+   "level": 4,
+   "slots": {
+    "label": "即学即练"
+   },
+   "iconIsDecoration": true,
+   "note": "规范里本就有 CZ_ExerciseGroupTitle,且各审计脚本已把它列为练习组标题的合法样式"
+  },
+  "子模块横幅·实践应用": {
+   "style": "exercise_group_title",
+   "level": 4,
+   "slots": {
+    "label": "实践应用"
+   },
+   "iconIsDecoration": true,
+   "note": "规范里本就有 CZ_ExerciseGroupTitle,且各审计脚本已把它列为练习组标题的合法样式"
+  },
+  "子模块横幅·基础达标": {
+   "style": "exercise_group_title",
+   "level": 4,
+   "slots": {
+    "label": "基础达标"
+   },
+   "iconIsDecoration": true,
+   "note": "规范里本就有 CZ_ExerciseGroupTitle,且各审计脚本已把它列为练习组标题的合法样式"
+  },
+  "子模块横幅·综合应用": {
+   "style": "exercise_group_title",
+   "level": 4,
+   "slots": {
+    "label": "综合应用"
+   },
+   "iconIsDecoration": true,
+   "note": "规范里本就有 CZ_ExerciseGroupTitle,且各审计脚本已把它列为练习组标题的合法样式"
+  },
+  "子模块横幅·拓展培优": {
+   "style": "exercise_group_title",
+   "level": 4,
+   "slots": {
+    "label": "拓展培优"
+   },
+   "iconIsDecoration": true,
+   "note": "规范里本就有 CZ_ExerciseGroupTitle,且各审计脚本已把它列为练习组标题的合法样式"
+  },
+  "正文": {
+   "style": "body"
+  },
+  "文本框内容": {
+   "style": "body",
+   "note": "文本框只是排版容器,内容按正文编制"
+  },
+  "表达式行": {
+   "style": "body",
+   "keepArrows": true,
+   "note": "箭头与反应条件已回填进文本,不可再当普通空白压缩"
+  },
+  "圈号项": {
+   "style": "body"
+  },
+  "提示框·特别提醒": {
+   "style": "callout_title",
+   "bodyStyle": "callout_body"
+  },
+  "提示框·解题要点": {
+   "style": "callout_title",
+   "bodyStyle": "callout_body"
+  },
+  "实验标记": {
+   "style": "callout_title",
+   "bodyStyle": "callout_body"
+  },
+  "查阅资料": {
+   "style": "callout_title",
+   "bodyStyle": "callout_body"
+  },
+  "探究环节标记": {
+   "style": "callout_subpoint"
+  },
+  "例题题干": {
+   "style": "exercise"
+  },
+  "变式题干": {
+   "style": "exercise"
+  },
+  "编号项": {
+   "style": "exercise",
+   "note": "在讲解栏目下是练习题,在刷好题下是作业题;两者同样按 exercise 编制,归属由栏目决定"
+  },
+  "小问": {
+   "style": "exercise_continuation",
+   "note": "CZ_ExerciseContinuation 橙子题目续行,自带续行缩进,不必再打直接格式"
+  },
+  "选项行": {
+   "style": "choice",
+   "atomised": true,
+   "note": "按选项对象逐个出,不按整行出"
+  },
+  "图片块": {
+   "style": "image",
+   "carry": [
+    "widthEmu",
+    "heightEmu",
+    "crop"
+   ]
+  },
+  "表格": {
+   "style": "table",
+   "carry": [
+    "style",
+    "width",
+    "layout",
+    "alignment",
+    "borders",
+    "shading",
+    "grid",
+    "rows"
+   ]
+  },
+  "空段落": {
+   "style": "layout_spacer"
+  },
+  "跨学科标题": {
+   "style": "heading2",
+   "level": 3,
+   "note": "树里与课题同级:课题1..N、跨学科实践活动、专题复习"
+  },
+  "复习讲义标题": {
+   "style": "heading2",
+   "level": 3,
+   "note": "树里与课题同级:课题1..N、跨学科实践活动、专题复习"
+  },
+  "重难点标题": {
+   "style": "heading2",
+   "level": 3,
+   "note": "树里与课题同级:课题1..N、跨学科实践活动、专题复习"
+  },
+  "作答线": {
+   "style": "answer_line",
+   "note": "整段只有一条下划线空白:是留给学生写字的作答线,不是版式空行"
+  }
+ },
+ "runs": {
+  "显式下标": {
+   "match": {
+    "vertAlign": "subscript"
+   },
+   "style": "chemical_subscript"
+  },
+  "显式上标": {
+   "match": {
+    "vertAlign": "superscript"
+   },
+   "style": "chemical_superscript"
+  },
+  "显式高亮": {
+   "match": {
+    "highlight": "*"
+   },
+   "style": "highlight"
+  },
+  "试卷来源标注": {
+   "match": {
+    "color": "0070C0"
+   },
+   "style": "source_tag",
+   "beforeShading": true,
+   "note": "裁决(2026-08-07,用户「按建议修好」):出处不是内容,单独出一档灰色小字 CZ_SourceTag。这条必须排在「底纹」之前——132 处标注里有 11 处压着 D9D9D9 灰底,先判底纹会把它们涂黄,同一个标注两种样子。原先只在数据里打标不落样式,结果是 1903 字出处和正文一个颜色一个字号。"
+  },
+  "底纹": {
+   "match": {
+    "shading": true
+   },
+   "style": "highlight"
+  },
+  "下划线空白": {
+   "match": {
+    "underline": "*",
+    "textIsBlank": true
+   },
+   "style": "fill_blank"
+  },
+  "例题变式标签": {
+   "match": {
+    "bold": "on",
+    "color": "1F4E79"
+   },
+   "inBlocks": [
+    "例题题干",
+    "变式题干"
+   ],
+   "style": "topic_label",
+   "note": "CZ_TopicLabel 定义就是 bold+1F4E79,与源文档该类 run 的指纹完全一致;此前映射成 emphasis 只保留了粗体,颜色被丢掉"
+  },
+  "加粗题号": {
+   "match": {
+    "bold": "on",
+    "color": null
+   },
+   "inBlocks": [
+    "编号项",
+    "正文"
+   ],
+   "style": "plain",
+   "note": "裁决(2026-08-06,用户):其余题号一律不加粗,这2处按源文档排版失误处理,统一按正文出。"
+  },
+  "无装饰": {
+   "match": {},
+   "style": "plain"
+  }
+ },
+ "notPrinted": {
+  "答案": "存于 atoms[].answer 与 subQuestions[].answer,成品不出",
+  "解析": "存于 atoms[].explanation,成品不出",
+  "页脚水印": "学科网（北京）股份有限公司,源方标识",
+  "页码域": "由排版生成",
+  "页眉页脚图": "源方 logo",
+  "子模块图标": "跨不同子模块复用,属装饰",
+  "空白占位图": "无墨的隐形占位图",
+  "Fallback副本": "与 Choice 分支逐组比对完全相同"
+ },
+ "adjudication": {
+  "runClasses": "2026-08-06 已全部裁决,0 类待裁",
+  "tagsCarriedInData": [],
+  "fidelityProperties": {
+   "字符·中文字体": "源 9 种字体统一成注册表的宋体+Times。查过:12 处黑体全部同时加粗且都是「课题N」标题,由标题样式承担;3 处方正楷体_GBK 在一句「拓展思考」里,是全书唯一只靠字体承载的区分,不为它单开一个字体类",
+   "字符·斜体": "源 23 处斜体没有一处是「只有斜体」——每一处都同时带高亮或底纹,含义由那一层承担。私有规范不用斜体(斜体会被 Word 带进目录)",
+   "字符·着色": "源三种上色:黄色 65 处是正文高亮,已全部落成橙子高亮;灰底 D9D9D9 105 处和 lightGray 11 处分别是子模块横幅背景和「专题N」标题背景,由横幅样式与标题样式承担,不再当高亮;白底 FFFFFF 131 处白纸白漆,不上色。字色收敛到三档(注册表 colourStandard):231F20 近黑 2973 字并入正文墨;1F4E79 深蓝 928 字与我们的 0C4396 并成一档强调蓝;0070C0 亮蓝 1903 字全是试卷出处标注,降成出处灰小字。",
+   "段落·首行缩进": "源里真有首行缩进的只有 9 段,全在「文字表达式/符号表达式」行,缩进 105 或 525 dxa。私有规范用样式统一段落几何,不为 9 段单开缩进类"
+  }
+ },
+ "typography": {
+  "bodySizePt": 12,
+  "note": "图片按「源绝对尺寸 × 本规范正文字号 ÷ 源正文字号」定宽,既保住源的相对比例,又随私有规范的字号缩放",
+  "figureScale": "图宽 = 源绝对尺寸 × 本规范正文字号 ÷ 图所在段落的正文字号。段落字号取该段各 run 按字数加权的众数——不取首个带字号的 run(一个上标或零星片段就会决定整行),也不取全文众数(段落本可以另有字号);段落自身无文字时才回退到全文正文块众数。",
+  "choiceColumns": {
+   "rule": "选项行保留源的行分组,列数取 4/2/1 中最大的、能让行内每个选项都放得下的那一档;放不下就退回一行一个选项——源本来也只是让它折行,不会更长",
+   "allowed": [
+    4,
+    3,
+    2
+   ],
+   "bodyWidthDxa": 9411,
+   "leftIndentDxa": 720,
+   "fitRatio": 0.98,
+   "charWidthDxa": {
+    "fullWidth": 240,
+    "halfWidth": 120,
+    "upperCaseLatin": 168,
+    "note": "宋体 12pt 的汉字正好 12pt=240 twips,量得准。非汉字原先一律按 120 算,但 Times New Roman 12pt 的大写字母约 0.7em=168——而每个选项都恰好带一个大写标号,这是模型里最系统的一处偏低。"
+   },
+   "note": "字宽按 12pt 估算:全角一字 240 dxa,半角 120 dxa。fitRatio 留出余量,避免刚好卡在栏边的选项把后一栏顶到下一个制表位",
+   "groupedBy": "question",
+   "rules": [
+    "一行中每个选项等宽——列位是均分的制表位,不是空格",
+    "一行尽量多放——在都放得下的前提下取最大列数",
+    "同一题每行数量相同——所以列数必须整除该题的选项数"
+   ],
+   "sourceRelation": "computed-per-question",
+   "supersedes": "原先是 row-grouping-preserved:照源打的换行走。源把 22 道题排成「A B / C / D」这种不齐的行型,读起来像三种不同的选项;另有 31 道题源把四个选项各占一行,但它们两两并得下,从没试过——因为按行判时单选项行直接返回一列,根本不测宽。",
+   "measured": "351 题:22 题行型不齐、31 题可并到两列、1 题可并到三列;重排省 64 行 ≈1.7 页",
+   "adjudicatedBy": "用户 2026-08-08:「一行中的每个选项必须等宽,一行中尽量放更多的选项,一个题目中每一行的选项数量要相同」",
+   "fitRatioWhy": "原来是 0.95。5% 相当于近一个汉字的余量,是拍出来的,不是量出来的:它把 22 道只占半栏 96–98% 的题挡在两列之外——那些题物理上还剩 0.4–0.7 个字的空。把标号宽度测准之后,剩下的不确定性只有零星拉丁字符,2% 够用;而占到 98–100% 的 2 道题仍然排除,它们只剩 8 twips,任何误差都会顶掉制表位。",
+   "fitRatioMeasured": "全书 24 道题落在 90–100% 区间:22 道 96–98%、2 道 98–100%"
+  }
+ },
+ "hierarchy": {
+  "rule": "主题 > 专题 > 课题 > 课时 > 栏目 > 知识点,与源目录树同构",
+  "themeFromDirectory": "主题与专题、课题都是目录层,不是文档内容。主题在任何文档里都没有标题段,按目录合成;专题与课题每个文档里都写了一遍,只在该层第一份讲义里排版,其余排除",
+  "sourceOfTruth": "源文件目录树"
+ },
+ "titleNormalization": {
+  "rule": "单位词 + 序号 + 一个半角空格 + 名称。序号用半角阿拉伯数字,不补前导零;主题一级沿用中文数字(源与目录都这么写)。",
+  "why": "源里同一层的写法不一致:「课题01 水的性质」与「课题1 空气的成分」并存,「专题3空气、氧气、二氧化碳」六份里有四份漏了空格。合成一本讲义时这些差异并排出现,读起来像是不同层级。",
+  "scope": [
+   "主题",
+   "专题",
+   "课题",
+   "课时"
+  ],
+  "patterns": [
+   {
+    "match": "^(主题)\\s*([一二三四五六七八九十]+)\\s*",
+    "replace": "\\1\\2 "
+   },
+   {
+    "match": "^(专题|课题)\\s*0*(\\d+)\\s*",
+    "replace": "\\1\\2 "
+   },
+   {
+    "match": "^第\\s*0*(\\d+)\\s*课时\\s*",
+    "replace": "第\\1课时 "
+   }
+  ],
+  "observed": {
+   "课题01 水的性质": "课题1 水的性质",
+   "专题3空气、氧气、二氧化碳": "专题3 空气、氧气、二氧化碳"
+  },
+  "sourceTextIsKept": "只改排面上的写法,来源段落与其原文照旧记在 provenance 里,不动源文件。"
+ },
+ "titleOverrides": {
+  "kind": "one-off-adjudications",
+  "notARule": "这不是规范。titleNormalization 管的是排面(序号、空格、分隔符),对全书一视同仁;这里是逐条列出的个别改写,只管自己那一条,不推广、不生成模式。两者分开放,是为了「我们改了措辞」永远不会被当成「我们修了空格」。",
+  "whyRecordedAtAll": "流水线的产物每次都是重新生成的,改在成品上下次编译就没了,哈希登记也对不上。记在这里不是把它升格成规范,是让它能重现、能查到理由。",
+  "appliedBefore": "titleNormalization——命中即用,不再走模式",
+  "entries": [
+   {
+    "from": "第1课时 水在自然界中如何循环和净化 水有哪些人工净化的方法",
+    "to": "第1课时 水的循环和净化是怎样进行的",
+    "why": "全书唯一一条把两个知识点相加而成的标题(其余六个课时都是「标题概括、知识点分述」)。原句 24 字、「水」「净化」各出现两次,并排两问读成一句长句。",
+    "houseStyle": "合成单句,对齐兄弟标题「第3课时 自然界中的氧循环和碳循环是怎样进行的」的句式;「循环」「净化」各领一个知识点,自然/人工的分野交给 ◆知识点一、◆知识点二 去分",
+    "contentChecked": "教学目标四条覆盖天然循环、自然净化、自来水净化方法、硬水软化,与两个知识点一致;原标题内容没写错,是措辞冗长",
+    "adjudicatedBy": "用户 2026-08-08:「这里的润色作为临时的处理,不记录为规范」"
+   }
+  ]
+ },
+ "calloutTitleNormalization": {
+  "rule": "独立成行的提示框标题不带尾随冒号。",
+  "why": "源里两种写法并存:「解题要点」40 处不带,「特别提醒：」25 处带。并排出现时像是两种不同的东西。",
+  "chose": "去掉冒号,不是给另一边补上。标题独占一行、又有黄底,「后面还有话」这件事版面已经说清楚了,冒号是在做一件版面已经做过的事;而且改 25 处比改 40 处动源少。",
+  "appliesTo": [
+   "callout_title"
+  ],
+  "onlyWhenWholeLine": "只处理整行就是标题的那种。「【查阅资料】红磷燃烧生成…」这类标签与正文同段,冒号不在行尾,不动。",
+  "patterns": [
+   {
+    "match": "^([^：:]{2,8})[：:]$",
+    "replace": "\\1"
+   }
+  ],
+  "adjudicatedBy": "用户 2026-08-08:「要么都加冒号要么都不加」"
+ },
+ "sourceTagNormalization": {
+  "rule": "块首是来源标注却没被认成 source_tag 的,补认。",
+  "why": "source_tag 是靠源里的字色 0070C0 认出来的,全书 132 处出处 run 都是蓝色。b0268 在源文件里整行只有一个 run、没有颜色——源作者漏标了这一处,于是「(2025·上海杨浦·三模)」和题干一个字号一个颜色。这属于源的内容缺陷,和「多一个句号」同类,不是搬运缺陷。",
+  "whyPatternNotOverride": "句号那种是笔误,只能逐条裁决;漏标是同一件事在源里没做全,而「块首的来源标注」有确定的形状。做成模式,下一册再漏几处也自动接住,并且漏标数可数、可收敛——这正是逐条覆盖做不到的。",
+  "match": "^[（(]\\s*(?:\\d{4}|\\d{2}\\s*-\\s*\\d{2})[·・].*?[）)]",
+  "matchNote": "只吃块首那一段括号,括号内以年份或学年开头。不匹配正文里出现的括号。",
+  "appliesTo": [
+   "exercise",
+   "exercise_continuation"
+  ],
+  "runStyle": "source_tag",
+  "measured": "本册块首为来源标注的块 45 个,其中 44 个源里已标蓝、1 个(b0268)漏标。补认后应为 0 个漏标。",
+  "ratchet": "repairedCount 记录本册补认了几处;这个数只该在源变差时上升,升了就说明源的标注质量在退,值得回头找源。",
+  "repairedCount": 1,
+  "adjudicatedBy": "用户 2026-08-08:「这是否属于源文件不规范?能否作为对源文件的修正,优化它?之前也做过一些,比如多了一个句号」"
+ },
+ "textOverrides": {
+  "rule": "一次性人工修正,不构成规则。每条锁定具体块与原文,只在完全匹配时生效。",
+  "why": "源里的笔误照排会印进成品,但改它就是改内容——所以逐条裁决、逐条留痕,不做成模式匹配。",
+  "entries": [
+   {
+    "blockKind": "table-cell",
+    "from": "2．结合实例，说明氧气的性质与应用的关系。。",
+    "to": "2．结合实例，说明氧气的性质与应用的关系。",
+    "reason": "源里连着两个句号,教学目标表第一格第二条。",
+    "adjudicatedBy": "用户 2026-08-08:「句号属于临时的人工修复：删除多余的句号」"
+   },
+   {
+    "blockKind": "table-cell",
+    "from": "2．结合实例，说明二氧化碳的性质与应用的关系。。",
+    "to": "2．结合实例，说明二氧化碳的性质与应用的关系。",
+    "reason": "与上一条同形:源里连着两个句号,课题2第2课时教学目标表第一格第二条。",
+    "adjudicatedBy": "用户 2026-08-08 裁定删除多余句号;全书扫描重复标点只此两处,逐条列出而非做成规则"
+   }
+  ],
+  "sweptFor": "全书扫过 。，；：、！？ 七种标点的连写,只有这两处。逐条列出而不是写成「删除重复标点」的规则——规则会悄悄改到没人看过的地方,而这是改源的字。"
+ }
+}

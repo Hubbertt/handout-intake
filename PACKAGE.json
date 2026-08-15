@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.1.0",
+ "version": "2.1.1",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -81,6 +81,20 @@
    "flow": "zip(0.9MB,不含 compositions/renders/probe-report/paths.json)→空目录→向导 --yes 全绿→自动 compose --all(2 组)→自动渲 2 组→init 识别 2.1.0→绑定 params 指向 compositions/docDefaults1+chengzi-summer-v1→全链 36 步(34 ok+1 已在+1 等人工目视)",
    "result": "118 页/73.7 MB/A4/字体 0/文本 0,与 2.0 新装及生产线成品三方一致",
    "gapFound": "重写导出器 styles 段时连带切掉了 runtime/ 段——解压件没有向导入口,导出成功包也能装,只是「安装向导」消失了;这种缺法最难发现。已补回。"
+  },
+  "v2.1.1_readmePath": {
+   "at": "2026-08-15",
+   "what": "清理全部开发遗留(旧包归档、4 个可再生工作区 5.9GB 删、旧 zip 删、投影清)后,**只按 README 走**:zip→空目录→向导→init --volume 写出绑定→inputs/ 三样→只填 <…> 占位→run_chain",
+   "result": "36 步(34 ok+1 已在+1 等人工目视)→ 118 页/A4/字体 0/文本 0,与生产线成品逐项相同",
+   "gapsFoundAndFixed": [
+    "★两处外部输入仍指向生产线目录(mapping.shared / matrix.reference / schema.reference 均为化学册参照)——每次「全新安装」都通过拷来的绑定悄悄继承,真正陌生的机器上不存在,链第 2/4 步就断 → 提为 skill/seeds/examples/",
+    "README「做一册」写着「从现有册拷 bindings」——全新安装无册可拷,且拷来的带别的机器的事实 → init --volume 写出真绑定文件,只填 <…> 占位",
+    "README 说付印停在外部交接——已过时 → 更新",
+    "seeds.templates 绑到裸目录被判不存在(与 release.reviewRoot 同形)→ 带通配",
+    "向导字体探测扫 styles/*/params.json,2.1.0 起参数在 compositions/,探到空又不吭声(与恒假门同形)→ 直接探 packs/(真源),找不到就明说;fontFiles 写进 probe-report",
+    "字形门要每册 bindings 各写 fontFiles(拷来的是别的机器的)→ 回退读向导探到的;门原先对四字体全 refused 是对的,缺的是读源",
+    "字体文件 glob 先命中 Bold Italic → 优先常规字重"
+   ]
   }
  },
  "styleModel": {
@@ -101,5 +115,14 @@
    "3 根×3 包=9 组全部合成过门渲出;新增根不动包、新增包不动根",
    "改名三层都通;组合自定义名在包改名重合成后保住"
   ]
+ },
+ "agents": {
+  "supported": "任何能开 shell、能读文件的智能体:Claude Code / Codex / Kimi / 人。包对智能体零依赖——全部 python3 xxx.py,不调任何专属接口。",
+  "entrypoints": {
+   "Claude Code": "SKILL.md",
+   "Codex": "AGENTS.md",
+   "其他/人": "README.md"
+  },
+  "rule": "三壳共正文,只改 README.md,sync_entrypoints.py 同步;导出自检 --check 拦漂移。"
  }
 }

@@ -112,7 +112,21 @@ def main() -> int:
     subs = {e["from"]: e["to"] for e in (policy.get("substitutions") or [])}
 
     names = declared_font_names(params)
-    font_files = CHAIN.bindings.get("fontFiles") or {}
+    # 字体文件映射:册级绑定显式给的 > 安装向导探到的(runtime/probe-report.json)。
+    # ★2026-08-15 全新安装抓出:新册绑定没有 fontFiles(拷来的是别的机器的),门对四个字体全 refused。
+    #   门拒绝是对的;缺的是它该去读向导已经探好的那份——机器事实探一次,不该每册各写。
+    font_files = dict(CHAIN.bindings.get("fontFiles") or {})
+    if not font_files:
+        from pathlib import Path as _P
+        for base in (_P(__file__).resolve().parents[3], _P(__file__).resolve().parents[2]):
+            rep = base / "runtime" / "probe-report.json"
+            if rep.exists():
+                try:
+                    font_files = dict(json.loads(rep.read_text(encoding="utf-8")).get("fontFiles") or {})
+                except Exception:
+                    font_files = {}
+                if font_files:
+                    break
     fonts, missing_files = load_fonts(names, font_files)
     if missing_files:
         REPORT.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +134,7 @@ def main() -> int:
             "gate": "GATE_GLYPH_COVERAGE", "status": "refused",
             "why": "声明的字体找不到文件,无法实测覆盖。这不是通过,是不知道。",
             "unresolvedFonts": missing_files,
-            "howToFix": "在册级 bindings.json 的 fontFiles 里给出 字体名 → 字体文件 的映射。",
+            "howToFix": "跑 runtime/install_wizard.py 让它探测字体并写入 probe-report.json;或在册级 bindings.json 的 fontFiles 里显式给出。",
         }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
         print(json.dumps({"status": "refused", "unresolvedFonts": missing_files},
                          ensure_ascii=False))
