@@ -1,9 +1,9 @@
 {
  "schemaVersion": "handout-intake.style-template.v2",
- "id": "docDefaults1+chengzi-summer-blue",
+ "id": "docDefaults1+chemistry-g08-summer",
  "root": "docDefaults1",
- "pack": "chengzi-summer-blue",
- "name": "蓝色标题变体·浅蓝底纹 × 橙子暑假班基线根",
+ "pack": "chemistry-g08-summer",
+ "name": "化学·八年级全一册第二册(2026-08-08 成品样式) × 橙子暑假班基线根",
  "params": "params.json",
  "spec": "../../base/橙子教室暑假班资料统一规范.md",
  "outlineLevels": "../../base/chengzi_word_outline_levels.v1.json",
@@ -73,6 +73,56 @@
     [
      "CZ_Body",
      "真空中的光速是自然界中最快的速度。"
+    ]
+   ]
+  },
+  {
+   "id": "mid-page-flow",
+   "title": "四级标题在页中(不换页)时的上下间距",
+   "blocks": [
+    [
+     "CZ_Heading2",
+     "概念构建"
+    ],
+    [
+     "CZ_Heading3",
+     "一、光的直线传播"
+    ],
+    [
+     "CZ_Heading4",
+     "1. 光源"
+    ],
+    [
+     "CZ_Body",
+     "光在同种均匀介质中沿直线传播。小孔成像、影子的形成都是它的例子。"
+    ],
+    [
+     "CZ_Body",
+     "光线不是客观存在的,它是人们建立的一种理想模型。"
+    ],
+    [
+     "CZ_Heading3",
+     "二、光的反射定律"
+    ],
+    [
+     "CZ_Heading4",
+     "1. 光的反射"
+    ],
+    [
+     "CZ_Body",
+     "光从一种介质射向另一种介质时,一部分光返回到原介质的现象称为光的反射。"
+    ],
+    [
+     "CZ_Heading3",
+     "三、镜面反射和漫反射"
+    ],
+    [
+     "CZ_Heading4",
+     "1. 镜面反射"
+    ],
+    [
+     "CZ_Body",
+     "平行光束经平面镜反射后依旧相互平行。"
     ]
    ]
   }

@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.1.1",
+ "version": "2.2.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.1.0:样式框架按使用方模型重做——根/包/底座三处真源独立存放,组合是投影,任意组合、三层可命名。2.0.0 的验收(全新安装到付印件)保持成立。",
+ "versionWhy": "2.2.0:样式收敛为 1 根 × 2 包(物理/化学);四级不换页 + 间距重调;三级底纹文字居中根因(段落底纹只覆盖行盒)。改名前后成品逐页相同。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -114,7 +114,12 @@
    "拆分时数据自证模型:school-b-v1 的包与 v1 包 sha 相同——它不是包是组合,已删",
    "3 根×3 包=9 组全部合成过门渲出;新增根不动包、新增包不动根",
    "改名三层都通;组合自定义名在包改名重合成后保住"
-  ]
+  ],
+  "currentPacks": {
+   "physics-g08-summer": "物理·八年级上册第二册(现行):黑体;三级底纹 exact 20pt 居中;四级蓝字不换页 380/110;五级黑粗;命名=大纲级别",
+   "chemistry-g08-summer": "化学·八年级全一册第二册:2026-08-08 成品 docx 实测样式(宋体 18/16/15/14/13,四级圆体-简蓝,无底纹边框,旧命名)。以成品为准,不以中途改过的参数表为准。"
+  },
+  "retired": "chengzi-summer-v1/v2/blue(使用方 2026-08-16:只保留一版物理一版化学)"
  },
  "agents": {
   "supported": "任何能开 shell、能读文件的智能体:Claude Code / Codex / Kimi / 人。包对智能体零依赖——全部 python3 xxx.py,不调任何专属接口。",
