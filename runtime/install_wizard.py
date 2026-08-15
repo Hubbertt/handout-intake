@@ -140,8 +140,20 @@ def probe_fonts() -> list[dict]:
             d = json.loads(params.read_text(encoding="utf-8"))
         except Exception:
             continue
-        for f in ((d.get("wordStyleRegistry") or {}).get("fontStandard") or {}).get("declared") or []:
-            declared.setdefault(f, set()).add(params.parent.name)
+        # 模板可用性只看**样式实际引用**的字体(fontCn/fontAscii/fontCs),
+        # 不看 fontStandard.declared——那张表是 PDF 字体审计的白名单,里面有
+        # Cambria Math(Word 公式引擎自带,不是系统字体,没有任何样式引用它)。
+        # 首版按 declared 判,三个模板在本机全被判「不可用」,而它们明明渲得出来。
+        # ★判据看错了表,报出来的「缺」就是假的——比漏报更坏,它让人去装不需要的东西。
+        reg = d.get("wordStyleRegistry") or {}
+        for coll in ("paragraphStyles", "characterStyles"):
+            for spec in (reg.get(coll) or {}).values():
+                if not isinstance(spec, dict) or spec.get("visualPassThrough"):
+                    continue
+                for key in ("fontCn", "fontAscii", "fontCs"):
+                    f = spec.get(key)
+                    if f:
+                        declared.setdefault(str(f), set()).add(params.parent.name)
     ALIASES = {"宋体": ["Songti", "SimSun", "STSong"], "黑体": ["Hei", "SimHei", "STHeiti", "Heiti"],
                "Times New Roman": ["Times New Roman", "TimesNewRoman"], "Arial": ["Arial"],
                "Cambria Math": ["Cambria Math", "CambriaMath"], "圆体-简": ["Yuanti", "STYuanti"]}
@@ -182,6 +194,8 @@ def main() -> int:
 
     missing = []
     print("Python:")
+    if not (py.get("engine") or {}).get("ok"):
+        print("  提示:若 ≥3.12 装在非常规位置,设 HANDOUT_INTAKE_PYTHON=/path/to/python3.12 后重跑。")
     for role, r in py.items():
         pip_note = "" if not r["found"] else ("  [有 pip]" if r["found"].get("hasPip") else "  [无 pip → 需 ensurepip]")
         print(f"  {'✓' if r['ok'] else '✗'} {role:8} 需要 ≥{r['required']}  "
@@ -200,14 +214,31 @@ def main() -> int:
         print(f"  {'✓' if a['ok'] else '✗'} {a['name']:16} [{a['role']}] {a.get('found') or '未找到'}{extra}")
         if not a["ok"]:
             missing.append({"kind": "app", **a})
-    print("\n字体(取自 styles/*/params.json 的声明):")
-    if not fonts:
-        print("  (styles/ 下还没有参数表,跳过)")
+    # 字体属于**模板**,不属于环境。使用方 2026-08-15 定:「本机没有字体,说明这个
+    # 样式模板他用不了,换掉就可以了。」所以字体缺失不是「缺项待装」,而是
+    # 「这套模板在本机不可用」——向导要说的是可选的有哪些,不是去装字体。
+    print("\n样式模板可用性(按声明字体在本机是否为实体字体判定):")
+    by_tpl: dict[str, list] = {}
     for f in fonts:
-        print(f"  {'✓' if f['ok'] else '✗'} {f['font']:16} 用于 {','.join(f['usedBy'])}"
-              f"{'' if f['ok'] else '  ← 未找到实体字体'}")
-        if not f["ok"]:
-            missing.append({"kind": "font", **f})
+        for t in f["usedBy"]:
+            by_tpl.setdefault(t, []).append(f)
+    templates_ok, templates_bad = [], []
+    if not by_tpl:
+        print("  (styles/ 下还没有模板,跳过)")
+    for tpl, fs in sorted(by_tpl.items()):
+        bad = [f["font"] for f in fs if not f["ok"]]
+        if bad:
+            templates_bad.append({"template": tpl, "missingFonts": bad})
+            print(f"  ✗ {tpl:28} 本机缺字体 {','.join(bad)} → **不可用,请换模板**")
+        else:
+            templates_ok.append(tpl)
+            print(f"  ✓ {tpl:28} 全部字体可用")
+    if by_tpl and not templates_ok:
+        # 一套都不可用才算环境缺项:那时用户没得选。
+        missing.append({"kind": "no-usable-template",
+                        "templates": templates_bad,
+                        "fix": "所有模板都要求本机没有的字体。二选一:① 新增一套用本机字体的模板"
+                               "(styles/new_template.py --kind pack);② 安装其中一套要的字体后重跑向导。"})
 
     installed, declined = [], []
     if not args.probe_only and missing:
@@ -259,6 +290,7 @@ def main() -> int:
     report = {"schemaVersion": "handout-intake.probe-report.v1",
               "probedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
               "python": py, "packages": pkgs, "applications": apps, "fonts": fonts,
+              "usableTemplates": templates_ok, "unusableTemplates": templates_bad,
               "installed": installed, "declined": declined, "stillMissing": still,
               "blocking": blocking, "advisory": advisory, "ready": ready}
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")

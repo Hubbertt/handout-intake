@@ -192,11 +192,18 @@ def main() -> int:
             print(f"     {'✓' if s['status']=='ok' else '✗'} {s['scene']}  {s.get('png') or s.get('stderr','')[:120]}")
         results[tid] = {"id": tid, "name": template.get("name"),
                         "description": template.get("description"),
+                        # 派生信息来自模板自己的声明,渲染器只是转录——不转录就丢了溯源。
+                        "kind": template.get("kind", "base"),
+                        "derivedFrom": template.get("derivedFrom"),
                         "paramsSha256": params_sha,
                         "renderedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
                         "renderedOn": os.uname().nodename,
                         "engine": engine, "scenes": scenes,
                         "status": "ok" if ok else "failed"}
+    # 只渲一个模板时,其余模板的条目原样保留——首版整份重写,渲 blue 把 v1 从清单里挤掉了。
+    # 清单是「有哪些模板」的真源;渲染只更新自己那一条。
+    for tid_prev, entry in (catalog.get("templates") or {}).items():
+        results.setdefault(tid_prev, entry)
     catalog = {"schemaVersion": "handout-intake.style-catalog.v1",
                "what": "样式模板清单。每个模板的预览在本机渲染,附 params 的 sha256;参数一变预览即过期。",
                "note": "★预览图不进包:renderedOn 记着是哪台机器渲的。发给别人时只发 styles/<id>/(不含 renders/),对方装好后自己渲一次。",

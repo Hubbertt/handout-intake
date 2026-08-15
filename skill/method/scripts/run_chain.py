@@ -40,6 +40,21 @@ from _chain import Chain, ChainError  # noqa: E402
 PACKAGE_ROOT = Path(__file__).resolve().parents[2]
 
 
+def _probed_engine(chain: Chain):
+    """安装向导写下的引擎解释器(runtime/probe-report.json)。找不到报告则 None。"""
+    for base in (PACKAGE_ROOT.parent, PACKAGE_ROOT):
+        rep = base / "runtime" / "probe-report.json"
+        if rep.exists():
+            try:
+                eng = ((json.loads(rep.read_text(encoding="utf-8")).get("python") or {})
+                       .get("engine") or {}).get("found") or {}
+                if eng.get("exe") and Path(eng["exe"]).exists():
+                    return eng["exe"]
+            except Exception:
+                pass
+    return None
+
+
 def substitute(token: str, chain: Chain) -> str:
     """命令模板里的占位符 → 实际值。
 
@@ -62,7 +77,15 @@ def substitute(token: str, chain: Chain) -> str:
         return _re.sub(r"\{(?:artifact|path|dir):[^}]+\}",
                        lambda m: substitute(m.group(0), chain), token)
     if token.startswith("{path:") and token.endswith("}"):
-        return str(chain.path_for(token[len("{path:"):-1]))
+        aid = token[len("{path:"):-1]
+        # {path:} 对多文件工件:已存在恰好一个就给它(only),否则按目录给。
+        # 首版直接 path_for,glob 工件当场抛 ChainError,整条链崩在执行器里——
+        # 而崩溃和「这一步失败」是两回事:前者连报告都不留。
+        try:
+            return str(chain.path_for(aid))
+        except ChainError:
+            found = chain.resolve(aid)
+            return str(found[0]) if len(found) == 1 else str(chain.dir_for(aid))
     if token.startswith("{dir:") and token.endswith("}"):
         return str(chain.dir_for(token[len("{dir:"):-1]))
     if token.startswith("{artifact:") and token.endswith("}"):
@@ -85,8 +108,15 @@ def substitute(token: str, chain: Chain) -> str:
         raise ChainError(f"工序表里出现执行器不认识的占位符 {token};"
                          f"已实现的是 {{artifact:id}} / {{path:id}} / {{dir:id}}。")
     interp = (chain.bindings.get("interpreter") or {})
+    # {python} 的来源按优先级:册级绑定显式给的 > 安装向导探到的引擎 > 当前解释器。
+    # ★向导探到了正确的 3.12(带 pip、装了 docx),而册级绑定里是从别处拷来的
+    #   精简 3.12(无 pip、无 docx)——两处真源,链信了旧的那个,编译器 import 失败。
+    #   向导的探测报告是这台机器的事实,绑定里的解释器若不存在或不可用就不该赢。
+    py = interp.get("python")
+    if not py or not Path(py).exists():
+        py = _probed_engine(chain) or sys.executable
     return (token
-            .replace("{python}", interp.get("python") or sys.executable)
+            .replace("{python}", py)
             .replace("{package}", str(PACKAGE_ROOT))
             .replace("{workspace}", str(chain.workspace))
             .replace("{volume}", chain.volume or ""))
@@ -176,7 +206,12 @@ def run_one(step: dict, chain: Chain, state: dict, dry: bool) -> dict:
         return result
 
     for cmd in commands:
-        argv = [substitute(t, chain) for t in cmd]
+        try:
+            argv = [substitute(t, chain) for t in cmd]
+        except ChainError as exc:
+            # 占位符解析失败是这一步的失败,不是执行器的崩溃。崩溃连运行记录都不留。
+            result.update(status="failed", why=f"命令占位符解析失败:{exc}", command=cmd)
+            return result
         # 册级绑定的 interpreter.pythonpath 必须真的进子进程环境。
         # ★P6 空手复现抓出:这个键声明了、写了 why、**而没有任何代码读它**——
         # 子进程照默认环境跑,import lxml 直接失败。

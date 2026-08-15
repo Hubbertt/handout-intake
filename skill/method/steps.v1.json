@@ -216,13 +216,6 @@
    "defaultPath": "work/word/release-prereq.json",
    "what": "PDF 发版三前置的执行记录"
   },
-  "release.reviewRoot": {
-   "external": true,
-   "what": "既有生产线的复核根目录。净开探针/合规审计把报告写在这里,PDF 四步也从这里读。",
-   "why": "它是**本机既有生产线的位置**,不属本包也不属工作区——写死在工序表里等于把一台机器的布局编进方法。提为外部输入,由册级绑定给出;缺失时链会如实报「外部输入未就位」。",
-   "glob": true,
-   "_resolveNote": "标 glob:它是一个**目录**,不是文件。resolve 按文件判定会对目录返回空,于是下游报「输入不存在」——而目录明明在。判定方式要与被判定的东西对得上。"
-  },
   "word.object-manifest": {
    "defaultPath": "work/word/object-manifest.json",
    "what": "Word 可见对象清单(s4e 的同源产物,进 Word 构建前刷新)"
@@ -262,6 +255,42 @@
   "word.declarations": {
    "defaultPath": "work/word/word-probe-declaration-gate.json",
    "what": "语义输出声明门"
+  },
+  "assets.back": {
+   "defaultPath": "inputs/back.pdf",
+   "what": "封底(册级资产,使用方放在 inputs/)。",
+   "external": true
+  },
+  "print.content-pdf": {
+   "defaultPath": "output/print/content-pdf/*/*.pdf",
+   "what": "Word 原生导出的内容 PDF(无封面、含字体)。",
+   "glob": true
+  },
+  "print.content-report": {
+   "defaultPath": "output/print/content-pdf/content_pdf_export_report.json",
+   "what": "导出报告。"
+  },
+  "print.standard-pdf": {
+   "defaultPath": "output/print/standard-pdf/*/*.pdf",
+   "what": "装订后 PDF(封面+补白+封底,页数偶数)。",
+   "glob": true
+  },
+  "print.standard-report": {
+   "defaultPath": "output/print/standard-pdf/standard_pdf_export_report.json",
+   "what": "装订报告。"
+  },
+  "print.qa": {
+   "defaultPath": "output/print/standard-pdf-qa/standard_pdf_binding_qa.json",
+   "what": "只读 QA:页序/页数/页码起点。"
+  },
+  "print.outlined-report": {
+   "defaultPath": "output/print/outlined-pdf/acrobat_preflight_outline_report.json",
+   "what": "转曲报告。"
+  },
+  "word.structure-manifest": {
+   "defaultPath": "output/print/structure-manifest/*.structure.json",
+   "glob": true,
+   "what": "已复核的结构清单,sha256 绑定当前 Word。付印导出的硬前置。"
   }
  },
  "steps": [
@@ -990,27 +1019,118 @@
    ]
   },
   {
-   "id": "s6-pdf",
-   "phase": "成品",
-   "runner": "run_summer_word_prepress_workflow --pdf-release",
-   "nonDeterministic": true,
+   "id": "s5i-structure-manifest",
+   "phase": "付印",
    "consumes": [
     "word@sha256'",
-    "assets.cover",
-    "word.compliance"
+    "word.probe"
    ],
    "produces": [
-    "print-master@sha256"
+    "word.structure-manifest"
    ],
-   "assert": "转曲 QA:字体页 0、可提取文字页 0、文字绘制指令页 0",
-   "note": "封皮封底在这一步裹上,不在 Word 阶段。内含四步子表,已存在。 使用方 2026-08-15 定「每一步都应独立产出、独立可跑」;本步入口一直明确,只是没接进表。★试制件经 CHENGZI_SUMMER_EXTRA_MATERIALS 临时注册,不改生产 DOCS。 ★P6 抓出:本步成功了而 print-master 仍缺——PDF 四步把成品写在生产复核目录,册级绑定却指向工作区内的路径。又一次「声明的位置与实际产出不一致」:下游 s7 永远等不到它,而 s6 自己一直报 ok。加 command2 把成品收进本工作区——产物归工作区所有,才谈得上每一步独立。 ★曾有 command2 收件步在 command 被删后仍单独运行,把生产线目录里的旧 PDF 收进 output 并报 ok——「报 ok 而做错了对象」,P6 缺口 13 原样重演。收件已并入外部交接的说明:成品由四脚本产出后须经 collect_print_master 校验「PDF 对应当前 Word」再入 output。",
-   "externalRunner": {
-    "entry": "vendor/export_summer_word_standard_pdfs.py → assemble_summer_pdf_binding_sequence.py → qa_standard_pdf_binding_sequence.py → outline_standard_pdfs_with_acrobat_preflight.py(需 Adobe Acrobat)",
-    "howToRun": "CHENGZI_SUMMER_EXTRA_MATERIALS=<册>/extra-materials.json CHENGZI_SUMMER_FILTER_KEYS=<key> 依次运行四个脚本;它们从注册表+scope 取对象、写到 release.reviewRoot。",
-    "why": "这四个脚本**没有 CLI 参数**:从模块级 DOCS/MATERIALS 注册表 + scope 环境变量读对象,写到自己的 RUN_DIR。是生产线为固定册子设计的。★在包内的正确形态是重写为接受显式输入/输出的步骤——那是一块独立工作量,本轮如实登记为边界,不假装接上:硬接的结果是「报 ok 而成品写在别处」,今天已经踩过一次(P6 缺口 13)。",
-    "thenCollect": "{package}/method/steps/collect_print_master.py --workspace <册> —— 只收与当前 word 哈希绑定的成品,不绑定的拒收。",
-    "boundaryMeasured": "四脚本共 31 处模块级路径常量(export 10 / assemble 9 / qa 4 / outline 8),全部按生产线固定布局拼出。逐处 patch 是给一台机器打补丁;产品化=改造为显式 I/O 的 4 个独立工步。",
-    "howToRunNow": "需 runtime/paths.json 的 HOME/MATERIALS_ROOT 指向本机既有生产线目录,再按 howToRun 依次运行;成品经 collect_print_master 校验 PDF↔Word 哈希后入 output/。"
+   "command": [
+    "{python}",
+    "{package}/method/steps/structure_manifest.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "清单 status=reviewed 且 sourceDocx.sha256 == 当前 Word",
+   "note": "接受判据:目录条目全部匹配 + 必需块锚点齐全。不满足留 draft 并失败——不把 draft 改成 reviewed,那是伪造复核。这道门今天拦对了两次。"
+  },
+  {
+   "id": "s6a-export-pdf",
+   "phase": "付印",
+   "consumes": [
+    "word@sha256'",
+    "word.probe",
+    "word.compliance",
+    "word.structure-manifest"
+   ],
+   "produces": [
+    "print.content-pdf",
+    "print.content-report"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/print_export.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "Word 原生引擎导出;导出报告 status=ready",
+   "note": "用 Word 自己的 save as PDF,不用 LibreOffice(会误判字距,使用方定)。前置:净开探针与合规审计必须是**当前 Word** 的——由 consumes 的 hash 强制,过期即 HOLD。"
+  },
+  {
+   "id": "s6b-assemble-binding",
+   "phase": "付印",
+   "consumes": [
+    "print.content-pdf",
+    "print.content-report",
+    "assets.cover",
+    "assets.back"
+   ],
+   "produces": [
+    "print.standard-pdf",
+    "print.standard-report"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/print_assemble.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "封面/订口补白/内容/奇偶补白/封底;总页数偶数;内容页起始位置记录在报告",
+   "note": "封面封底是册级资产,放 inputs/,不是模板的一部分。内容页数为奇数时本步拒绝——补白必须在 Word 里做,PDF 侧不改内容。"
+  },
+  {
+   "id": "s6c-binding-qa",
+   "phase": "付印",
+   "consumes": [
+    "print.standard-pdf",
+    "print.standard-report"
+   ],
+   "produces": [
+    "print.qa"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/print_qa.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "只读:页序/页数/页码起点/空白页位置与装订报告一致",
+   "note": "装订步骤不许改内容;本步证明它没改。"
+  },
+  {
+   "id": "s6d-outline",
+   "phase": "付印",
+   "consumes": [
+    "print.standard-pdf",
+    "print.qa"
+   ],
+   "produces": [
+    "print-master@sha256",
+    "print.outlined-report"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/print_outline.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "0 残留字体、0 可提取文本、页数与装订件相同",
+   "note": "Acrobat Preflight 转曲。★没有 Acrobat 时本步 refuse 并说明:可拿装订件(print.standard-pdf)自用,但它**含字体、不可付印**——不假装,也不拦着。",
+   "requires": {
+    "app": "Adobe Acrobat"
    }
   },
   {

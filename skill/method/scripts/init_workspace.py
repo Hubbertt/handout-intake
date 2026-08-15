@@ -37,8 +37,32 @@ def seed_inventory() -> list[dict[str, Any]]:
 
 
 def version() -> str:
-    marker = SKILL_ROOT / "VERSION"
-    return marker.read_text(encoding="utf-8").strip() if marker.exists() else "0.0.0-unversioned"
+    # VERSION 在产品根(skill/ 的上一层);skill/ 自己的那份是开发目录的遗留。
+    # 分发件里只有产品根那份,首版只找 skill/VERSION,新装报 0.0.0-unversioned——
+    # 一个「不知道自己是什么版本」的安装,升级时就无从判断该不该接受成长物。
+    for marker in (SKILL_ROOT.parent / "VERSION", SKILL_ROOT / "VERSION"):
+        if marker.exists():
+            return marker.read_text(encoding="utf-8").strip()
+    return "0.0.0-unversioned"
+
+
+VOLUME_BINDINGS_TEMPLATE = {
+    "_what": "新册绑定模板(init 生成)。用户只改三处:paths.source / assets.cover / assets.back 指向 inputs/ 里的文件;选样式改 params。",
+    "_learnedFrom": "2026-08-15 全新安装实测:从参考册拷绑定会带来别的机器的事实——写死的解释器、通配的产物名、生产线的文件名。",
+    "paths": {
+        "source": "inputs/<源.docx>",
+        "assets.cover": "inputs/cover.pdf",
+        "assets.back": "inputs/back.svg",
+        "params": "<产品根>/styles/<模板id>/params.json",
+        "word": "output/<按规范命名>.docx",
+        "print-master": "output/print-master.pdf",
+    },
+    "interpreter": {"pythonpath": "work/pylib",
+                    "_why": "不写死 python:由安装向导探测(runtime/probe-report.json)。写死一个别处拷来的路径,是把别的机器的事实带进这一册。"},
+    "theme": "<册主题,如 第四章 光>",
+    "pdfKey": "<册键,如 g08_ph_a10a14>",
+    "_wordNameWhy": "文件名须过 formal.filename.shape(年份-班型-年级-册-科目-版本-讲义-范围)。改了会被门拦——门拦是对的。",
+}
 
 
 def initialise(workspace: Path, force: bool) -> dict[str, Any]:

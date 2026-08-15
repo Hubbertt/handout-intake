@@ -1,12 +1,12 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.0.0-rc1",
+ "version": "2.0.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
-  "skill/":      "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
-  "styles/":     "样式模板库,与 skill 解耦。每个模板一个目录(params.json + template.json + 规范);catalog.json 由渲染器生成;renders/ 是本机渲染的预览,**不进分发包**。",
-  "runtime/":    "环境依赖声明(requirements.json)、安装向导(install_wizard.py)、探测报告、可移植路径(paths.json)。",
+  "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
+  "styles/": "样式模板库,与 skill 解耦。每个模板一个目录(params.json + template.json + 规范);catalog.json 由渲染器生成;renders/ 是本机渲染的预览,**不进分发包**。",
+  "runtime/": "环境依赖声明(requirements.json)、安装向导(install_wizard.py)、探测报告、可移植路径(paths.json)。",
   "volumes/<册>/": "每册一个目录即工作区:inputs/(用户放源文)、work/(中间产物)、output/(成品,可手改)、decisions/(人裁队列)、runs/<时间戳>/(每次运行记录+debrief)、bindings.json(路径/字体/解释器,可手改)。",
   "experience/": "经验层:rules.v1.json(规律,四判据+fromRuns)、candidates.json(从 debrief 收割)。GATE_EXPERIENCE_ADMISSION 守准入并校验 fromRuns 指向已填 debrief。"
  },
@@ -34,9 +34,46 @@
  },
  "export": {
   "tool": "skill/method/scripts/export_package.py",
-  "default": ["skill/", "styles/<id>/(不含 renders/)", "runtime/requirements.json", "runtime/install_wizard.py", "PACKAGE.json", "SKILL.md", "VERSION"],
-  "optIn": ["volumes/", "experience/"],
+  "default": [
+   "skill/",
+   "styles/<id>/(不含 renders/)",
+   "runtime/requirements.json",
+   "runtime/install_wizard.py",
+   "PACKAGE.json",
+   "SKILL.md",
+   "VERSION"
+  ],
+  "optIn": [
+   "volumes/",
+   "experience/"
+  ],
   "optInGate": "--include-grown 与 --i-understand-copyright 缺一不可(含源文片段)。",
-  "selfChecks": ["包内无本机绝对路径", "VERSION 与 PACKAGE.json 一致", "PACKAGE.json 可解析"]
+  "selfChecks": [
+   "包内无本机绝对路径",
+   "VERSION 与 PACKAGE.json 一致",
+   "PACKAGE.json 可解析"
+  ]
+ },
+ "versionWhy": "2.0.0:产品化验收成立——从导出的 zip 在全新目录解压 → 安装向导全绿并自动渲三套样式预览 → 只给源 Word+封面封底、选一套样式 → 全链 13 步跑到付印件(118 页/A4/0 字体/0 文本),与生产线成品逐项相同。付印四步、样式两种新增、静默与沙盒门、运行记录与经验闭环全部在包内。",
+ "freshInstallVerification": {
+  "at": "2026-08-15",
+  "workspace": "reviews/2026-08-15-fresh-install",
+  "steps": [
+   "export_package.py → zip(3.8 MB,不含渲染图/探测报告/paths.json)",
+   "解压到空目录",
+   "install_wizard.py --yes → 全绿(2 解释器/5 包/2 应用/3 模板可用)→ 自动渲 3 套 6 场景",
+   "init_workspace + inputs/(源 Word、cover.pdf、back.svg)+ 绑定选 chengzi-summer-v1",
+   "run_chain 全链 → output/讲义.docx + output/print-master.pdf"
+  ],
+  "result": "118 页 / 73.7 MB / A4 / 残留字体 0 / 可提取文本 0——与生产线成品与 P6 复现件三方一致",
+  "gapsFoundAndFixed": [
+   "向导没找到非常规位置的引擎 Python → 提示 HANDOUT_INTAKE_PYTHON",
+   "向导按 fontStandard.declared 判模板可用性,Cambria Math(公式引擎自带、无样式引用)把三套全判不可用 → 改看样式实际引用的字体",
+   "向导提示里写了不存在的 styles/new_pack.py → 改 new_template.py --kind pack",
+   "init 找 skill/VERSION 而分发件只有产品根 VERSION → 先找产品根",
+   "{path:} 遇通配工件抛 ChainError 使执行器崩溃而非报步骤失败 → 解析失败记为该步失败",
+   "册级绑定从参考册拷来带着别的机器的事实(写死解释器/通配产物名/生产线文件名)→ {python} 优先级 绑定显式>向导探测>当前;init 给新册绑定模板",
+   "formal.filename.shape 拦了 讲义.docx → 输出名按规范,门拦是对的"
+  ]
  }
 }

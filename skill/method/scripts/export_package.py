@@ -42,10 +42,18 @@ MACHINE_PATH = re.compile(r'["\'](/Users/|/Volumes/|/home/)[^"\']*["\']')
 warnings: list[dict] = []
 
 
+def product_root() -> Path:
+    """产品根 = 有 styles/ 的那一层;skill/ 是它的子目录。清单与版本只在产品根一份。"""
+    return ROOT.parent if (ROOT.parent / "styles").exists() else ROOT
+
+
 def self_check(package: dict) -> list[dict]:
     findings = []
-    version_file = (ROOT / "VERSION").read_text(encoding="utf-8").strip() \
-        if (ROOT / "VERSION").exists() else ""
+    PR = product_root()
+    # VERSION 与 PACKAGE.json 都只认产品根那一份。开发目录曾在 skill/ 下也留了一套,
+    # 导出器读了旧的、我改了新的——它自己抓到的正是它要防的「两处各说各的」。
+    version_file = (PR / "VERSION").read_text(encoding="utf-8").strip() \
+        if (PR / "VERSION").exists() else ""
     if version_file != str(package.get("version") or ""):
         findings.append({"check": "version-agrees", "kind": "mismatch",
                          "VERSION": version_file, "PACKAGE.json": package.get("version"),
@@ -103,7 +111,7 @@ def main() -> int:
     ap.add_argument("--workspace", type=Path)
     args = ap.parse_args()
 
-    package = json.loads((ROOT / "PACKAGE.json").read_text(encoding="utf-8"))
+    package = json.loads((product_root() / "PACKAGE.json").read_text(encoding="utf-8"))
     findings = self_check(package)
     if findings:
         print(json.dumps({"status": "refused", "findings": findings,
