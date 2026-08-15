@@ -1,0 +1,233 @@
+{
+  "schemaVersion": "chengziclass.figure-adjudication.v1",
+  "status": "provisional",
+  "scope": "第A10-A14讲,去重后 193 张不同图片(226 处引用)",
+  "adjudicatedBy": "claude-e 试制轮;使用方裁定「逐张看完」",
+  "coverage": {
+    "programmaticSweep": "193/193 按格式、显示尺寸、有效 dpi、归属块全扫",
+    "visualReview": "193/193 全部人眼过(联系表 1-10 页 + WMF 渲染专页 + 低 dpi 放大专页)",
+    "status": "complete"
+  },
+
+  "rulesetV2": {
+    "adjudicatedBy": "使用方 2026-08-14:「有实际含义的图像,清晰可见的都不动,不清楚的标记,纯文本或图像为了突出重点的比如标题这种,都换文本,公式都用公式做」",
+    "supersedes": "第一版只分「留/换」两档,没有「存疑」这一档,也没把「为了突出重点的装饰图」单列。",
+    "rules": [
+      {"id": "R1", "condition": "有实际含义的图像 且 清晰可见", "action": "不动,用原图", "count": 171},
+      {"id": "R2", "condition": "有实际含义 但 不清楚", "action": "仍用原图,但打标记进复核", "count": 2},
+      {"id": "R3", "condition": "纯文本,或为突出重点而做的装饰图(标题这类)", "action": "换文本", "count": 1},
+      {"id": "R4", "condition": "公式以图片格式存储", "action": "用公式做", "count": 19}
+    ],
+    "checkSum": "171 + 2 + 1 + 19 = 193"
+  },
+
+  "legibility": {
+    "rule": "R2 的「不清楚」需要一个可算的判据,不能靠印象。用有效 dpi = 像素宽 ÷ (显示宽 cm ÷ 2.54)。",
+    "precedent": "化学册记过最低两档是 105、108 dpi,「放大就糊」。",
+    "distribution": {"<120dpi": 0, "120-150dpi": 2, "150-300dpi": 63, ">=300dpi": 109, "矢量WMF不参与": 19},
+    "flagged": [
+      {"n": 13, "dpi": 135, "displayCm": "5.2x1.8", "px": "276x94", "lesson": "第A10讲",
+       "content": "红箭头 + 图注「图 4-1-4 光线」",
+       "visualVerdict": "3 倍放大后线条干净、字清楚,实际可读",
+       "disposition": "按规则标记留档;不建议返工"},
+      {"n": 175, "dpi": 147, "displayCm": "7.5x2.9", "px": "434x170", "lesson": "第A14讲",
+       "content": "相机成像光路图(胶片/镜头/物体的像)",
+       "visualVerdict": "3 倍放大后线条干净、字清楚,实际可读",
+       "disposition": "按规则标记留档;不建议返工"}
+    ],
+    "measuredLesson": "dpi 是筛子不是判决。两张被筛出来的,人眼看都清楚。低 dpi 只说明放大后风险高,不等于当前尺寸不可读——所以规则说的是「标记」,不是「返工」,这一点定得准。"
+  },
+
+  "boundaryCases": {
+    "note": "看起来像纯文本、实则是有含义图像的,单独记下来,免得下一册按形状误判。",
+    "cases": [
+      {
+        "ids": ["#152", "#153", "#154"],
+        "lesson": "第A13讲",
+        "looksLike": "三张只有一个大写字母 F 的图,形状上就是纯文本",
+        "actuallyIs": "凸透镜成像实验里的物体。**方向就是内容**——#153 是倒立的 F,整道题问的正是像的正倒。",
+        "verdict": "R1 不动。换成文字 F 会把倒立这个信息丢掉,那是题目的全部。",
+        "lesson_learned": "「纯文本」不能只看有没有文字以外的东西,要看**文字的排布本身是不是内容**。"
+      },
+      {
+        "ids": ["#89", "#118", "#171"],
+        "looksLike": "宽高比 >= 3 且高 < 2cm,与过关检测横幅同形",
+        "actuallyIs": "光路图 / 山洞激光掘进 / 眼球成像,都是普通插图",
+        "verdict": "R1 不动。",
+        "lesson_learned": "用宽高比找横幅,4 张里只有 1 张对。**这个判据不能用**——最后是靠图片内容哈希定位横幅的,那才有确定形状。"
+      }
+    ]
+  },
+
+  "classes": [
+    {
+      "id": "CLASS_INLINE_MATH_AS_PICTURE",
+      "name": "行内量值/符号图 —— 本该是文字",
+      "essence": "源用 Word 公式/OLE 对象排斜体数学片段,Word 存成 WMF 图片。它不是插图,是被图片化的文字。",
+      "shape": "格式=WMF 且显示高度<0.8cm 且 WMF 内含 TEXTOUT 记录",
+      "hits": 19,
+      "hitsOfClassScanned": "全量 193 张扫过,WMF 恰好 19 张,全部落在极小尺寸档,全部含文字记录。19/19,无例外。",
+      "whyItMatters": "其中 3 张携带的量值在正文里是缺的——抽出文字后句子读不通:「距离为，则」「厚度约为，」「保持在左右」。老流程把它们当图片原样搬运,印出来人看得懂;但任何基于文字的再加工都会丢掉这些数。这与化学册的 EQ \\F(s,t) 是同一类。",
+      "disposition": "转写为文字,回填进正文;图片不再作为内容载体",
+      "gate": "GATE_NO_INLINE_MATH_PICTURE:雕刻后扫描,凡 WMF 且高度<0.8cm 的图必须在 transcriptions 里有对应转写,缺一条即报错",
+      "promotionCriteria": {
+        "hasShape": true,
+        "classScanCount": 19,
+        "gateConfigured": true,
+        "destructiveSelfProof": "未做——需构造一张不在表里的同形图,验证门会报错"
+      },
+      "status": "provisional"
+    },
+    {
+      "id": "CLASS_CAPTION_BURNT_INTO_BITMAP",
+      "name": "图注烧进位图",
+      "essence": "「图 4-1-1 塔式光热电站」这类图注是位图的一部分,不是可编辑文字",
+      "shape": "位图底部含中文图注(需人眼或 OCR 判定)",
+      "hitsObserved": "已人眼过的 60 张里至少 12 张",
+      "hitsOfClassScanned": "未扫全量 —— 没有可靠的程序判据,OCR 未接入",
+      "disposition": "**待使用方裁决**。留在图里:成本零,但图注不可搜索、不可改、字号不受规范约束(实测图注字号明显大于正文)。抽出来:图注纳入排版规范,但要重做 12+ 张图。",
+      "status": "needs-adjudication",
+      "note": "这是 SKILL.md 说的「四类只能靠看」里的第 3 类:偏离规范是接受还是回改,取决于使用方的取舍。"
+    },
+    {
+      "id": "CLASS_SECTION_BANNER_AS_PICTURE",
+      "name": "栏目横幅是图片(过关检测)",
+      "essence": "过关检测栏目在源里确实存在,但它是一张图片横幅(红色飘带),而概念构建/深研精练是绘图对象里的文字",
+      "hits": "每讲 1 张,待全量确认",
+      "correction": "**更正我先前的结论。** 我在第一阶段说「过关检测在源里根本不存在,是老流程加的」,并据此写了 exerciseBlockBoundary 推导规则。错了——它存在,只是形态是图片,而我当时只在段落文字里找。教训与 MISSING_ANSWER 那次同源:没穷尽形态就下「不存在」的结论。",
+      "impact": "引擎的 sectionBanners(按图片哈希查表)对物理是有用的,可以直接给出 kind=section-banner 与 section 一级。exerciseBlockBoundary 那条推导规则因此可能是多余的,应改为「优先用横幅哈希,查不到再退回推导」并保留门。",
+      "status": "needs-rework"
+    },
+    {
+      "id": "CLASS_WIDE_COMPOSITE",
+      "name": "接近版心满宽的拼贴图",
+      "shape": "显示宽度 >= 14cm",
+      "hits": 9,
+      "figures": ["#17", "#21", "#50", "#86", "#146", "#164", "#170", "#182", "#186"],
+      "disposition": "待人眼逐张确认:是本该拆成多图,还是本该是表格",
+      "status": "needs-adjudication"
+    },
+    {
+      "id": "CLASS_ORDINARY_DIAGRAM",
+      "name": "常规插图 —— 保持为图",
+      "essence": "光路图、成像图、实景照片。物理讲义的主体,本来就该是图。",
+      "hits": 143,
+      "disposition": "保持为图,不做转写",
+      "status": "provisional"
+    }
+  ],
+
+  "transcriptions": {
+    "rule": "WMF 内的 TEXTOUT 记录逐条取出,不猜。取不到文字的不转写,报进复核队列。",
+    "method": "直接解析 WMF 二进制的 META_EXTTEXTOUT(0x0a32)/META_TEXTOUT(0x0521) 记录",
+    "objects": {
+      "#26": {"lesson": "第A10讲", "locator": "body/p[128]", "text": ["45", "°"], "reads": "45°", "context": "(1)如图甲…将一束光照射到水平放置的平面镜上"},
+      "#27": {"lesson": "第A10讲", "locator": "body/p[131]", "text": ["90", "°"], "reads": "90°", "context": "(2)利用如图乙所示的装置进行探究"},
+      "#46": {"lesson": "第A10讲", "locator": "body/p[206]", "text": ["AO"], "reads": "AO", "context": "11．在图中,根据给出的入射光线画出反射光线"},
+      "#47": {"lesson": "第A10讲", "locator": "body/p[206]", "text": ["OB"], "reads": "OB", "context": "同上"},
+      "#59": {"lesson": "第A11讲", "locator": "body/p[98]", "text": ["AB"], "reads": "AB", "context": "【即练2】根据平面镜成像特点,在图中画出物体在平面镜中所成的像"},
+      "#60": {"lesson": "第A11讲", "locator": "body/p[98]", "text": ["MN"], "reads": "MN", "context": "同上"},
+      "#61": {"lesson": "第A11讲", "locator": "body/p[98]", "text": ["AB", "ⅱ"], "reads": "AB(待复核:第二段 ⅱ 疑为上标或撇号)", "context": "同上", "review": true},
+      "#81": {"lesson": "第A11讲", "locator": "body/p[161]", "text": ["10m"], "reads": "10m", "context": "(2)若教室前白板到玻璃的距离为【此处缺值】,则白板到其所成像的距离为____", "fillsGapInText": true},
+      "#82": {"lesson": "第A11讲", "locator": "body/p[161]", "text": ["m"], "reads": "m", "context": "同上", "review": true},
+      "#83": {"lesson": "第A11讲", "locator": "body/p[162]", "text": ["25nm"], "reads": "25nm", "context": "(3)…高反射金属镀膜厚度约为【此处缺值】,____", "fillsGapInText": true},
+      "#84": {"lesson": "第A11讲", "locator": "body/p[162]", "text": ["25nm", "="], "reads": "25nm=", "context": "同上", "review": true},
+      "#85": {"lesson": "第A11讲", "locator": "body/p[162]", "text": ["6", "1mm10m", "="], "reads": "待复核:疑为 1mm=10⁶nm 一类的单位换算,TEXTOUT 分片顺序不足以还原", "context": "同上", "review": true},
+      "#87": {"lesson": "第A11讲", "locator": "body/p[167]", "text": ["A"], "reads": "A", "context": "11. 某学校的云录播教室…"},
+      "#140": {"lesson": "第A13讲", "locator": "body/p[84]", "text": ["f", "甲"], "reads": "f甲(下标)", "context": "【例1】…若甲、乙…"},
+      "#141": {"lesson": "第A13讲", "locator": "body/p[84]", "text": ["f", "乙"], "reads": "f乙(下标)", "context": "同上"},
+      "#159": {"lesson": "第A13讲", "locator": "body/tbl[5]", "text": ["h", "¢"], "reads": "h′(像高,¢ 应为撇号的字体映射)", "context": "11. 小明和小红对凸透镜成像规律进行探究", "review": true},
+      "#188": {"lesson": "第A14讲", "locator": "body/p[176]#D", "text": ["25cm"], "reads": "25cm", "context": "读写时眼睛与书本的距离应保持在【此处缺值】左右", "fillsGapInText": true},
+      "#190": {"lesson": "第A14讲", "locator": "body/p[183]", "text": ["2", "f"], "reads": "2f", "context": "(2)观察图(c)可知:微距模式下相机成的像是____的"},
+      "#191": {"lesson": "第A14讲", "locator": "body/p[183]", "text": ["1", "f"], "reads": "待复核:疑为 f 或 1f", "context": "同上", "review": true}
+    },
+    "reviewQueue": {
+      "count": 6,
+      "ids": ["#61", "#82", "#84", "#85", "#159", "#191"],
+      "why": "TEXTOUT 分片能取到字符,但还原不出确切排版(上下标、撇号、单位换算式)。按「宁可拒绝,不可猜」进复核队列,不硬填。",
+      "howToResolve": "把这 6 张 WMF 渲染出来人眼看。sips 不支持 WMF,需要 LibreOffice 或 Word 转一次。"
+    }
+  },
+
+  "contentErrorsFoundWhileAdjudicating": [
+    {
+      "id": "DIMENSIONAL_ERROR_IN_PICTURISED_FORMULA",
+      "severity": "已付印,影响学生",
+      "lesson": "第A11讲 平面镜成像",
+      "locator": "body/p[161] 第11题(3)",
+      "figure": "#85 / 9c45254528ed9c6e.wmf",
+      "sentenceReconstructed": "(3)单向透视的效果源自于玻璃上镀的一层膜,某款单向透视玻璃高反射金属镀膜厚度约为〖25nm〗,〖25nm=〗______〖m〗;(〖1mm = 10⁶ m〗)",
+      "error": "换算提示写作「1mm = 10⁶ m」。左边小于一米,右边是一百万米,量纲不成立。按题意(纳米镀膜换算)应为「1mm = 10⁶ nm」——源里漏了一个 n。",
+      "evidence": [
+        "WMF 的 TEXTOUT 记录取出为 ['6','1mm10m','='],无 n",
+        "LibreOffice 独立渲染同一文件,显示 1mm = 10⁶ m,与文字记录一致",
+        "两条互不依赖的证据同向"
+      ],
+      "shippedInProduction": {
+        "confirmed": true,
+        "how": "正式库下册母版 2026-暑假班-八年级-上册-物理-学生版-讲义-下-第A10-A19讲.docx 内 word/media/image74.emf 与本文件逐字节相同(sha256 9c45254528ed9c6e…)",
+        "meaning": "该错误已随 2026-07-05 付印的印刷件发出。"
+      },
+      "essence": "内容笔误(一次写错,无形状)→ 逐条覆盖,不做成模式。",
+      "whyNobodyCaughtIt": "**这才是可升格的那条。** 公式被排成图片,于是它从不经过任何文字层检查——拼写、量纲、一致性,全都看不见它。老流程把图片原样搬运,越搬越稳地把错误带进印刷件。CLASS_INLINE_MATH_AS_PICTURE 的门(全部转写成文字)一旦立起来,这类错误就重新暴露在文字检查之下。",
+      "disposition": "本轮试制不改源。上报使用方,由其决定是否勘误、是否影响已发出的印刷件。",
+      "status": "reported-awaiting-decision"
+    }
+  ],
+
+  "carveDefectsFoundWhileAdjudicating": [
+    {
+      "id": "PICTURE_OPTIONS_FLATTENED_INTO_STEM",
+      "lesson": "第A11讲",
+      "locator": "body/p[144]-p[145]",
+      "phenomenon": "第 6 题的四个纯图片选项(#73-76,天鹅与倒影)全部归属到题干,该题 options=0、figureOwners=[('题干',4)]",
+      "source": [
+        "p[144] 题干:「6．初夏的傍晚…发生____反射所形成的现象(选填「A．镜面」或「B．漫」),此时…」",
+        "p[145] 选项行:「A．    B．    C．D．」+ 4 张图 —— 标号后无文字,选项内容全在图里"
+      ],
+      "diagnosis": "题干正文里嵌了「选填 A．镜面 / B．漫」的标号。选项切分按标号顺序推进,题干内这两个标号先被吃掉,真正的图片选项行就配不上号了。",
+      "essence": "判据被源里的同形文本抢先命中 —— 与沪科册记过的「选项标号出现在非选项位置」同族,但那一册是漏标号,这一册是多标号。表面相反,本质同一:标号不等于选项。",
+      "impact": "蓝图无法把四张图分别放到 A/B/C/D 下,成品里四张图会挤在题干后面,选项变成四个空标号。",
+      "disposition": "待定。候选解法:选项标号只在「该段以标号开头且全段由标号切成若干段」时才算选项行,题干内的括号选填不参与切分。此解需扫全类后再定,不能只看这一例就改判据。",
+      "RESOLVED": {
+        "rootCause": "**是我自己引入的。** carve_engine 在 carve() 里按 `if role == \"选项行\"` 精确分派才做选项切分。沪科表有两条选项规则、共用同一个 id「选项行」——我第一版把其中一条改名成「选项行·多标号」,想让命中统计能分开两条,结果引擎的分派条件不成立,整段选项切分被跳过。",
+        "howFound": "改回同名后重跑,optionObjects 28→82、questionsWithFullABCD 7→20、OPTION_GAP 警告消失、天鹅题 options 0→4 且每个选项恰好带 1 张图、figureOwners 清空。",
+        "myTwoWrongDiagnoses": [
+          "第一次:判成「题干内括号选填标号抢先命中」。扫全类后不成立——A12 那处前面没有括号选填,照样丢。",
+          "第二次:判成「选项判据要求标号后跟可见字符,而图片不是字符」。也不对——判据本身没问题,是根本没跑到那一步。",
+          "两次都在猜判据的行为,没去读分派它的那一行。教训:改一个 id 之前,先 grep 这个 id 被谁按字面比较。"
+        ],
+        "correctedCount": "先前扫全类得「3 处、10 张图」是低估。修复后实测:7 道题带图片选项、共 23 张选项图。我那个正则要求整行只有标号,漏掉了标号与图交错的行。",
+        "reappraisalOfHukeTable": "我在第一阶段把沪科表两条同名规则记成缺陷(「命中统计无法区分两条规则」)。**判错了——那个重名是承重结构。** 要分开统计只能在 note 里另加标识,不能动 id。已在本表该角色下写死这条警告。",
+        "status": "fixed-and-verified"
+      },
+      "classScanDone": true,
+      "classScanSuperseded": "以下扫描结果保留作过程记录,其计数(3 处/10 张)已被修复后的实测(7 题/23 张)取代。",
+      "classScan": {
+        "scope": "第A10-A14讲 5 档全扫",
+        "纯图片选项行(标号后无文字且本段带图)": {
+          "count": 3,
+          "sites": ["A11 p[145] img=4", "A12 p[161] img=2", "A13 p[185] img=4"],
+          "totalFigures": 10
+        },
+        "题干内括号选填含选项标号": {
+          "count": 3,
+          "sites": ["A11 p[144]", "A12 p[169]", "A12 p[170]"]
+        },
+        "corroboration": "雕刻报告 optionsCarryingImages=0 —— 10 张图片选项无一被归属到选项,全类命中。",
+        "subclassSplit": "两者不是同一件事:A12 p[161] 那处纯图片选项行前面并没有括号选填,照样丢。所以「题干内多标号」只是其中一个诱因,根因是纯图片选项行本身没有被识别为选项行——标号后无文字,现有判据要求 [标号][．.]\\s*\\S,而这里 \\S 是图不是字。",
+        "essenceCorrection": "我先前把本质写成「判据被同形文本抢先命中」,扫全类后不成立。真本质:**选项判据要求标号后跟可见字符,而图片不是字符**。这与沪科册「漏标号」是同族的第三种:标号在、内容在,但内容不是文字。"
+      },
+      "status": "provisional-class-scanned"
+    }
+  ],
+
+  "openItems": [
+    "133 张未人眼过(联系表 4-10 页)",
+    "PICTURE_OPTIONS_FLATTENED_INTO_STEM 需扫全类:统计还有多少题的题干里含括号选填标号、多少题是纯图片选项行",
+    "CLASS_CAPTION_BURNT_INTO_BITMAP 需使用方裁决:图注留在图里还是抽成文字",
+    "CLASS_SECTION_BANNER_AS_PICTURE 需返工:把过关检测横幅按哈希登记进 sectionBanners,并把 exerciseBlockBoundary 改成「先查哈希,查不到再推导」",
+    "6 张进复核队列的 WMF 需渲染后人眼确认",
+    "GATE_NO_INLINE_MATH_PICTURE 的破坏性自证未做"
+  ]
+}

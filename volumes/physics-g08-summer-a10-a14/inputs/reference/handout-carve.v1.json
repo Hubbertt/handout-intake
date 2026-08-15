@@ -1,0 +1,1406 @@
+{
+ "schemaVersion": "chengziclass.handout-carve-schema.v1",
+ "rule": "Every rule the carve applies lives here, not in code. Adding a role, a banner or a tag is a data change. Order matters: within roles the first match wins, so the list is written most specific first.",
+ "questionNumberRegex": "^(\\d{1,2})[．.]",
+ "optionMarkers": {
+  "chars": "ABCDEFGH",
+  "separators": [
+   "．",
+   "."
+  ],
+  "boundaryRule": "A marker counts unless the character before it is an ASCII letter — that is the only case where it would really be part of a word. Whitespace is not required: a 讲义 runs its options together, and chemistry runs them together after digits (「A．N2B．SO2」, 「体积比为2∶1D．」), so both a whitespace rule and a no-alphanumeric rule lose most of the options. Ordering still constrains the search: B is only looked for after A was found.",
+  "boundaryChars": [
+   " ",
+   "\t",
+   "　"
+  ],
+  "rejectPrecedingClass": "ASCII letter",
+  "groups": "A question may carry several option groups when it has sub-questions; completeness is judged per group, not over the concatenation.",
+  "charsUsedBy": "optionMarkers.chars 是选项标号的唯一定义。roles 里的选项行模式写 {optionChars} 占位,由 carve_engine 代入——原来两处各写各的([ABCD] 对 ABCDEFGH),第五个选项 E 单独成段时判不出是选项,被排在题目的选项组之外,单独占一行印在两列之下。"
+ },
+ "sectionBanners": {
+  "db9ca5b036d9": {
+   "label": "探新知",
+   "caption": "教材知识解读",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "fe6d0072696b": {
+   "label": "揭规律",
+   "caption": "讲透重点难点",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "658560e7e25e": {
+   "label": "帮解题",
+   "caption": "方法能力构建",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "9a0138872c36": {
+   "label": "刷好题",
+   "caption": "同步分层测评",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "9ae7dec4c8a1": {
+   "label": "教学目标",
+   "caption": null,
+   "layout": "arrow+label",
+   "role": "块标题"
+  },
+  "148b2f2d075f": {
+   "label": "教学目标",
+   "caption": null,
+   "layout": "arrow+label",
+   "role": "块标题"
+  }
+ },
+ "subModules": [
+  "即学即练",
+  "实践应用",
+  "基础达标",
+  "综合应用",
+  "拓展培优"
+ ],
+ "calloutHeads": [
+  "特别提醒",
+  "解题要点",
+  "方法归纳",
+  "易错提醒"
+ ],
+ "roles": [
+  {
+   "id": "知识点标题",
+   "kind": "section",
+   "pattern": "^◆\\s*知识点",
+   "sortOrder": 10
+  },
+  {
+   "id": "考点标题",
+   "kind": "section",
+   "pattern": "^考点[一二三四五六七八九十\\d]",
+   "sortOrder": 11
+  },
+  {
+   "id": "中文编号标题",
+   "kind": "section",
+   "pattern": "^[一二三四五六七八九十]+[、．.]\\s*\\S",
+   "sortOrder": 12
+  },
+  {
+   "id": "例题题干",
+   "kind": "stem",
+   "pattern": "^【例\\s*\\d+】",
+   "sortOrder": 20
+  },
+  {
+   "id": "变式题干",
+   "kind": "stem",
+   "pattern": "^【变式\\s*\\d+[-–]\\d+】",
+   "sortOrder": 21
+  },
+  {
+   "id": "编号项",
+   "kind": "stem",
+   "pattern": "^\\d{1,2}[．.]",
+   "sortOrder": 22
+  },
+  {
+   "id": "实验标记",
+   "kind": "body",
+   "pattern": "^【实验\\s*\\d*】",
+   "sortOrder": 30
+  },
+  {
+   "id": "查阅资料",
+   "kind": "body",
+   "pattern": "^【查阅资料】",
+   "sortOrder": 31
+  },
+  {
+   "id": "探究环节标记",
+   "kind": "body",
+   "pattern": "^【[^】]{1,10}】",
+   "sortOrder": 32,
+   "note": "Open-valued: each activity names its own steps, so the label is data."
+  },
+  {
+   "id": "选项行",
+   "kind": "body",
+   "pattern": "^[{optionChars}][．.]\\s*\\S",
+   "sortOrder": 40
+  },
+  {
+   "id": "小问",
+   "kind": "body",
+   "pattern": "^[（(]\\s*\\d+\\s*[)）]",
+   "sortOrder": 41
+  },
+  {
+   "id": "圈号项",
+   "kind": "body",
+   "pattern": "^[①-⑳]",
+   "sortOrder": 42
+  },
+  {
+   "id": "表达式行",
+   "kind": "body",
+   "pattern": "^(文字表达式|符号表达式|化学方程式)",
+   "sortOrder": 43
+  },
+  {
+   "id": "专题标题",
+   "kind": "header",
+   "pattern": "^专题\\s*\\d",
+   "sortOrder": 50
+  },
+  {
+   "id": "课题标题",
+   "kind": "header",
+   "pattern": "^课题\\s*\\d",
+   "sortOrder": 51
+  },
+  {
+   "id": "课时标题",
+   "kind": "header",
+   "sortOrder": 52,
+   "pattern": "^第\\s*[一二三四五六七八九十\\d]+\\s*课时",
+   "note": "原来落进「正文」,字符层因此出现一类判不了的样式(1F4E79 sz=32);缺的是块层角色,不是字符层裁决"
+  },
+  {
+   "id": "选项行",
+   "kind": "body",
+   "pattern": "^.*?[{optionChars}][．.]\\s*\\S.*?[{optionChars}][．.]\\s*\\S",
+   "sortOrder": 39,
+   "note": "两个以上选项标号就是选项行,哪怕行首不是 A．。源里有一行漏写了 A．,只剩「①②  B．②③ C．全部 D．①②④」,按行首判成圈号项,自动编号又把 ① 补了回去——看着对,结构是错的。题干类角色排序更靠前,不会被这条抢走"
+  },
+  {
+   "id": "跨学科标题",
+   "kind": "header",
+   "pattern": "^跨学科实践活动\\s*$",
+   "sortOrder": 53,
+   "joinsNext": true,
+   "note": "标题写成两段:第一段是类别,第二段是活动名。树里它是课题的同级兄弟"
+  },
+  {
+   "id": "复习讲义标题",
+   "kind": "header",
+   "pattern": "^专题[一二三四五六七八九十]+\\s",
+   "sortOrder": 54,
+   "joinsNext": true,
+   "note": "复习讲义的抬头用中文数字写专题号(专题三),与同步讲义的「专题3」不同形,不会互相抢;第二段是「复习讲义」"
+  },
+  {
+   "id": "重难点标题",
+   "kind": "header",
+   "pattern": "^重难点\\d+",
+   "sortOrder": 55,
+   "note": "重难点讲义,单段标题,树里挂在专题复习下"
+  }
+ ],
+ "tags": [
+  {
+   "id": "answer",
+   "pattern": "【答案】\\s*([^【]+)",
+   "required": true
+  },
+  {
+   "id": "explanation",
+   "pattern": "【(?:详解|解析)】\\s*([^【]+)",
+   "required": false
+  }
+ ],
+ "diagnostics": {
+  "MISSING_ANSWER": {
+   "severity": "error",
+   "detail": "题在解析版中没有【答案】"
+  },
+  "ANSWER_STARTS_WITH_NUMBER": {
+   "severity": "error",
+   "detail": "答案以题号开头,合并答案未拆分"
+  },
+  "OPTIONS_OUT_OF_ORDER": {
+   "severity": "error",
+   "detail": "选项标号未按顺序出现"
+  },
+  "OPTION_GAP": {
+   "severity": "warning",
+   "detail": "选项标号不连续"
+  },
+  "UNATTRIBUTED_BLOCK": {
+   "severity": "error",
+   "detail": "块没有任何角色归属"
+  },
+  "SUBANSWER_UNPAIRED": {
+   "severity": "warning",
+   "detail": "小问没有配到对应的答案分片"
+  },
+  "FIGURE_UNATTRIBUTED": {
+   "severity": "error",
+   "detail": "题内有图片没有归属到选项/小问/题干"
+  },
+  "SUBANSWER_SHARED": {
+   "severity": "info",
+   "detail": "源文档把相邻小问的答案合并写在一个标记下,已共享绑定"
+  },
+  "FIGURE_ASSET_MISSING": {
+   "severity": "error",
+   "detail": "题内图片有归属但没有取到图片实体"
+  },
+  "FIELD_UNRENDERED": {
+   "severity": "error",
+   "detail": "Word 域没有结果文本且未登记渲染,内容会丢失"
+  },
+  "ARROW_UNPLACED": {
+   "severity": "error",
+   "detail": "段内有图形箭头但找不到可回填的位置"
+  },
+  "OPTION_LABEL_MISSING": {
+   "severity": "warning",
+   "detail": "选项行首个选项没有标号,按后一个标号推出所缺标号并保留其正文"
+  }
+ },
+ "bannerSlots": {
+  "label": "栏目名,映射到私有规范的栏目样式",
+  "caption": "副标题,独立映射;教学目标类横幅没有这一位",
+  "layout": "源图版式,仅作来源记录,不参与编制",
+  "note": "源横幅是位图,文字不可从图中分离;这里改为按语义位重建,源图仅作来源指纹保留",
+  "role": "栏目=课时正文的分栏(探新知/揭规律/帮解题/刷好题),会重置分栏上下文;块标题=课时开头的一个标题(教学目标),只命名它下面那一块,不重置分栏"
+ },
+ "fieldRenderings": {
+  "eq \\o\\ac(\\s\\up5(点燃),\\s\\do0(——→),\\s\\do5())": {
+   "text": "——点燃→",
+   "semantic": {
+    "kind": "反应箭头",
+    "condition": "点燃"
+   },
+   "note": "Word EQ 域自身不存结果文本,只存排版指令;不登记就会在提取时整段消失,把「氢气 + 氧气 ——点燃→ 水」读成「氢气 + 氧气 水」"
+  }
+ },
+ "shapeArrows": {
+  "geometries": [
+   "line",
+   "straightConnector1"
+  ],
+  "render": "{condition}",
+  "renderWithoutCondition": "",
+  "note": "反应箭头是浮动线条图形,条件文字在图形内;文字流里只留下一段空白。按「段内第一处连续空白」回填,放不下就报 ARROW_UNPLACED,不静默丢。",
+  "carryForward": 3,
+  "placement": "箭头是浮动图形,渲染出来画在它服务的那一行上方,所以锚定段总在目标段之前。先在本段找连续空白回填;放不下就顺延到后面最多 carryForward 段继续找。这依据的是「源文件内部顺序不会错」,不是坐标猜测。 每段最多回填一个:一行反应式只有一个箭头,多填会把下一行的箭头吃掉。",
+  "onePerParagraph": true,
+  "slot": "取段内最宽的连续空白;冒号后的排版空当也是空白,取第一处会插在标签后面",
+  "renderNote": "回填的是一对私有区哨兵包着条件文字,不是一串字符画。编排端见到哨兵就出 Word 原生公式:箭头一枚,条件排在正上方。写成「——点燃→」时条件是排在行内的,和源上下叠放的读法不一样;哨兵的做法与化学下标 \\ue000/\\ue001 是同一套。"
+ },
+ "openItems": {
+  "autoNumbering": "12 处段落用 numbering.xml 自动编号,序号不在 w:t 里,尚未解析回填",
+  "tableStructure": "54 个表格 686 单元格 79 处合并,当前只存扁平文本,行列与合并关系未建模",
+  "runSemantics": "88 个 run 样式类未裁决,字符层(填空/下标/强调)映射缺依据"
+ },
+ "tableProperties": {
+  "table": [
+   "width",
+   "layout",
+   "alignment",
+   "indent",
+   "borders",
+   "shading",
+   "look",
+   "caption",
+   "style"
+  ],
+  "row": [
+   "height",
+   "heightRule",
+   "isHeader",
+   "cantSplit"
+  ],
+  "cell": [
+   "gridSpan",
+   "vMerge",
+   "width",
+   "vAlign",
+   "borders",
+   "shading",
+   "textDirection",
+   "margins"
+  ],
+  "note": "表格整体存储:表属性+网格宽度+行属性+单元格属性+单元格内容原子。合并关系靠 gridSpan(横向)与 vMerge(纵向 restart/continue)表达,丢了就无法还原版面。"
+ },
+ "listProperties": {
+  "capture": [
+   "numId",
+   "ilvl",
+   "numFmt",
+   "lvlText",
+   "start",
+   "index",
+   "marker"
+  ],
+  "note": "自动编号的序号由 Word 依 numbering.xml 生成,不在 w:t 里。按文档顺序对同一 (numId,ilvl) 计数还原序号,存为列表项而非拼进正文,输出时按私有规范重新生成编号。"
+ },
+ "embeddedObjects": {
+  "0f2514998e40671e": {
+   "kind": "text",
+   "text": "1∶2"
+  },
+  "22c357b29f8169c5": {
+   "kind": "text",
+   "text": "1∶2"
+  },
+  "b1e094e089cf7f3f": {
+   "kind": "text",
+   "text": "2∶1"
+  },
+  "d02bea5a481782c6": {
+   "kind": "text",
+   "text": "16∶1"
+  },
+  "bcbb106f31762c5a": {
+   "kind": "text",
+   "text": "1/3"
+  },
+  "71e2865b81c7c591": {
+   "kind": "text",
+   "text": "21%"
+  },
+  "14aa522db1dd779c": {
+   "kind": "text",
+   "text": "MnO_2"
+  },
+  "f11fca2552892dbb": {
+   "kind": "text",
+   "text": "MnO_2"
+  },
+  "16d4a76ec5ccda16": {
+   "kind": "text",
+   "text": "H_2O"
+  },
+  "71e0ae6933be5ac5": {
+   "kind": "text",
+   "text": "H_2O"
+  },
+  "7434fcbc4fdddd35": {
+   "kind": "text",
+   "text": "H_2"
+  },
+  "3cd3668edd2dd72a": {
+   "kind": "text",
+   "text": "SO_2"
+  },
+  "593a45402cbd2392": {
+   "kind": "text",
+   "text": "CO_2"
+  },
+  "d71758506935cfdb": {
+   "kind": "text",
+   "text": "CO_2"
+  },
+  "d8e3638d9c70a415": {
+   "kind": "text",
+   "text": "O_2"
+  },
+  "cecb833ce6bf10ea": {
+   "kind": "text",
+   "text": "O_2"
+  },
+  "62df15f82083f6ca": {
+   "kind": "text",
+   "text": "ClO_2"
+  },
+  "d69a97206263afec": {
+   "kind": "text",
+   "text": "Cl_2"
+  },
+  "6617d8af3dcee5ba": {
+   "kind": "text",
+   "text": "CH_4"
+  },
+  "40e25ef894d92f32": {
+   "kind": "text",
+   "text": "Fe_2O_3"
+  },
+  "503613ce1bcf2c60": {
+   "kind": "text",
+   "text": "Fe_3O_4"
+  },
+  "63aadcad46b79884": {
+   "kind": "text",
+   "text": "Fe_3O_4"
+  },
+  "860ad6385b6febbb": {
+   "kind": "text",
+   "text": "3%H_2O_2"
+  },
+  "582f984890597283": {
+   "kind": "text",
+   "text": "(CH_3OH)"
+  },
+  "c284eb873f4bf7b1": {
+   "kind": "text",
+   "text": "(KAl(SO_4)_m·12H_2O)"
+  },
+  "eadc1ea478e1f080": {
+   "kind": "text",
+   "text": "PM_2.5"
+  },
+  "fb790a41a1279073": {
+   "kind": "text",
+   "text": "PM_2.5"
+  },
+  "f4f5f4605deac1d2": {
+   "kind": "text",
+   "text": "PM_10"
+  },
+  "3e1bb1dfd8955da8": {
+   "kind": "text",
+   "text": "3000 m"
+  },
+  "5427757910ec648b": {
+   "kind": "text",
+   "text": "129mL"
+  },
+  "552d398825a6a0aa": {
+   "kind": "text",
+   "text": "250mL"
+  },
+  "aef3313e0e445de4": {
+   "kind": "text",
+   "text": "180mL"
+  },
+  "ee7c46744442c90d": {
+   "kind": "text",
+   "text": "−200°C"
+  },
+  "e1ec7cb96988a0f9": {
+   "kind": "text",
+   "text": "CO_2 160t"
+  },
+  "172ada1dce59049a": {
+   "kind": "text",
+   "text": "——加热→"
+  },
+  "765ba3930a2332fc": {
+   "kind": "text",
+   "text": "——加热→"
+  },
+  "18bd91137d232100": {
+   "kind": "text",
+   "text": "——加热→"
+  },
+  "56606a94ca1d0f8e": {
+   "kind": "text",
+   "text": "——通电→"
+  },
+  "6d32c8e60b1a9eef": {
+   "kind": "text",
+   "text": "——点燃→"
+  },
+  "7beca6a29871d21a": {
+   "kind": "text",
+   "text": "——点燃→"
+  },
+  "f2d57b339eb57a04": {
+   "kind": "text",
+   "text": "——点燃→"
+  },
+  "8b52874a3b4ebaaf": {
+   "kind": "text",
+   "text": "——→"
+  },
+  "a05c1d7e25e55df7": {
+   "kind": "text",
+   "text": "——→"
+  },
+  "1749b11497883644": {
+   "kind": "text",
+   "text": "溴化银——光→银+溴"
+  },
+  "28b41173d051c2b8": {
+   "kind": "text",
+   "text": "氢气+氯气——点燃→氯化氢"
+  },
+  "2a694d4d46232fb3": {
+   "kind": "text",
+   "text": "氧化汞——加热→汞+氧气"
+  },
+  "67dce40625cc1ecf": {
+   "kind": "text",
+   "text": "汞+氧气——加热→氧化汞"
+  },
+  "6b5ae34ac64f514d": {
+   "kind": "text",
+   "text": "2CO+O_2——点燃══2CO_2"
+  },
+  "8f8087db3e6db1c2": {
+   "kind": "text",
+   "text": "2Mg+O_2——点燃══2MgO"
+  },
+  "9ca0849e955616a2": {
+   "kind": "text",
+   "text": "CaCO_3——高温══CaO+CO_2↑"
+  },
+  "ded28a62f6ad8d27": {
+   "kind": "text",
+   "text": "C+2CuO——高温══2Cu+CO_2↑"
+  },
+  "5aa2b11c97b1e632": {
+   "kind": "text",
+   "text": "CO_2+Ca(OH)_2=CaCO_3+H_2O"
+  },
+  "a0f2d052d66f06ce": {
+   "kind": "image",
+   "note": "工艺流程图:空气→液态空气→剩余液体→蓝色钢瓶",
+   "render": "a0f2d052d66f06ce.render.png"
+  },
+  "ebd04ac342fceb7b": {
+   "kind": "image",
+   "note": "状态变化流程图:氧气(无色)→液态氧→固态氧",
+   "render": "ebd04ac342fceb7b.render.png"
+  },
+  "a5d82849d032d575": {
+   "kind": "image",
+   "note": "净水材料题内插图,渲染文字不可辨,不猜测",
+   "render": "a5d82849d032d575.render.png"
+  },
+  "dd41197849d183ee": {
+   "kind": "image",
+   "note": "净水材料题内插图,渲染文字不可辨,不猜测",
+   "render": "dd41197849d183ee.render.png"
+  }
+ },
+ "embeddedObjectPolicy": "源用嵌入对象表达了本该是文字的内容(化学式、比例、反应箭头)。重印位图会丢掉可选中、可搜索、可被题库消费的能力,故转写为文字按私有规范排。真正是图的(流程图)与看不清的一律保留为图片,不猜。",
+ "conditionArrows": {
+  "note": "反应条件有两种画法。一种是浮动线条图形,条件文字在图形里,由 shapeArrows 处理;另一种是把「条件+箭头」整个画成一张小图,图里没有任何文字可取。后者只能按图片内容哈希登记,登记一次全套通用。",
+  "rule": "按 media 内容哈希前 16 位登记;命中即转写为正文文字,图片不再作为图输出。",
+  "objects": {
+   "8db94448876d1338": {
+    "condition": "点燃",
+    "sizePt": [
+     20.0,
+     14.1
+    ],
+    "seenIn": "课题1 空气的成分 body/p[98] 上的两处,服务于下一行的文字表达式与符号表达式",
+    "reading": "图上是「点燃」二字,下面一条右箭头",
+    "placement": "floating"
+   },
+   "f54d6426e0378fd8": {
+    "condition": "加热",
+    "sizePt": [
+     33.0,
+     20.0
+    ],
+    "placement": "inline",
+    "seenIn": "课题1 空气的成分,「汞+氧气 → 氧化汞」与「氧化汞 → 汞+氧气」两行",
+    "reading": "图上是「加热」二字,下面一条右箭头"
+   }
+  }
+ },
+ "reactions": {
+  "schemaVersion": "chengziclass.chemical-reaction.v1",
+  "rule": "反应式是事实,不是排版。切分阶段把它抽成结构化数据(反应物/产物/条件/表示法/反应类型),Word 里的原生公式是这份数据的投影。只定「必须用公式」解决的是好看,解决不了题库检索、自动判卷、学情统计——那些要的是数据。",
+  "typedArrowNormalisation": {
+   "adjudicatedAt": "2026-08-08",
+   "adjudicatedBy": "用户「一起转,转完你复核」/「按照题库的标准做」",
+   "why": "源文件里同一件事有两种写法:一种是浮动图形或小图片(已按 shapeArrows/conditionArrows 转成公式),另一种是作者直接敲出来的「——点燃→」。后者按逐字照源原样透出是对的单条规则,合起来却让同一本书里 10 处压在箭杆上、19 处排在行内。这是规范化裁决,与 titleNormalization 同类。",
+   "dashedForm": {
+    "pattern": "一段破折号/长横 + 可选条件 + 右箭头",
+    "confidence": "无歧义:破折号画的箭头在本册只用于反应式"
+   },
+   "bareForm": {
+    "pattern": "光秃秃一个 → ,两侧无破折号",
+    "confidence": "有歧义:本册的 → 还用于变色顺序「无色→紫色→红色」和工序「取水→加混凝剂→过滤」",
+    "test": "箭头任一侧必须是用 + 或 ＋ 连接的物质项表——变色顺序和工序都不带 +,靠这一条即可分开,不需要认物质名",
+    "residueRule": "测不过的一律不转,并写进 reactions 报告的 notConverted,不静默留下"
+   }
+  },
+  "conditions": {
+   "点燃": "ignition",
+   "加热": "heating",
+   "通电": "electrolysis",
+   "光": "light",
+   "光照": "light",
+   "催化剂": "catalyst",
+   "高温": "high-temperature",
+   "": "none"
+  },
+  "notation": {
+   "word": "文字表达式:物质用中文名",
+   "symbol": "符号表达式:物质用化学式",
+   "test": "项内出现拉丁字母即判为符号表达式"
+  },
+  "reactionType": {
+   "mechanical": {
+    "combination": "化合:多种反应物 → 一种产物",
+    "decomposition": "分解:一种反应物 → 多种产物",
+    "neither": "既不是化合也不是分解——由数量唯一确定,是个**确定的否定**,不是「不知道」",
+    "rule": "这三个状态只靠数反应物与产物得出,不需要化学判断,永远可信。"
+   },
+   "adjudicated": {
+    "rule": "落在 neither 里的,究竟是置换、复分解、还是不属于四种基本反应类型,要先分清单质与化合物、还要知道氧化物不参与复分解——那是化学判断,不在确定性脚本能力内。一处一条人工裁决,并标明谁定的。",
+    "values": {
+     "displacement": "置换反应:单质 + 化合物 → 另一单质 + 另一化合物",
+     "metathesis": "复分解反应:两种化合物互相交换成分",
+     "none-of-the-four": "不属于四种基本反应类型"
+    },
+    "reviewStatus": "settled",
+    "whyReviewMatters": "这两条恰好是题目考的陷阱(蜡烛+氧气、二氧化碳+氢氧化钙)。判错了,学生学到的就是错的。上线前必须有化学老师签字。",
+    "entries": [
+     {
+      "match": "蜡烛+氧气",
+      "value": "none-of-the-four",
+      "evidence": "solution",
+      "document": "课题3 水的组成（同步讲义）（解析版）.docx",
+      "locator": "body/p[301]",
+      "quote": "该反应为蜡烛和氧气的反应，属于氧化反应，但该反应的反应物和生成物均有两种，不属于化合反应",
+      "why": "2 种反应物生成 2 种产物,产物中无单质,四种基本类型都不符;它是氧化反应,但氧化反应不在四种基本类型之列"
+     },
+     {
+      "match": "二氧化碳+氢氧化钙",
+      "value": "none-of-the-four",
+      "evidence": "solution",
+      "document": "课题3 水的组成（同步讲义）（解析版）.docx",
+      "locator": "body/p[398]",
+      "quote": "该反应由两种物质反应生成两种物质，既不属于分解反应又不属于化合反应，D选项正确",
+      "why": "解析定了非化合非分解;也不是复分解——复分解是酸碱盐之间互相交换成分,二氧化碳是氧化物,不在这个范畴。p406 那句「两种化合物互相交换成分」是在酸碱盐语境下的简写,不能脱开范畴套用"
+     },
+     {
+      "match": "钠+水",
+      "value": "displacement",
+      "evidence": "definition-applied",
+      "document": "课题3 水的组成（同步讲义）（解析版）.docx",
+      "locator": "body/p[405]",
+      "why": "单质钠 + 化合物水 → 化合物氢氧化钠 + 单质氢气,与解析写下的置换反应定义逐项对上"
+     },
+     {
+      "match": "氢氧化钠+硫酸",
+      "value": "metathesis",
+      "evidence": "definition-applied",
+      "document": "课题3 水的组成（同步讲义）（解析版）.docx",
+      "locator": "body/p[406]",
+      "why": "碱与酸互相交换成分生成盐和水,即中和反应,是复分解的一种"
+     },
+     {
+      "match": "碳酸钙+盐酸",
+      "value": "metathesis",
+      "evidence": "standard-curriculum",
+      "why": "CaCO₃ + 2HCl 交换成分先得 CaCl₂ 与 H₂CO₃(两种化合物,合定义),碳酸不稳定随即分解成水和二氧化碳,所以写出来是三种产物。初中一律按复分解教。我上一轮拿「产物有三种」质疑过这条,是没想到中间产物那一步,撤回"
+     },
+     {
+      "match": "CaCO3+HCl",
+      "value": "metathesis",
+      "evidence": "standard-curriculum",
+      "why": "同上,符号表达式写法"
+     }
+    ],
+    "evidenceAuthorityBoundary": "解析版在源策略里是 annotated_word,禁止作为学生版讲义的内容来源——这里不是拿它当内容,是拿它当**裁决证据**:判某个反应属于哪一类,依据必须是源自己说过的话,不是代理的化学知识。两种用法不同,分开记。",
+    "definitionSource": {
+     "document": "课题3 水的组成（同步讲义）（解析版）.docx",
+     "sha256Prefix": "c4833508f5385916",
+     "quotes": [
+      {
+       "locator": "body/p[405]",
+       "type": "displacement",
+       "text": "一种单质和一种化合物反应生成另一种单质和另一种化合物的反应，属于置换反应"
+      },
+      {
+       "locator": "body/p[406]",
+       "type": "metathesis",
+       "text": "两种化合物相互交换成分生成两种新的化合物的反应，属于复分解反应"
+      }
+     ],
+     "note": "四种基本反应类型的定义,以源解析自己写的为准,不用代理记忆里的表述。"
+    },
+    "confidencePolicy": "依据分档记的是「这句话从哪来」,不是「有多不确定」。本册这六条都是初中化学的定论,不是判断题——把它们全挂成待签字,等于让真正需要人看的和不需要的混在一起,那个标记就没人再看了。整套解析搜过一遍:提到置换/复分解/中和的只有 2 处,就是 p405/p406 那两句定义,没有一处给这几个反应定过类。所以下面凡不是 solution 档的,依据就是标准课程内容,写明是谁说的。"
+   }
+  },
+  "balanced": {
+   "policy": "not-asserted",
+   "why": "本册处于「文字表达式/符号表达式」阶段,源文件里的式子本就不配平(如 P + O2 → P2O5)。记录源写了什么,不声称配平,也不替源配平。"
+  },
+  "boundaryOverrides": {
+   "rule": "反应式两侧靠标点定界。源里偶有句子直接连着反应式、中间没有标点,机器切不出来——检出得到(boundary=needs-review),切不准。这种一处一条人工裁决,不写成猜测规则。",
+   "entries": [
+    {
+     "blockId": "b3204",
+     "side": "reactants",
+     "from": "其反应原理之一是溴化银",
+     "to": "溴化银",
+     "why": "源句为「…遮挡刺眼的阳光。其反应原理之一是溴化银——光→银+溴，该反应的基本反应类型是」,反应式前无标点,「其反应原理之一是」是句子不是反应物",
+     "adjudicatedAt": "2026-08-08"
+    }
+   ]
+  }
+ },
+ "chartSubstitutions": {
+  "rule": "少数插图本身就是图表:源把它印成位图,数值一个都没写在文字里,133dpi 下连坐标轴刻度都糊。按 media 内容哈希登记,命中就出 Word 原生图表——数值进内嵌工作簿,任何人能打开核对、能改,图形矢量任意放大都清楚。与 conditionArrows 同一套登记办法。",
+  "valuesPolicy": {
+   "basis": "measured-from-source-bitmap",
+   "how": "先定坐标轴(0 在 y=208、10000 在 y=41,1px≈59.9 单位),再逐根量柱顶像素,24 根全部量到,四舍五入到 50",
+   "precision": "±60 左右",
+   "why": "源文档正文里没有任何数值——该题是填空「＿＿水多、耕地少;＿＿耕地多、水量严重不足」,图是给学生读相对关系用的,不是读数用的",
+   "honesty": "估值必须可见可改,才不会被当成实测。工作簿就是为这个存在的。",
+   "adjudicatedBy": "用户 2026-08-08「没有的话,按照预估估一个」"
+  },
+  "objects": {
+   "94940e8dcf396837": {
+    "seenIn": "课题2 水的自然循环与人工净化 第2课时,图 4.9",
+    "sourcePx": [
+     487,
+     300
+    ],
+    "sourceDpi": 133,
+    "chart": {
+     "type": "clustered-bar",
+     "categories": [
+      "华北",
+      "东北",
+      "华东",
+      "中南",
+      "西南",
+      "西北"
+     ],
+     "series": [
+      {
+       "name": "水资源/亿立方米",
+       "colour": "A3CCC7",
+       "values": [
+        650,
+        2300,
+        5750,
+        7250,
+        10350,
+        2550
+       ]
+      },
+      {
+       "name": "人口/十万人",
+       "colour": "C6DAF0",
+       "values": [
+        1700,
+        2200,
+        4200,
+        4050,
+        2000,
+        1000
+       ]
+      },
+      {
+       "name": "耕地面积/万公顷",
+       "colour": "FEDC9F",
+       "values": [
+        2200,
+        2150,
+        2100,
+        2100,
+        1600,
+        1700
+       ]
+      },
+      {
+       "name": "国内生产总值/百亿元",
+       "colour": "DD7997",
+       "values": [
+        1150,
+        500,
+        3700,
+        2700,
+        1100,
+        550
+       ]
+      }
+     ],
+     "valueAxis": {
+      "min": 0,
+      "max": 12000,
+      "step": 2000
+     },
+     "categoryAxisTitle": "地区",
+     "valueAxisTitle": "指标",
+     "widthMm": 118.8,
+     "heightMm": 74.0,
+     "fontPt": 9,
+     "gridlineColour": "D8D9DA",
+     "gapWidthPercent": 400,
+     "overlapPercent": -50,
+     "description": "我国的水资源、人口、耕地面积和国内生产总值区域比重图",
+     "annotationsKept": "只保留原图有的:两条坐标轴标题、六个地区名、0–12000 每 2000 一格的刻度、底部四项图例",
+     "annotationsDropped": "Word 默认会加的图表标题、数据标签、次要网格线一律不出;绘图区那层斜线在源里是 #FEFEFE 级的扫描噪点不是设计,不复现"
+    }
+   }
+  }
+ },
+ "vectorFigureSubstitutions": {
+  "rule": "个别插图是简单几何(球、箭头、标签),源把它印成低解析度位图。按 media 内容哈希登记,命中就用 Word 原生图形画出来——矢量,任意放大清楚。与 chartSubstitutions 同一套登记办法。",
+  "geometryPolicy": {
+   "basis": "measured-from-source-bitmap",
+   "how": "对源位图做连通块检测,逐个量出红球/灰球的外接框与箭头位置;坐标单位就是源像素,再按源的印刷宽度换算成 EMU",
+   "whatIsOurs": "只有渲染是我们的(球的高光渐变、字体);几何是源的",
+   "limits": "这是重绘,不是复制:球数与排布是对源位图的判读。判读本身写在这里,谁都能对着源图核。",
+   "reviewedBy": "用户 2026-08-08 核对成品页面后确认"
+  },
+  "objects": {
+   "aa7fcbd45332334f": {
+    "seenIn": "课题3 水的组成,氢气燃烧的微观示意图",
+    "sourcePx": [
+     462,
+     119
+    ],
+    "sourceDpi": 121,
+    "figure": {
+     "widthUnits": 462,
+     "heightUnits": 119,
+     "emuPerUnit": 7538.400000000001,
+     "palette": {
+      "H": [
+       "E8E8EA",
+       "9A9A9E"
+      ],
+      "O": [
+       "EE2222",
+       "9C0F0F"
+      ]
+     },
+     "fontCn": "宋体",
+     "fontAscii": "Times New Roman",
+     "description": "氢分子与氧分子反应生成水分子的微观示意图",
+     "shapes": [
+      {
+       "kind": "sphere",
+       "x": 12,
+       "y": 31,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 22,
+       "y": 31,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 12,
+       "y": 60,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 22,
+       "y": 60,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "label",
+       "x": 40,
+       "y": 32,
+       "w": 26,
+       "h": 16,
+       "text": "+",
+       "pt": 13
+      },
+      {
+       "kind": "sphere",
+       "x": 74,
+       "y": 39,
+       "w": 30,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 93,
+       "y": 39,
+       "w": 30,
+       "colour": "O"
+      },
+      {
+       "kind": "arrow",
+       "x": 147,
+       "y": 60,
+       "w": 39,
+       "h": 0,
+       "weight": 1.3
+      },
+      {
+       "kind": "sphere",
+       "x": 218,
+       "y": 16,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 257,
+       "y": 16,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 218,
+       "y": 45,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 257,
+       "y": 45,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 207,
+       "y": 78,
+       "w": 29,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 259,
+       "y": 78,
+       "w": 29,
+       "colour": "O"
+      },
+      {
+       "kind": "label",
+       "x": 286,
+       "y": 38,
+       "w": 46,
+       "h": 14,
+       "text": "点燃",
+       "pt": 7.5
+      },
+      {
+       "kind": "arrow",
+       "x": 290,
+       "y": 62,
+       "w": 37,
+       "h": 0,
+       "weight": 1.3
+      },
+      {
+       "kind": "sphere",
+       "x": 367,
+       "y": 17,
+       "w": 29,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 356,
+       "y": 10,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 386,
+       "y": 8,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 367,
+       "y": 78,
+       "w": 29,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 356,
+       "y": 71,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 386,
+       "y": 69,
+       "w": 17,
+       "colour": "H"
+      },
+      {
+       "kind": "label",
+       "x": 0,
+       "y": 86,
+       "w": 58,
+       "h": 18,
+       "text": "氢分子",
+       "pt": 9
+      },
+      {
+       "kind": "label",
+       "x": 74,
+       "y": 86,
+       "w": 58,
+       "h": 18,
+       "text": "氧分子",
+       "pt": 9
+      },
+      {
+       "kind": "label",
+       "x": 404,
+       "y": 86,
+       "w": 58,
+       "h": 18,
+       "text": "水分子",
+       "pt": 9
+      }
+     ]
+    }
+   },
+   "ddf4463a6d227599": {
+    "seenIn": "课题3 水的组成,图 4.16 水通电分解的微观示意图",
+    "sourcePx": [
+     265,
+     152
+    ],
+    "sourceDpi": 124,
+    "croppedInSource": "crop.b=16312 — 源把底部 16.3% 裁掉了,裁走的正是「▲ 图 4.16 …」那行图注。所以矢量图只画到标签行:265×127,与 width_mm/height_mm 的宽高比 2.084 对得上(整幅的 1.743 对不上)。",
+    "measured": {
+     "水分子 O": "红色连通块 x9..50 y5..46 → 直径 42,圆心 (30,26);下面一个 y56..97 → 圆心 (30,77)",
+     "水分子 H": "灰色可见部分 x6..21 与 x38..53 → H 在 O 之后,只露外侧。按外缘定圆心 (16,14) 与 (43,14),直径 20;由此得 O–H 距 ≈18、HOH ≈97°,与真实的 104.5° 同量级——这是判读,不是复制",
+     "氢分子": "灰色块 x129..158 y18..41 与 y56..79 → 直径 24,圆心 (141,30)(146,30) 与 (141,68)(146,68)",
+     "氧分子": "红色块 x203..261 y28..69 → 直径 42,圆心 (224,49) 与 (240,49)",
+     "箭头": "蓝色 x71..108 y48..52,取 y=50 一线;通电 二字在 y35..44",
+     "加号": "蓝色 x179..187 y≈45..55",
+     "标签": "水分子 x15..44、氢分子 x131..158、氧分子 x219..247,同在 y108..117",
+     "取色": "O 主体 (130,35,15)、外圈 (181,57,38);H 主体 (127,128,131);箭头 (12,109,182)"
+    },
+    "figure": {
+     "widthUnits": 265,
+     "heightUnits": 127,
+     "emuPerUnit": 7375.2,
+     "palette": {
+      "H": [
+       "E4E5E7",
+       "8A8B8F"
+      ],
+      "O": [
+       "D2452B",
+       "7E1F0C"
+      ]
+     },
+     "fontCn": "宋体",
+     "fontAscii": "Times New Roman",
+     "description": "水通电分解的微观示意图:两个水分子通电后生成两个氢分子和一个氧分子",
+     "shapes": [
+      {
+       "kind": "sphere",
+       "x": 6.0,
+       "y": 4.0,
+       "w": 20,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 33.0,
+       "y": 4.0,
+       "w": 20,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 9.0,
+       "y": 5.0,
+       "w": 42,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 6.0,
+       "y": 55.0,
+       "w": 20,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 33.0,
+       "y": 55.0,
+       "w": 20,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 9.0,
+       "y": 56.0,
+       "w": 42,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 129.0,
+       "y": 18.0,
+       "w": 24,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 134.0,
+       "y": 18.0,
+       "w": 24,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 129.0,
+       "y": 56.0,
+       "w": 24,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 134.0,
+       "y": 56.0,
+       "w": 24,
+       "colour": "H"
+      },
+      {
+       "kind": "sphere",
+       "x": 203.0,
+       "y": 28.0,
+       "w": 42,
+       "colour": "O"
+      },
+      {
+       "kind": "sphere",
+       "x": 219.0,
+       "y": 28.0,
+       "w": 42,
+       "colour": "O"
+      },
+      {
+       "kind": "arrow",
+       "x": 71,
+       "y": 50,
+       "w": 37,
+       "h": 0,
+       "weight": 1.1,
+       "colour": "0C6DB6"
+      },
+      {
+       "kind": "label",
+       "x": 71,
+       "y": 32,
+       "w": 37,
+       "h": 13,
+       "text": "通电",
+       "pt": 6,
+       "colour": "1F3864"
+      },
+      {
+       "kind": "label",
+       "x": 172,
+       "y": 43,
+       "w": 22,
+       "h": 14,
+       "text": "+",
+       "pt": 8,
+       "colour": "0C6DB6"
+      },
+      {
+       "kind": "label",
+       "x": 10.5,
+       "y": 106,
+       "w": 38,
+       "h": 13,
+       "text": "水分子",
+       "pt": 6
+      },
+      {
+       "kind": "label",
+       "x": 125.5,
+       "y": 106,
+       "w": 38,
+       "h": 13,
+       "text": "氢分子",
+       "pt": 6
+      },
+      {
+       "kind": "label",
+       "x": 214,
+       "y": 106,
+       "w": 38,
+       "h": 13,
+       "text": "氧分子",
+       "pt": 6
+      }
+     ]
+    }
+   }
+  }
+ },
+ "nativeTextSubstitutions": {
+  "rule": "少数「插图」根本不是图:源把一段本该是文字的内容——一条带条件的变化链、一张数据表——印成了位图。按 media 内容哈希登记,命中就出原生内容:文字是文字,表格是表格。与 chartSubstitutions / vectorFigureSubstitutions 同一套登记办法,同一条理由——只有是真内容,才进得了题库、才让模型读得懂。",
+  "whyNotJustAPicture": "位图里的字对搜索、对模型、对无障碍读屏都不存在;而且这两张的解析度是全书最低的两档(105、108 dpi),放大就糊。b0589 的两处负号在 108 dpi 下几乎看不见——转成文字同时修好了一处可读性缺陷,不只是保真。",
+  "textProvenanceTiers": {
+   "extracted": "字符是从源文件自己的记录里取出来的,不是我们认的。最强的一档。",
+   "transcribed": "源只有扫描件,没有字符记录,字是人照着扫描件敲的。必须写明,谁都能对着源图逐字核。"
+  },
+  "boundaryRule": "只处理「整张图就是文字/表格」的。图里夹着线框流程、装置、微粒的一律不动——那些是真的图,重画是另一码事,得单独裁决。",
+  "displayedNotStored": "按源实际显示的范围转,不按位图存了什么。6722ce12a70c78f1 存了「表6-1 二氧化碳对人体健康的影响」这行标题,但源用 19.134% 的顶部裁剪把它切掉了——成品里就不该有这行。",
+  "adjudicatedBy": "用户 2026-08-08「要」+「这些问题只是举例,不代表清单,你要检查」;257 张插图逐张过了一遍,只有这两张落在边界内",
+  "objects": {
+   "ebd04ac342fceb7b": {
+    "seenIn": "课题2 氧气和二氧化碳的性质 第1课时,「降温、加压就会发生状态的改变:」后面那条链",
+    "sourcePx": [
+     471,
+     23
+    ],
+    "sourceDpi": 108,
+    "sourceFormat": "WMF(随附 .render.png 是它的栅格化副本)",
+    "textProvenance": "extracted",
+    "evidence": "WMF 的 EXTTEXTOUT 记录逐条读出:「101kPa-183C」「101kPa-219C」「，」「°」「①」「②」以及氧气/液态氧/固态氧/无色/淡蓝色 各字。负号在记录里是 0x2D,栅格图上几乎看不出——以图为准会把它丢掉。",
+    "keepsSourceCharacters": "半角括号、半角连字符、全角逗号,都按 WMF 记录的原样,不做美化替换",
+    "blocks": [
+     {
+      "type": "exercise_continuation",
+      "alignment": "left",
+      "segments": [
+       {
+        "text": "氧气(无色)",
+        "run_type": "plain"
+       },
+       {
+        "kind": "reaction_arrow",
+        "over": "①",
+        "under": "101kPa，-183°C",
+        "chemistry": "physical-change"
+       },
+       {
+        "text": "液态氧(淡蓝色)",
+        "run_type": "plain"
+       },
+       {
+        "kind": "reaction_arrow",
+        "over": "②",
+        "under": "101kPa，-219°C",
+        "chemistry": "physical-change"
+       },
+       {
+        "text": "固态氧(淡蓝色)",
+        "run_type": "plain"
+       }
+      ]
+     }
+    ],
+    "chemistryNote": "这条链是物理变化:氧气、液态氧、固态氧是同一种物质的三种状态,箭头上的 101kPa、-183°C/-219°C 是发生状态改变的条件,不是反应条件。两枚箭头都标 chemistry=physical-change,不进反应集——不标的话抽取器会把它读成两个根本不存在的反应,而且第二枚箭头会把相邻两项并在一起当反应物。"
+   },
+   "6722ce12a70c78f1": {
+    "seenIn": "课题2 氧气和二氧化碳的性质 第2课时,「空气中二氧化碳超过正常含量对人体健康有影响」后面那张表",
+    "sourcePx": [
+     549,
+     117
+    ],
+    "sourceDpi": 105,
+    "sourceFormat": "PNG(教材页扫描件,没有任何字符记录)",
+    "textProvenance": "transcribed",
+    "evidence": "照着扫描件逐字敲;源用 crop.t=19134 切掉了顶部的「表6-1 …」标题行,所以成品只有三行表体,没有标题",
+    "notReproduced": "扫描件自带的灰底、印刷网点、行距不匀不复现;表格按本规范的 CZ_Table_Standard 排。源决定的是内容和列宽比例,长什么样由规范决定。",
+    "gridFrom": "分隔线在扫描件的 x≈240/549,按显示宽度 133.28mm 折成 3302 + 4254 dxa",
+    "blocks": [
+     {
+      "type": "table",
+      "header_rows": 1,
+      "grid": [
+       "3302",
+       "4254"
+      ],
+      "tableStyle": "TableGrid",
+      "rowProperties": [
+       {},
+       {},
+       {}
+      ],
+      "rows": [
+       [
+        {
+         "segments": [
+          {
+           "text": "空气中二氧化碳的体积分数/%",
+           "run_type": "plain"
+          }
+         ],
+         "gridSpan": 1,
+         "vMerge": null,
+         "vAlign": "center",
+         "alignment": "center"
+        },
+        {
+         "segments": [
+          {
+           "text": "对人体健康的影响",
+           "run_type": "plain"
+          }
+         ],
+         "gridSpan": 1,
+         "vMerge": null,
+         "vAlign": "center",
+         "alignment": "center"
+        }
+       ],
+       [
+        {
+         "segments": [
+          {
+           "text": "3",
+           "run_type": "plain"
+          }
+         ],
+         "gridSpan": 1,
+         "vMerge": null,
+         "vAlign": "center",
+         "alignment": "center"
+        },
+        {
+         "segments": [
+          {
+           "text": "使人呼吸急促",
+           "run_type": "plain"
+          }
+         ],
+         "gridSpan": 1,
+         "vMerge": null,
+         "vAlign": "center",
+         "alignment": "center"
+        }
+       ],
+       [
+        {
+         "segments": [
+          {
+           "text": "10",
+           "run_type": "plain"
+          }
+         ],
+         "gridSpan": 1,
+         "vMerge": null,
+         "vAlign": "center",
+         "alignment": "center"
+        },
+        {
+         "segments": [
+          {
+           "text": "使人丧失知觉、呼吸停止，以致死亡",
+           "run_type": "plain"
+          }
+         ],
+         "gridSpan": 1,
+         "vMerge": null,
+         "vAlign": "center",
+         "alignment": "center"
+        }
+       ]
+      ]
+     }
+    ]
+   }
+  }
+ }
+}

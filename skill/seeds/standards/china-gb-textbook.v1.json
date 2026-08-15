@@ -1,0 +1,70 @@
+{
+ "schemaVersion": "handout-intake.seed.standards.v1",
+ "id": "china-gb-textbook.v1",
+ "title": "中国中小学教科书版面国标参数（模板，可替换）",
+ "replaceable": "这是编制规范时用的参数模板,不是永恒不变的底座。标准会换版、换地区,机构也可能另选口径。换一份即可。",
+ "sources": [
+  {
+   "code": "GB/T 18358-2009",
+   "name": "中小学教科书幅面尺寸及版面通用要求",
+   "usedFor": "幅面、版心、正文类别字号、版面密度、最小用字"
+  },
+  {
+   "code": "GB 40070-2021",
+   "name": "儿童青少年学习用品近视防控卫生要求",
+   "usedFor": "正文字号、行距下限——这是卫生底线,不接受为省页数向下取整"
+  }
+ ],
+ "parameters": {
+  "pageWidthDxa": {
+   "value": 11906,
+   "note": "A4 210mm"
+  },
+  "pageHeightDxa": {
+   "value": 16838,
+   "note": "A4 297mm"
+  },
+  "textBlockWidthMm": {
+   "value": 166,
+   "dxa": 9411,
+   "attribution": "国标参数",
+   "note": "A4 C 类版心宽。页边距是 A4 减版心之后分配的结果,不是反过来"
+  },
+  "textBlockHeightMm": {
+   "value": 244,
+   "dxa": 13833,
+   "attribution": "国标参数"
+  },
+  "bodyFontSizePt": {
+   "value": 12,
+   "attribution": "国标参数 + 阅读卫生底线",
+   "note": "初中正文不小于 12 P/小四"
+  },
+  "bodyLineMultiple": {
+   "value": 1.75,
+   "attribution": "阅读卫生底线",
+   "note": "多倍行距;不得用 exact 固定行距压缩正文"
+  },
+  "minimumTypeSizePt": {
+   "value": 9,
+   "attribution": "国标参数",
+   "note": "目录、注释、图注不得小于 9 P。化学下标与公式内条件文字属排版必需,不按此判定"
+  },
+  "twipsPerPt": {
+   "value": 20,
+   "attribution": "单位定义",
+   "note": "OOXML"
+  }
+ },
+ "attributionOrder": [
+  "国标参数",
+  "阅读卫生底线",
+  "讲义补充",
+  "本册例外"
+ ],
+ "attributionOrderWhy": "冲突时的裁决顺序。合并两份成长物时同样按它裁,同级冲突显式报出让人定。",
+ "derivedFrom": {
+  "registry": "templates/summer-class-layout/summer_class_module_parameters.current.json",
+  "sha256_16": "4d583b70674e61ca"
+ }
+}

@@ -1,0 +1,1061 @@
+{
+ "schemaVersion": "handout-intake.steps.v1",
+ "status": "provisional",
+ "why": [
+  "顺序不能靠提示词约束,要靠数据依赖。",
+  "第一次完整走通(物理 A10-A14)时,所有顺序错误都发生在既有两张子步骤表(Word 9 步、PDF 四步)之外",
+  "那一段由人手工敲命令,于是:建蓝图时对象清单还不存在、修完 JPEG 又重建蓝图把修复冲掉、",
+  "跳过第 0 步与第 2 步、源比对与引文门从头到尾没跑。",
+  "落在 9 步子表里的部分一次都没错——因为它不给机会。",
+  "一步跑不起来不该是因为「禁止跳」,该是因为它的输入还不存在。"
+ ],
+ "rules": {
+  "ordering": "不声明顺序,顺序从 consumes/produces 的依赖图推出。表里 steps 的书写次序无语义。",
+  "freshness": "每个产物记 sha256。步骤运行前校验每个 consumes 的当前 hash 与上次记录一致;不一致即 HOLD_INPUT_DRIFT,拒绝运行。",
+  "precedent": "gate_semantic_blueprint_source_coverage 已经这么做了(manifest.blueprintSha256 对不上就拒绝)。本表把同一条纪律推广到全链。",
+  "skipping": "跳步在结构上不可能:输入不存在就跑不了,不需要任何人守规矩。",
+  "rerun": "上游 hash 变了,下游全部自动失效,不靠人记得重跑。",
+  "noPathsHere": "**本表不含任何路径。** consumes/produces 一律写 artifacts 里的逻辑 id。路径解析见 artifacts.defaultPath 与册级 bindings.json——这是「工序公有、经验私有」在文件层的落点。"
+ },
+ "artifacts": {
+  "_doc": {
+   "defaultPath": "工作区相对路径。可被册级 bindings.json 覆盖。没有 defaultPath 的必须由册级绑定。",
+   "external": "true = 本链的任何步骤都不产出它。它要么是外部既有资产,要么由智能体在链外裁决产出。",
+   "authoredBy": "external 的来源。shared-asset=既有共享资产(需绑绝对路径);agent=智能体介入产出(有默认约定路径)。",
+   "glob": "true = 该 id 展开为多文件;hash 按文件名排序后串联计算。",
+   "_agentBoundaryIsMeasurable": "authoredBy=agent 的恰好三个,对应 SKILL 里说的「智能体只在两处介入」:建表(schema)与图/公式逐张裁决(mapping.substitutions,并入 mapping)。这条边界因此不是散文,是可以数的字段——多出第四个,就是有活悄悄从工序漏回了人身上。"
+  },
+  "source": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "what": "源原始稿(冻结证据)"
+  },
+  "params": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "what": "共享参数表"
+  },
+  "spec": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "what": "共享私有规范"
+  },
+  "assets.cover": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "glob": true,
+   "what": "封皮封底素材(既有资产,非本链产出)"
+  },
+  "mapping.shared": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "what": "跨册共享的私有规范映射真源(target/principles/typography 等整节取用)"
+  },
+  "seeds.templates": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "glob": true,
+   "defaultPath": "seeds/templates/*.json",
+   "what": "包内已知模板表,供指纹比对。路径相对包根,由 bindings 绑绝对路径。"
+  },
+  "matrix.reference": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "what": "上一册的审计矩阵,只取视角清单与格的形状作参照"
+  },
+  "schema.reference": {
+   "external": true,
+   "authoredBy": "shared-asset",
+   "what": "指纹比对用的已知模板完整 schema。**这是一处设计欠账**:seeds/templates 里的模板表本该自带指纹所需的角色判据,现在还要另找一份完整 schema 才比得了,说明种子表还不是自足的。列为 P4 待办。"
+  },
+  "schema": {
+   "external": true,
+   "authoredBy": "agent",
+   "defaultPath": "carve-rules/schema.json",
+   "what": "模板表:视觉特征 → 语义角色。指纹不匹配已知模板时由智能体建表。"
+  },
+  "mapping.substitutions": {
+   "external": true,
+   "authoredBy": "agent",
+   "defaultPath": "carve-rules/mapping/native-text-substitutions.json",
+   "what": "公式与标题替换表。逐张图裁决的产物。"
+  },
+  "mapping.own": {
+   "external": true,
+   "authoredBy": "agent",
+   "defaultPath": "carve-rules/private-spec-mapping.json",
+   "what": "本册自己的私有规范映射(含图裁决结果)。与共享真源合并后成为 mapping。"
+  },
+  "fingerprint": {
+   "defaultPath": "quality/fingerprint.json"
+  },
+  "figures.index": {
+   "defaultPath": "figures/figure-index.json"
+  },
+  "figures.contact": {
+   "defaultPath": "figures/contact-*.png",
+   "glob": true
+  },
+  "mapping": {
+   "defaultPath": "work/derived/merged-mapping.json",
+   "what": "共享真源与本册映射合并后的结果。**是产物不是输入**——首版表把它标成 external,是因为我按「我当时手敲了什么」写表,而不是按「事实从哪来」。"
+  },
+  "truth-map": {
+   "defaultPath": "quality/step0-truth-map.md"
+  },
+  "census": {
+   "defaultPath": "census/block-census.json"
+  },
+  "matrix": {
+   "defaultPath": "quality/audit-matrix.json"
+  },
+  "render-review": {
+   "defaultPath": "quality/render-review.json"
+  },
+  "source.stripped": {
+   "defaultPath": "work/source.zero-width-stripped.docx"
+  },
+  "lessons": {
+   "defaultPath": "work/per-lesson/*.docx",
+   "glob": true
+  },
+  "registry": {
+   "defaultPath": "carve-rules/registry.json"
+  },
+  "atoms": {
+   "defaultPath": "work/atoms.json"
+  },
+  "atoms.normalised": {
+   "defaultPath": "work/atoms.normalised.json"
+  },
+  "structure": {
+   "defaultPath": "work/structure.json"
+  },
+  "media": {
+   "defaultPath": "work/media/**",
+   "glob": true
+  },
+  "carve-report": {
+   "defaultPath": "work/carve-report.json"
+  },
+  "blueprint.pass1": {
+   "defaultPath": "work/blueprint.json"
+  },
+  "object-manifest": {
+   "defaultPath": "work/word/object-manifest.json"
+  },
+  "blueprint.pristine": {
+   "defaultPath": "work/blueprint.pristine.json"
+  },
+  "blueprint.substituted": {
+   "defaultPath": "work/derived/blueprint.inline-substituted.json"
+  },
+  "blueprint.glyph-safe": {
+   "defaultPath": "work/derived/blueprint.glyph-safe.json"
+  },
+  "verify-source": {
+   "defaultPath": "work/verify-against-source.json"
+  },
+  "word": {
+   "defaultPath": "work/word/讲义.docx",
+   "glob": true
+  },
+  "word.report": {
+   "defaultPath": "work/word/workflow-report.json"
+  },
+  "print-master": {
+   "defaultPath": "release/print-master.pdf"
+  },
+  "gate.no-zero-width": {
+   "defaultPath": "work/gate_no_zero_width.json"
+  },
+  "gate.split-banner": {
+   "defaultPath": "work/gate_split_and_banner.json"
+  },
+  "gate.exercise-items": {
+   "defaultPath": "work/gate_exercise_items_are_questions.json"
+  },
+  "gate.inline-formula": {
+   "defaultPath": "work/gate_inline_formula_substituted.json"
+  },
+  "gate.jpeg-density": {
+   "defaultPath": "work/gate_jpeg_density_valid.json"
+  },
+  "gate.citations": {
+   "defaultPath": "work/gate-provenance-citations.json"
+  },
+  "gate.glyph-coverage": {
+   "defaultPath": "work/gate_glyph_coverage.json"
+  },
+  "gate.doc-defaults": {
+   "defaultPath": "work/gate_doc_defaults_unchanged.json"
+  },
+  "gate.style-self-contained": {
+   "defaultPath": "work/gate_style_self_contained.json"
+  },
+  "gate.font-ownership": {
+   "defaultPath": "work/gate_font_ownership.json"
+  },
+  "wheels": {
+   "external": true,
+   "glob": true,
+   "what": "随册提供的 wheel 文件,由 s-1-bootstrap 解包到 interpreter.pythonpath。",
+   "why": "不联网装包:那会让『这次能跑』取决于当时的网络与源,正是可复现要消灭的东西。",
+   "defaultPath": "work/wheels/*.whl"
+  },
+  "runtime.pylib": {
+   "glob": true,
+   "what": "解包后的运行时库目录(= interpreter.pythonpath)。",
+   "defaultPath": "work/pylib"
+  },
+  "verify-report": {
+   "defaultPath": "work/verify-against-source.json",
+   "what": "源比对报告"
+  },
+  "gate.release-prereq": {
+   "defaultPath": "work/word/release-prereq.json",
+   "what": "PDF 发版三前置的执行记录"
+  },
+  "release.reviewRoot": {
+   "external": true,
+   "what": "既有生产线的复核根目录。净开探针/合规审计把报告写在这里,PDF 四步也从这里读。",
+   "why": "它是**本机既有生产线的位置**,不属本包也不属工作区——写死在工序表里等于把一台机器的布局编进方法。提为外部输入,由册级绑定给出;缺失时链会如实报「外部输入未就位」。",
+   "glob": true,
+   "_resolveNote": "标 glob:它是一个**目录**,不是文件。resolve 按文件判定会对目录返回空,于是下游报「输入不存在」——而目录明明在。判定方式要与被判定的东西对得上。"
+  },
+  "word.object-manifest": {
+   "defaultPath": "work/word/object-manifest.json",
+   "what": "Word 可见对象清单(s4e 的同源产物,进 Word 构建前刷新)"
+  },
+  "word.coverage": {
+   "defaultPath": "work/word/source-coverage.json",
+   "what": "源对象覆盖门报告"
+  },
+  "word.semantic-manifest": {
+   "defaultPath": "work/word/semantic-manifest.json",
+   "what": "语义清单"
+  },
+  "word.source-ledger": {
+   "defaultPath": "work/word/source-ledger.json",
+   "what": "来源台账"
+  },
+  "word.build-report": {
+   "defaultPath": "work/word/build-report.json",
+   "what": "编译报告"
+  },
+  "word.toc-report": {
+   "defaultPath": "work/word/word-probe-native-toc-update.json",
+   "what": "Word 原生目录域更新报告"
+  },
+  "word.probe": {
+   "defaultPath": "work/word/word-probe.json",
+   "what": "Word 净开探针报告"
+  },
+  "word.page-audit": {
+   "defaultPath": "work/word/word-probe-native-page-content-audit.json",
+   "what": "Word 原生逐页内容审计"
+  },
+  "word.compliance": {
+   "defaultPath": "work/word/word-probe-full-compliance-audit.json",
+   "what": "全量合规审计"
+  },
+  "word.declarations": {
+   "defaultPath": "work/word/word-probe-declaration-gate.json",
+   "what": "语义输出声明门"
+  }
+ },
+ "steps": [
+  {
+   "id": "s-1-bootstrap",
+   "phase": "准备",
+   "consumes": [
+    "wheels"
+   ],
+   "produces": [
+    "runtime.pylib"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/bootstrap_runtime.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "interpreter.pythonpath 下已有绑定声明的全部包",
+   "note": "★P6 空手复现在新工作区第一次跑就死在 ModuleNotFoundError: lxml。原工作区一直好好的,因为 work/pylib 是当初**手工**解包出来的——而「手工做过一次」在工序表里没有任何痕迹,下一个人会在同一个地方以同样的方式失败。工序表的意义就是不给机会;一件必须先做的事若不在表里,它就只活在做过的人的记忆里,而记忆不随包分发。",
+   "provenance": "incident:p6-barehand-repro-missing-runtime"
+  },
+  {
+   "id": "s0-truth-map",
+   "phase": "方法",
+   "runner": "human",
+   "consumes": [],
+   "produces": [
+    "truth-map"
+   ],
+   "note": "第 0 步:画事实住在哪。人做,但产物必须存在——下游第一步就 consumes 它,不画就开不了工。",
+   "humanProduct": true
+  },
+  {
+   "id": "s1-block-census",
+   "phase": "方法",
+   "consumes": [
+    "source@sha256",
+    "truth-map"
+   ],
+   "produces": [
+    "census"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/census.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "note": "第 1 步:块型普查 → 对象类全集。"
+  },
+  {
+   "id": "s1b-fingerprint",
+   "phase": "方法",
+   "consumes": [
+    "source@sha256",
+    "seeds.templates",
+    "schema.reference"
+   ],
+   "produces": [
+    "fingerprint"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/fingerprint.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "note": "这批源像不像已知模板?像 → 用那张表;不像 → 走建表流程,**绝不强行套最像的那个**。SKILL.md 里一直有这一步,首版工序表漏了它。"
+  },
+  {
+   "id": "s2-matrix",
+   "phase": "方法",
+   "consumes": [
+    "census",
+    "matrix.reference",
+    "blueprint.substituted@sha256'"
+   ],
+   "produces": [
+    "matrix"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/build_matrix.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "note": "第 2 步:对象类 × 视角。空白格是工作清单,必须显式列出。 ★P6 空手复现抓出:本步实际读 blueprint.substituted(build_matrix.py:19),而 consumes 里没声明它。拓扑因此把它排在第 4 位,那时该文件还不存在。原工作区从没暴露——文件一直躺着。**声明的输入与实际读的不一致时,拓扑排出来的顺序是错的,而每一步自己都报成功。**补声明后它自动落到 s4g 之后。"
+  },
+  {
+   "id": "s4-merge-mapping",
+   "phase": "施工",
+   "consumes": [
+    "mapping.shared",
+    "mapping.own"
+   ],
+   "produces": [
+    "mapping"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/merge_mapping.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "note": "共享真源整节取用 + 本册覆盖。合并是机械的,裁决在 mapping.own 里——智能体的活与机器的活在这一步分开。"
+  },
+  {
+   "id": "s4a-strip-zero-width",
+   "phase": "施工",
+   "consumes": [
+    "source@sha256"
+   ],
+   "produces": [
+    "source.stripped@sha256",
+    "gate.no-zero-width",
+    "registry"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/prepare_input.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "gate": "GATE_NO_ZERO_WIDTH",
+   "selfProof": "清洗前后同一判据命中数必须变化"
+  },
+  {
+   "id": "s4b-split-lessons",
+   "phase": "施工",
+   "consumes": [
+    "source.stripped@sha256",
+    "schema"
+   ],
+   "produces": [
+    "lessons@sha256",
+    "gate.split-banner"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/split_and_normalise.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "gate": "GATE_LESSON_SPLIT_AND_BANNER_COUNT"
+  },
+  {
+   "id": "s4c-carve",
+   "phase": "施工",
+   "consumes": [
+    "lessons@sha256",
+    "schema",
+    "registry"
+   ],
+   "produces": [
+    "atoms",
+    "structure",
+    "media@sha256",
+    "carve-report"
+   ],
+   "note": "**本步重写 media。任何对 media 的修复都必须排在它之后——由依赖表达,不由记性。** ★P6 空手复现抓出:整条流水线的核心步骤**在表里没有命令**,于是原子产不出来、下游 16 步全部 blocked。引擎一直在包里(method/engine/carve_engine.py),只是从没接进表——原工作区的 atoms 是当初手工跑出来的,而『手工跑过一次』在表里没有痕迹。这一条是 P6 存在的全部理由:前五步都是搬运,只有它能证伪「换谁都能做」。",
+   "provenance": "incident:media-repair-overwritten",
+   "command": [
+    "{python}",
+    "{package}/method/engine/carve_engine.py",
+    "--registry",
+    "{artifact:registry}",
+    "--schema",
+    "{artifact:schema}",
+    "--atoms",
+    "{artifact:atoms}",
+    "--structure",
+    "{artifact:structure}",
+    "--media-dir",
+    "{artifact:media}",
+    "--report",
+    "{artifact:carve-report}"
+   ]
+  },
+  {
+   "id": "s4c3-figure-sheets",
+   "phase": "方法",
+   "consumes": [
+    "media@sha256"
+   ],
+   "produces": [
+    "figures.contact",
+    "figures.index"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/contact_sheets.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "note": "把全册图排成接触表,供人逐张裁决。这是 SKILL.md 说「只能靠看」那四类里最大的一类的入口——裁决结果回填 mapping.own,不回填这里。"
+  },
+  {
+   "id": "s4c2-normalise-atoms",
+   "phase": "施工",
+   "consumes": [
+    "atoms"
+   ],
+   "produces": [
+    "atoms.normalised",
+    "gate.exercise-items"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/normalise_atoms.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "gate": "GATE_EXERCISE_ITEMS_ARE_QUESTIONS"
+  },
+  {
+   "id": "s4d-blueprint-pass1",
+   "phase": "施工",
+   "consumes": [
+    "atoms.normalised",
+    "mapping",
+    "media@sha256"
+   ],
+   "produces": [
+    "blueprint.pass1"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/engine/build_blueprint_from_atoms.py",
+    "--engine",
+    "{package}/method/engine/carve_engine.py",
+    "--schema",
+    "{path:schema}",
+    "--registry",
+    "{path:registry}",
+    "--mapping",
+    "{path:mapping}",
+    "--media",
+    "{dir:media}",
+    "--out",
+    "{path:blueprint.pass1}"
+   ],
+   "note": "第一遍无对象清单,unbound 必然不为 0。它的唯一用途是喂给下一步。"
+  },
+  {
+   "id": "s4e-object-manifest",
+   "phase": "施工",
+   "consumes": [
+    "blueprint.pass1"
+   ],
+   "produces": [
+    "object-manifest@sha256"
+   ],
+   "knownInversion": "★s5-word 会回头改写本步的产物 object-manifest。执行器首次干跑即抓到:4e7dd837→1c9197016,s4f 因此 HOLD_INPUT_DRIFT。这与当初『重建蓝图冲掉 JPEG 修复』是同一形状,而本表正是为防那个而建。**它表达不成 DAG**:s4f 消费它、s5 又生产它,而 s5 的输入来自 s4f。正解在生产侧——Word 工序不应改写它的输入清单;在那之前,执行器停在这里是正确行为,不是误报。",
+   "command": [
+    "/usr/bin/env",
+    "CHENGZI_SUMMER_FORMAL_WORKFLOW_INTERNAL=chengziclass.summer-handout-word-production.v1",
+    "{python}",
+    "{package}/vendor/build_word_source_object_manifest.py",
+    "--blueprint",
+    "{path:blueprint.pass1}",
+    "--output",
+    "{path:object-manifest}"
+   ],
+   "note": "使用方 2026-08-15 定:每一步都应独立产出、独立可跑,这样才利于维护和使用。本步原先只能由 9 步整体工作流带出——为拿一个产物要跑完九步,与该原则相反。★守卫说明(不藏着):build_word_source_object_manifest 用环境变量 CHENGZI_SUMMER_FORMAL_WORKFLOW_INTERNAL 标记「由注册流程调用」。它标记的是调用者身份,不是密钥——既有工作流自己也是用 /usr/bin/env VAR=VAL 设的。本链是本册的注册流程(工序表 + 输入存在性 + hash 漂移强制),故按同一约定声明为对等调用者。**这是显式登记,不是绕过**:绕过是不告诉任何人地设上它。"
+  },
+  {
+   "id": "s4f-blueprint-pass2",
+   "phase": "施工",
+   "consumes": [
+    "atoms.normalised",
+    "mapping",
+    "media@sha256",
+    "object-manifest@sha256"
+   ],
+   "produces": [
+    "blueprint.pristine@sha256"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/engine/build_blueprint_from_atoms.py",
+    "--engine",
+    "{package}/method/engine/carve_engine.py",
+    "--schema",
+    "{path:schema}",
+    "--registry",
+    "{path:registry}",
+    "--mapping",
+    "{path:mapping}",
+    "--media",
+    "{dir:media}",
+    "--object-manifest",
+    "{path:object-manifest}",
+    "--out",
+    "{path:blueprint.pristine}"
+   ],
+   "assert": "unbound == 0",
+   "note": "两遍不是冗余:清单要从蓝图知道扫哪些源文件,蓝图要从清单绑定源对象。循环由两遍打开。"
+  },
+  {
+   "id": "s4f-relevel-headings",
+   "phase": "施工",
+   "consumes": [
+    "blueprint.substituted@sha256",
+    "mapping.own"
+   ],
+   "produces": [
+    "blueprint.substituted@sha256'"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/relevel_headings_by_position.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "命中数 == 私有规范登记的 expectedCounts(自源文逐份数出)",
+   "note": "按结构位置重定标题级,不按文字模式。同一形态「一、X」在物理册承担两种角色:概念构建之下是栏目下的顶层主题,知识点之下是子项——第11讲「一、平面镜成像特点」两处都出现、一字不差,文字形态定不了级。★判据用源文自己的信号:整段加粗 → 全部 segment 的 run_type 为 emphasis。位置相同的三种块(标题/【例1】题干/整句描述)只有这一项能分开;靠「【例」前缀」或句子长度去分,是拿我们的印象替换源文的标记。★命中数必须等于源文数出来的数;对不上即判据错,本步报错不静默按新数字走。 ★代次链接:本册对 blueprint.substituted 有两个就地变换(重定级、上标字面量),而撇号约定只表达一代。首版让两者都『消费不带撇、产出带撇』,结果 s4i 消费的是不带撇的,与本步之间没有边,拓扑把本步排到了 s5 之后——**排在 Word 构建之后的重定级,等于没有重定级**,而它照样报 ok。改为串成一条:relevel 消费不带撇产出带撇,literal-supersub 与 s4i 都消费带撇的。",
+   "provenance": "incident:heading-level-assigned-by-text-pattern"
+  },
+  {
+   "id": "s4g-substitute-formulas",
+   "phase": "施工",
+   "consumes": [
+    "blueprint.pristine@sha256",
+    "mapping.substitutions"
+   ],
+   "produces": [
+    "blueprint.substituted@sha256",
+    "gate.inline-formula"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/substitute_inline_formulas.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "gate": "GATE_INLINE_FORMULA_SUBSTITUTED",
+   "assert": "残留矢量行内图 == 0 且 登记对象全部替换到(按对象去重断言,不按出现次数)",
+   "provenance": "incident:substitution-gate-asserted-on-occurrences"
+  },
+  {
+   "id": "s4h-repair-media",
+   "phase": "施工",
+   "consumes": [
+    "media@sha256"
+   ],
+   "produces": [
+    "media@sha256'",
+    "gate.jpeg-density"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/repair_jpeg_density.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "gate": "GATE_JPEG_DENSITY_VALID",
+   "note": "**依赖 media 的当前 hash。s4c 重跑后 hash 变化,本步自动失效并要求重跑——这正是那个坑的结构性修复。**"
+  },
+  {
+   "id": "s3-verify-source",
+   "phase": "门",
+   "consumes": [
+    "blueprint.substituted@sha256",
+    "schema",
+    "mapping",
+    "object-manifest@sha256"
+   ],
+   "produces": [
+    "verify-source",
+    "verify-report"
+   ],
+   "note": "源比对。首轮直到补做才跑,期间出了两版成品都带着同一个错字。 使用方 2026-08-15 定「每一步都应独立可跑」;本步脚本一直在包里(method/engine/verify_against_source.py),只是没接进表。",
+   "provenance": "incident:verify-never-ran",
+   "command": [
+    "{python}",
+    "{package}/method/engine/verify_against_source.py",
+    "--engine",
+    "{package}/method/engine/carve_engine.py",
+    "--schema",
+    "{path:schema}",
+    "--registry",
+    "{path:registry}",
+    "--blueprint",
+    "{path:blueprint.substituted}",
+    "--mapping",
+    "{path:mapping}",
+    "--object-manifest",
+    "{path:object-manifest}",
+    "--report",
+    "{path:verify-report}"
+   ]
+  },
+  {
+   "id": "s3b-citation-gate",
+   "phase": "门",
+   "consumes": [
+    "params",
+    "spec"
+   ],
+   "produces": [
+    "gate.citations"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/gate_registry_provenance_citations.py",
+    "--parameters",
+    "{path:params}",
+    "--spec",
+    "{path:spec}",
+    "--report",
+    "{path:gate.citations}"
+   ],
+   "note": " 使用方 2026-08-15 定「每一步都应独立产出、独立可跑」;本步入口一直明确,只是没接进表。"
+  },
+  {
+   "id": "s4h-literal-supersub",
+   "phase": "施工",
+   "consumes": [
+    "blueprint.substituted@sha256'",
+    "mapping.substitutions"
+   ],
+   "produces": [
+    "blueprint.substituted@sha256'"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/substitute_literal_supersub.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "登记的上下标字面量 == 0 且 每处产出带 run_type 的独立段",
+   "note": "**为什么不并进 s4i 的字符替换表。** 那张表是字符换字符(❌→×);上标是把一个段拆成三段并给中间那段加 run_type。硬塞进去只会把 ⁸ 换成 8——丢掉上标,那不是修,是把缺陷改小到门看不见。首版把规则写进 native-text-substitutions 却去读合并件 mapping,规则数报 0 而一切「正常」:**放对了地方,读错了地方**,又一次静默失效。原写成产出未加撇的同名 id,是自造形状——表里早有约定:撇号表示同一 id 的下一代次(见 _chain.py 对 media@sha256' 的说明)。",
+   "provenance": "incident:u2078-accepted-on-falsified-evidence"
+  },
+  {
+   "id": "s4i-glyph-coverage",
+   "phase": "门",
+   "consumes": [
+    "blueprint.substituted@sha256'",
+    "params",
+    "mapping"
+   ],
+   "produces": [
+    "blueprint.glyph-safe@sha256",
+    "gate.glyph-coverage"
+   ],
+   "gate": "GATE_GLYPH_COVERAGE",
+   "command": [
+    "{python}",
+    "{package}/method/steps/substitute_uncovered_glyphs.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "assert": "声明字体画不出的字符 == 0(登记替换后)",
+   "note": "**这道门是硬依赖,不是可跳过的报告。** s5-word 消费它的产物 blueprint.glyph-safe,所以门不过就没有输入,Word 在结构上建不出来。首轮的 ❌(U+274C)是导出完 106 页 PDF 之后才由 undeclared-font 报出来的——判据挂在链子末端,前面全部工序白跑。这一步把它前移到蓝图阶段,并且把检出对象从「没声明的字体名」(症状)改成「声明的字体画不出的字符」(根因)。",
+   "provenance": "incident:emoji-found-after-pdf-export"
+  },
+  {
+   "id": "s5a-object-manifest",
+   "phase": "编制",
+   "consumes": [
+    "blueprint.glyph-safe@sha256"
+   ],
+   "produces": [
+    "word.object-manifest"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/build_word_source_object_manifest.py",
+    "--blueprint",
+    "{artifact:blueprint.glyph-safe}",
+    "--output",
+    "{artifact:word.object-manifest}"
+   ],
+   "note": "★原由生产线 run_summer_word_prepress_workflow(89 脚本注册表+内部守卫)整体承担。使用方 2026-08-15 定「技能包与样式模板解耦」「每一步独立可跑」,故拆成 9 步显式写进表,脚本 vendor 化,守卫由执行器满足。"
+  },
+  {
+   "id": "s5b-coverage-gate",
+   "phase": "编制",
+   "consumes": [
+    "blueprint.glyph-safe@sha256",
+    "word.object-manifest"
+   ],
+   "produces": [
+    "word.coverage"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/gate_semantic_blueprint_source_coverage.py",
+    "--blueprint",
+    "{artifact:blueprint.glyph-safe}",
+    "--source-object-manifest",
+    "{artifact:word.object-manifest}",
+    "--report",
+    "{artifact:word.coverage}"
+   ],
+   "note": ""
+  },
+  {
+   "id": "s5c-build-word",
+   "phase": "编制",
+   "consumes": [
+    "blueprint.glyph-safe@sha256",
+    "word.object-manifest",
+    "word.coverage",
+    "params"
+   ],
+   "produces": [
+    "word",
+    "word.semantic-manifest",
+    "word.source-ledger",
+    "word.build-report"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/build_semantic_handout_from_blueprint.py",
+    "--blueprint",
+    "{artifact:blueprint.glyph-safe}",
+    "--output",
+    "{path:word}",
+    "--params",
+    "{artifact:params}",
+    "--semantic-manifest",
+    "{artifact:word.semantic-manifest}",
+    "--source-ledger",
+    "{artifact:word.source-ledger}",
+    "--report",
+    "{artifact:word.build-report}",
+    "--source-object-manifest",
+    "{artifact:word.object-manifest}",
+    "--source-coverage-report",
+    "{artifact:word.coverage}"
+   ],
+   "note": ""
+  },
+  {
+   "id": "s5d-toc-update",
+   "phase": "编制",
+   "consumes": [
+    "word@sha256",
+    "word.semantic-manifest",
+    "word.build-report",
+    "params"
+   ],
+   "produces": [
+    "word.toc-report",
+    "word@sha256'"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/update_word_native_toc_fields.py",
+    "{path:word}",
+    "--report",
+    "{artifact:word.toc-report}",
+    "--semantic-manifest",
+    "{artifact:word.semantic-manifest}",
+    "--build-report",
+    "{artifact:word.build-report}",
+    "--params",
+    "{artifact:params}"
+   ],
+   "note": "Word 原生更新目录域并重分页保存——本步就地改写 word,产出下一代次。"
+  },
+  {
+   "id": "s5e-clean-open",
+   "phase": "编制",
+   "consumes": [
+    "word@sha256'"
+   ],
+   "produces": [
+    "word.probe"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/probe_word_native_open_clean.py",
+    "{path:word}",
+    "--wait",
+    "20",
+    "--report",
+    "{artifact:word.probe}"
+   ],
+   "note": "--wait 20:与生产线一致。首版抄漏了值——参数名对了值没抄,argparse 当场报错;若它有默认值就静默过了。"
+  },
+  {
+   "id": "s5f-page-audit",
+   "phase": "编制",
+   "consumes": [
+    "word@sha256'",
+    "word.build-report"
+   ],
+   "produces": [
+    "word.page-audit"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/audit_word_native_page_content.py",
+    "{path:word}",
+    "--report",
+    "{artifact:word.page-audit}",
+    "--semantic-build-report",
+    "{artifact:word.build-report}"
+   ],
+   "note": ""
+  },
+  {
+   "id": "s5g-compliance",
+   "phase": "编制",
+   "consumes": [
+    "word@sha256'",
+    "word.probe"
+   ],
+   "produces": [
+    "word.compliance"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/audit_summer_word_full_compliance.py",
+    "--documents",
+    "{path:word}",
+    "--probe-report",
+    "{artifact:word.probe}",
+    "--out",
+    "{artifact:word.compliance}"
+   ],
+   "note": ""
+  },
+  {
+   "id": "s5h-declaration-gate",
+   "phase": "编制",
+   "consumes": [
+    "blueprint.glyph-safe@sha256",
+    "word@sha256'",
+    "params"
+   ],
+   "produces": [
+    "word.declarations"
+   ],
+   "command": [
+    "{python}",
+    "{package}/vendor/gate_semantic_output_declarations.py",
+    "--blueprint",
+    "{artifact:blueprint.glyph-safe}",
+    "--docx",
+    "{path:word}",
+    "--parameters",
+    "{artifact:params}",
+    "--report",
+    "{artifact:word.declarations}"
+   ],
+   "note": ""
+  },
+  {
+   "id": "s5b-style-gates",
+   "phase": "门",
+   "consumes": [
+    "word@sha256'",
+    "params"
+   ],
+   "produces": [
+    "gate.doc-defaults",
+    "gate.style-self-contained",
+    "gate.font-ownership"
+   ],
+   "gate": "GATE_DOC_DEFAULTS_UNCHANGED + GATE_ROOT_COMPLETE + GATE_STYLE_EFFECTIVE_VALUES + GATE_FONT_OWNERSHIP",
+   "command": [
+    "{python}",
+    "{package}/method/gates/gate_doc_defaults_unchanged.py",
+    "--docx",
+    "{artifact:word}",
+    "--params",
+    "{artifact:params}",
+    "--report",
+    "{artifact:gate.doc-defaults}"
+   ],
+   "command2": [
+    "{python}",
+    "{package}/method/gates/gate_style_self_contained.py",
+    "--docx",
+    "{artifact:word}",
+    "--params",
+    "{artifact:params}",
+    "--report",
+    "{artifact:gate.style-self-contained}"
+   ],
+   "assert": "三道门全过:根等于声明、根覆盖全部会影响渲染的属性、每个样式的生效值等于声明值;且成品引用的每个字体名都是声明过的",
+   "note": "**生效值比对不查元素是否存在。** Word 会合法清掉与根相同的冗余值,按元素存在去查必然误报——本轮就是这么一度误判成『此路不通』。查的是根+样式解析后的结果。",
+   "provenance": "incident:inheritance-root-not-ours",
+   "command3": [
+    "{python}",
+    "{package}/method/gates/gate_font_ownership.py",
+    "--docx",
+    "{artifact:word}",
+    "--params",
+    "{artifact:params}",
+    "--report",
+    "{artifact:gate.font-ownership}"
+   ]
+  },
+  {
+   "id": "s6-pdf",
+   "phase": "成品",
+   "runner": "run_summer_word_prepress_workflow --pdf-release",
+   "nonDeterministic": true,
+   "consumes": [
+    "word@sha256'",
+    "assets.cover",
+    "word.compliance"
+   ],
+   "produces": [
+    "print-master@sha256"
+   ],
+   "assert": "转曲 QA:字体页 0、可提取文字页 0、文字绘制指令页 0",
+   "note": "封皮封底在这一步裹上,不在 Word 阶段。内含四步子表,已存在。 使用方 2026-08-15 定「每一步都应独立产出、独立可跑」;本步入口一直明确,只是没接进表。★试制件经 CHENGZI_SUMMER_EXTRA_MATERIALS 临时注册,不改生产 DOCS。 ★P6 抓出:本步成功了而 print-master 仍缺——PDF 四步把成品写在生产复核目录,册级绑定却指向工作区内的路径。又一次「声明的位置与实际产出不一致」:下游 s7 永远等不到它,而 s6 自己一直报 ok。加 command2 把成品收进本工作区——产物归工作区所有,才谈得上每一步独立。 ★曾有 command2 收件步在 command 被删后仍单独运行,把生产线目录里的旧 PDF 收进 output 并报 ok——「报 ok 而做错了对象」,P6 缺口 13 原样重演。收件已并入外部交接的说明:成品由四脚本产出后须经 collect_print_master 校验「PDF 对应当前 Word」再入 output。",
+   "externalRunner": {
+    "entry": "vendor/export_summer_word_standard_pdfs.py → assemble_summer_pdf_binding_sequence.py → qa_standard_pdf_binding_sequence.py → outline_standard_pdfs_with_acrobat_preflight.py(需 Adobe Acrobat)",
+    "howToRun": "CHENGZI_SUMMER_EXTRA_MATERIALS=<册>/extra-materials.json CHENGZI_SUMMER_FILTER_KEYS=<key> 依次运行四个脚本;它们从注册表+scope 取对象、写到 release.reviewRoot。",
+    "why": "这四个脚本**没有 CLI 参数**:从模块级 DOCS/MATERIALS 注册表 + scope 环境变量读对象,写到自己的 RUN_DIR。是生产线为固定册子设计的。★在包内的正确形态是重写为接受显式输入/输出的步骤——那是一块独立工作量,本轮如实登记为边界,不假装接上:硬接的结果是「报 ok 而成品写在别处」,今天已经踩过一次(P6 缺口 13)。",
+    "thenCollect": "{package}/method/steps/collect_print_master.py --workspace <册> —— 只收与当前 word 哈希绑定的成品,不绑定的拒收。",
+    "boundaryMeasured": "四脚本共 31 处模块级路径常量(export 10 / assemble 9 / qa 4 / outline 8),全部按生产线固定布局拼出。逐处 patch 是给一台机器打补丁;产品化=改造为显式 I/O 的 4 个独立工步。",
+    "howToRunNow": "需 runtime/paths.json 的 HOME/MATERIALS_ROOT 指向本机既有生产线目录,再按 howToRun 依次运行;成品经 collect_print_master 校验 PDF↔Word 哈希后入 output/。"
+   }
+  },
+  {
+   "id": "s7-render-review",
+   "phase": "方法",
+   "runner": "human",
+   "consumes": [
+    "print-master@sha256"
+   ],
+   "produces": [
+    "render-review"
+   ],
+   "humanProduct": true,
+   "note": "第 5 步「渲染成品人眼过一遍」。它 consumes 印刷件——所以在 s6 通过之前,这一步在结构上开不了工。"
+  }
+ ],
+ "nonDeterministic": {
+  "steps": [
+   "word-toc-update",
+   "word-clean-open",
+   "word-page-audit",
+   "pdf-outline"
+  ],
+  "why": "Word 与 Acrobat 自动化会间歇性返回连接错误。run_step 已有重试一次的处理;本表如实标注,不假装它们与纯 Python 步骤同质。",
+  "frontmostRule": "AppleScript 一律 launch 不用 activate。这条已固化在多处代码里,不是提示词约定。"
+ },
+ "environment": {
+  "python": "carve/blueprint 需 Python ≥ 3.12(代码用了 `X | None` 注解)与 lxml。解释器的具体位置是机器事实,写在册级 bindings.json 的 interpreter 字段,不写在本表。",
+  "removableVolume": "若工作区落在可移除卷上:手动运行没问题,但挂进调度器时 macOS TCC 会拦,需人工授完全磁盘访问权限。挂调度前必须先解决。",
+  "wordAcrobat": "s5/s6 需 Word 与 Acrobat(macOS)。没有时按 SKILL.md 能力分级降级:仍产出原子化与私有规范两个产物,不产出印刷件,并在报告里写明未经过哪些门。"
+ },
+ "openQuestions": [
+  "门的报告要不要成为下游的 consumes?若要,则「没跑门就出不了成品」;若不要,门就仍是可跳过的。首轮的错字正是从这个缝里漏出去的。倾向要,但会让链更硬,需使用方裁定。",
+  "human 步骤(s0/s7)的产物如何校验「真的做了」而不是「建了个空文件」。s0 首轮就被标成完成而实际没做。humanProduct:true 目前只是标注,还没有对应的门。"
+ ],
+ "interfaceContract": {
+  "rule": "工序公有可分发,经验私有随工作区。接口必须智能体与 CLI 双兼容。",
+  "io": "输入=本表 + --workspace 路径 + 册级 bindings.json;输出=JSON,退出码 0/1。不依赖对话,不依赖任何特定智能体。",
+  "agentBoundary": "智能体只在两处介入:新模板建表、图像逐张裁决。其余全部由步骤表驱动,换谁跑结果相同。",
+  "evidence": "首轮实测:carve_engine 未改一行即跑通第二个学科;build_blueprint 需改三处,全部是首个学科的常量泄漏进代码,本就该是数据。"
+ },
+ "_s5Split": {
+  "at": "2026-08-15",
+  "from": null,
+  "why": "生产线的 orchestrator 绑 89 脚本注册表与 preflight,不可分发;包自己按 9 步逐条写进表,每步独立产出、独立可跑。"
+ },
+ "_pdfStageBoundary": "s6-pdf 为已声明的外部交接点(vendor 内四脚本,需 Acrobat)。产品化的下一步:把四脚本改造为显式 I/O 并拆成 4 个独立工步。"
+}

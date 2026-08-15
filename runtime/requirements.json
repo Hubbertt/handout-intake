@@ -1,0 +1,82 @@
+{
+ "schemaVersion": "handout-intake.runtime-requirements.v1",
+ "what": "本技能包在目标机器上运行所需的一切外部事实。安装向导逐项探测,缺什么列什么,由用户授权后一键安装;不猜、不静默跳过。",
+ "why": "「智能体拿到就能用」的前提不是承诺任何机器都能跑,而是把每一样依赖说清楚、探得出、装得上。今天 P6 空手复现抓出的第一个缺口就是 lxml——原工作区里它一直在,所以从没有人写下它。",
+ "python": {
+  "tooling": {
+   "minVersion": "3.9",
+   "why": "check_chain/run_chain/init/export 只读表算 hash,3.9 即可。"
+  },
+  "engine": {
+   "minVersion": "3.12",
+   "why": "carve/blueprint 用了 `X | None` 注解。"
+  },
+  "probe": "python3 --version / python3.12 --version"
+ },
+ "pythonPackages": [
+  {
+   "name": "lxml",
+   "importName": "lxml",
+   "why": "读写 OOXML(切分/蓝图/对象清单/目录域)。",
+   "install": "pip install lxml"
+  },
+  {
+   "name": "python-docx",
+   "importName": "docx",
+   "why": "编译器 build_semantic_handout 依赖。",
+   "install": "pip install python-docx"
+  },
+  {
+   "name": "PyMuPDF",
+   "importName": "fitz",
+   "why": "字形覆盖门/PDF 分页审计读 PDF 字体与文本。",
+   "install": "pip install PyMuPDF"
+  },
+  {
+   "name": "pypdf",
+   "importName": "pypdf",
+   "why": "PDF 装订/QA 读页数与尺寸。",
+   "install": "pip install pypdf"
+  },
+  {
+   "name": "fontTools",
+   "importName": "fontTools",
+   "why": "字形覆盖门解析字体 cmap。",
+   "install": "pip install fonttools"
+  }
+ ],
+ "applications": [
+  {
+   "name": "Microsoft Word",
+   "role": "必需",
+   "probe": "osascript -e 'tell application \"System Events\" to (name of processes)' 或检查 /Applications/Microsoft Word.app",
+   "why": "净开探针、目录域更新、PDF 导出、页面审计全部走 Word 原生引擎。**LibreOffice 不可替代**:它忽略 w:w、公式字距也不同,据它判断会错(使用方定)。",
+   "sandbox": "Word 是沙盒应用,只能读写 ~/Library/Containers/com.microsoft.Word/Data/Documents/ 下的文件。包内所有 Word 交互都经该目录中转;探针会检查它可写。"
+  },
+  {
+   "name": "Adobe Acrobat",
+   "role": "付印转曲时必需",
+   "probe": "检查 /Applications/Adobe Acrobat*.app",
+   "why": "成品 PDF 全部转曲(0 残留字体、0 可提取文本)由 Acrobat Preflight 完成。没有它可出 Word 直出 PDF,但不能付印。",
+   "altNames": [
+    "Adobe Acrobat DC",
+    "Acrobat"
+   ]
+  }
+ ],
+ "fonts": {
+  "why": "参数表声明的每个字体必须在本机是**实体字体**而非按需 Subsets(圆体-简那次声明了却画不出)。安装向导逐个探测。",
+  "probe": "解析参数表 fontStandard.declared,逐个在系统字体目录找实体文件;找不到的列出并给安装建议。",
+  "declaredBy": "styles/<template>/params.json 的 wordStyleRegistry.fontStandard.declared"
+ },
+ "paths": {
+  "file": "runtime/paths.json",
+  "keys": {
+   "HANDOUT_INTAKE_MATERIALS_ROOT": "资料根目录(封皮/封底等资产所在)。",
+   "HANDOUT_INTAKE_HOME": "本包的宿主根目录。",
+   "HANDOUT_INTAKE_SOFFICE": "soffice 路径,仅诊断用,非必需。"
+  },
+  "why": "vendor 脚本原写死本机路径,进包时改为:环境变量 > runtime/paths.json > 可移植默认。安装向导写这份文件。"
+ },
+ "installWizard": "runtime/install_wizard.py —— 探测以上全部,列出缺项,逐项请求授权,授权后执行安装,写 runtime/probe-report.json;装好后自动触发 styles/render_catalog.py 渲染一次。"
+}

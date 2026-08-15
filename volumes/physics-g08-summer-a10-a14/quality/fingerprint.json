@@ -1,0 +1,30 @@
+{
+ "schemaVersion": "handout-intake.fingerprint.v1",
+ "source": "/Volumes/CZ-Data/projects/CZClassRoom/data/teaching-materials/source-originals/2026-06-29-physics-grade8-summer-source-evidence/橙子教室-八年级物理暑假班-学生版.docx",
+ "comparedAgainst": "/Users/Shared/ChengziClass/projects/CZClassRoom/handout-intake/skill/seeds/templates/huke-wusi-2024.v1.json",
+ "threshold": 0.8,
+ "thresholdBasis": "经验阈值,未做敏感性分析。判定落在 62.7% 与 80% 之间时差距足够大,不靠阈值取舍;若将来某册落在 75-85% 区间,这个数必须先量再用。",
+ "coverage": 0.6273,
+ "matchedParagraphs": 670,
+ "paragraphsWithText": 1068,
+ "unclassified": 356,
+ "verdict": "不匹配",
+ "consequence": "走建表流程,不强行套最像的那个",
+ "roleHits": {
+  "讲标题": 5,
+  "栏目横幅(全角竖线)": 20,
+  "知识点标题(无◆)": 13,
+  "例题": 0,
+  "即练": 0,
+  "探究归纳": 0,
+  "其他【】标记": 0,
+  "过关检测栏目": 0,
+  "题型小标题": 0,
+  "中文编号标题": 0,
+  "阿拉伯编号项": 0,
+  "小问": 0,
+  "圈号项": 0,
+  "选项行": 0,
+  "图注": 4
+ }
+}

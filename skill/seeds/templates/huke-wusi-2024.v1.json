@@ -1,0 +1,279 @@
+{
+ "schemaVersion": "handout-intake.seed.template.v1",
+ "id": "huke-wusi-2024.v1",
+ "title": "沪科版五四学制 2024 同步讲义（原卷版）模板表",
+ "whatThisIs": "「源文件的视觉特征 → 语义角色」的对照表。这是本 skill 真正的资产:引擎跨出版社通用,这张表按出版社模板走。换出版社重做表,引擎不动。",
+ "fingerprint": {
+  "hints": [
+   "段落样式名多为源生成",
+   "中文标题常为 Type3 转曲或图形横幅",
+   "出处标注用蓝色 0070C0",
+   "强调底纹用 D9D9D9"
+  ],
+  "note": "指纹用于「这份新文件像不像已知模板」。匹配不上要走建表流程,绝不强行套最像的那个——套错的代价是认错而不报错。"
+ },
+ "roles": [
+  {
+   "id": "知识点标题",
+   "kind": "section",
+   "pattern": "^◆\\s*知识点",
+   "sortOrder": 10
+  },
+  {
+   "id": "考点标题",
+   "kind": "section",
+   "pattern": "^考点[一二三四五六七八九十\\d]",
+   "sortOrder": 11
+  },
+  {
+   "id": "中文编号标题",
+   "kind": "section",
+   "pattern": "^[一二三四五六七八九十]+[、．.]\\s*\\S",
+   "sortOrder": 12
+  },
+  {
+   "id": "例题题干",
+   "kind": "stem",
+   "pattern": "^【例\\s*\\d+】",
+   "sortOrder": 20
+  },
+  {
+   "id": "变式题干",
+   "kind": "stem",
+   "pattern": "^【变式\\s*\\d+[-–]\\d+】",
+   "sortOrder": 21
+  },
+  {
+   "id": "编号项",
+   "kind": "stem",
+   "pattern": "^\\d{1,2}[．.]",
+   "sortOrder": 22
+  },
+  {
+   "id": "实验标记",
+   "kind": "body",
+   "pattern": "^【实验\\s*\\d*】",
+   "sortOrder": 30
+  },
+  {
+   "id": "查阅资料",
+   "kind": "body",
+   "pattern": "^【查阅资料】",
+   "sortOrder": 31
+  },
+  {
+   "id": "探究环节标记",
+   "kind": "body",
+   "pattern": "^【[^】]{1,10}】",
+   "sortOrder": 32,
+   "note": "Open-valued: each activity names its own steps, so the label is data."
+  },
+  {
+   "id": "选项行",
+   "kind": "body",
+   "pattern": "^[{optionChars}][．.]\\s*\\S",
+   "sortOrder": 40
+  },
+  {
+   "id": "小问",
+   "kind": "body",
+   "pattern": "^[（(]\\s*\\d+\\s*[)）]",
+   "sortOrder": 41
+  },
+  {
+   "id": "圈号项",
+   "kind": "body",
+   "pattern": "^[①-⑳]",
+   "sortOrder": 42
+  },
+  {
+   "id": "表达式行",
+   "kind": "body",
+   "pattern": "^(文字表达式|符号表达式|化学方程式)",
+   "sortOrder": 43
+  },
+  {
+   "id": "专题标题",
+   "kind": "header",
+   "pattern": "^专题\\s*\\d",
+   "sortOrder": 50
+  },
+  {
+   "id": "课题标题",
+   "kind": "header",
+   "pattern": "^课题\\s*\\d",
+   "sortOrder": 51
+  },
+  {
+   "id": "课时标题",
+   "kind": "header",
+   "sortOrder": 52,
+   "pattern": "^第\\s*[一二三四五六七八九十\\d]+\\s*课时",
+   "note": "原来落进「正文」,字符层因此出现一类判不了的样式(1F4E79 sz=32);缺的是块层角色,不是字符层裁决"
+  },
+  {
+   "id": "选项行",
+   "kind": "body",
+   "pattern": "^.*?[{optionChars}][．.]\\s*\\S.*?[{optionChars}][．.]\\s*\\S",
+   "sortOrder": 39,
+   "note": "两个以上选项标号就是选项行,哪怕行首不是 A．。源里有一行漏写了 A．,只剩「①②  B．②③ C．全部 D．①②④」,按行首判成圈号项,自动编号又把 ① 补了回去——看着对,结构是错的。题干类角色排序更靠前,不会被这条抢走"
+  },
+  {
+   "id": "跨学科标题",
+   "kind": "header",
+   "pattern": "^跨学科实践活动\\s*$",
+   "sortOrder": 53,
+   "joinsNext": true,
+   "note": "标题写成两段:第一段是类别,第二段是活动名。树里它是课题的同级兄弟"
+  },
+  {
+   "id": "复习讲义标题",
+   "kind": "header",
+   "pattern": "^专题[一二三四五六七八九十]+\\s",
+   "sortOrder": 54,
+   "joinsNext": true,
+   "note": "复习讲义的抬头用中文数字写专题号(专题三),与同步讲义的「专题3」不同形,不会互相抢;第二段是「复习讲义」"
+  },
+  {
+   "id": "重难点标题",
+   "kind": "header",
+   "pattern": "^重难点\\d+",
+   "sortOrder": 55,
+   "note": "重难点讲义,单段标题,树里挂在专题复习下"
+  }
+ ],
+ "runRules": {
+  "显式下标": {
+   "match": {
+    "vertAlign": "subscript"
+   },
+   "style": "chemical_subscript"
+  },
+  "显式上标": {
+   "match": {
+    "vertAlign": "superscript"
+   },
+   "style": "chemical_superscript"
+  },
+  "显式高亮": {
+   "match": {
+    "highlight": "*"
+   },
+   "style": "highlight"
+  },
+  "试卷来源标注": {
+   "match": {
+    "color": "0070C0"
+   },
+   "style": "source_tag",
+   "beforeShading": true,
+   "note": "裁决(2026-08-07,用户「按建议修好」):出处不是内容,单独出一档灰色小字 CZ_SourceTag。这条必须排在「底纹」之前——132 处标注里有 11 处压着 D9D9D9 灰底,先判底纹会把它们涂黄,同一个标注两种样子。原先只在数据里打标不落样式,结果是 1903 字出处和正文一个颜色一个字号。"
+  },
+  "底纹": {
+   "match": {
+    "shading": true
+   },
+   "style": "highlight"
+  },
+  "下划线空白": {
+   "match": {
+    "underline": "*",
+    "textIsBlank": true
+   },
+   "style": "fill_blank"
+  },
+  "例题变式标签": {
+   "match": {
+    "bold": "on",
+    "color": "1F4E79"
+   },
+   "inBlocks": [
+    "例题题干",
+    "变式题干"
+   ],
+   "style": "topic_label",
+   "note": "CZ_TopicLabel 定义就是 bold+1F4E79,与源文档该类 run 的指纹完全一致;此前映射成 emphasis 只保留了粗体,颜色被丢掉"
+  },
+  "加粗题号": {
+   "match": {
+    "bold": "on",
+    "color": null
+   },
+   "inBlocks": [
+    "编号项",
+    "正文"
+   ],
+   "style": "plain",
+   "note": "裁决(2026-08-06,用户):其余题号一律不加粗,这2处按源文档排版失误处理,统一按正文出。"
+  },
+  "无装饰": {
+   "match": {},
+   "style": "plain"
+  }
+ },
+ "optionMarkers": {
+  "chars": "ABCDEFGH",
+  "separators": [
+   "．",
+   "."
+  ],
+  "boundaryRule": "A marker counts unless the character before it is an ASCII letter — that is the only case where it would really be part of a word. Whitespace is not required: a 讲义 runs its options together, and chemistry runs them together after digits (「A．N2B．SO2」, 「体积比为2∶1D．」), so both a whitespace rule and a no-alphanumeric rule lose most of the options. Ordering still constrains the search: B is only looked for after A was found.",
+  "boundaryChars": [
+   " ",
+   "\t",
+   "　"
+  ],
+  "rejectPrecedingClass": "ASCII letter",
+  "groups": "A question may carry several option groups when it has sub-questions; completeness is judged per group, not over the concatenation.",
+  "charsUsedBy": "optionMarkers.chars 是选项标号的唯一定义。roles 里的选项行模式写 {optionChars} 占位,由 carve_engine 代入——原来两处各写各的([ABCD] 对 ABCDEFGH),第五个选项 E 单独成段时判不出是选项,被排在题目的选项组之外,单独占一行印在两列之下。"
+ },
+ "sectionBanners": {
+  "db9ca5b036d9": {
+   "label": "探新知",
+   "caption": "教材知识解读",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "fe6d0072696b": {
+   "label": "揭规律",
+   "caption": "讲透重点难点",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "658560e7e25e": {
+   "label": "帮解题",
+   "caption": "方法能力构建",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "9a0138872c36": {
+   "label": "刷好题",
+   "caption": "同步分层测评",
+   "layout": "badge+caption",
+   "role": "栏目"
+  },
+  "9ae7dec4c8a1": {
+   "label": "教学目标",
+   "caption": null,
+   "layout": "arrow+label",
+   "role": "块标题"
+  },
+  "148b2f2d075f": {
+   "label": "教学目标",
+   "caption": null,
+   "layout": "arrow+label",
+   "role": "块标题"
+  }
+ },
+ "calloutHeads": [
+  "特别提醒",
+  "解题要点",
+  "方法归纳",
+  "易错提醒"
+ ],
+ "derivedFrom": {
+  "schema": "carve-rules/g08-chemistry-huke-2026-topic3-4/schema/handout-carve.v1.json",
+  "mapping": "carve-rules/g08-chemistry-huke-2026-topic3-4/mapping/private-spec-mapping.v1.json"
+ },
+ "provenNote": "本表在八年级化学第二册(230 页,2026-08-09 付印)上跑通:3151 块、覆盖门通过、源比对通过。"
+}

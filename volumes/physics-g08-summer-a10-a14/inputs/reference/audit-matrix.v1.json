@@ -1,0 +1,1461 @@
+{
+ "schemaVersion": "chengziclass.production-audit-matrix.v1",
+ "rule": "每个对象类 × 每个视角 = 一格。每格必须写明保证从哪来:不适用/构造保证/有门/只能靠看/空白。工作只在后两种;空白必须显式写出,不能靠没人想起来就当它不存在。",
+ "howToInstantiate": [
+  "复制本文件,把 count 清零、把所有格重置为空白",
+  "跑一遍块型普查(见 playbook 第 2 步)填 count",
+  "逐格判定:已有的门覆盖到这一格吗?覆盖不到就是空白",
+  "只做后两种格;每关掉一格,把它升到「有门」"
+ ],
+ "assuranceLevels": {
+  "不适用": "这个视角对这个对象类没有意义",
+  "构造保证": "走同一条代码路径,一次对就全对",
+  "有门": "每次构建都会检查,失败会响",
+  "只能靠看": "要人渲染出来盯;必然会烂,应尽快升级为「有门」",
+  "空白": "没有任何保证。所有事故都住在这里。"
+ },
+ "lenses": {
+  "真源一致": "内容、顺序、归属与源一致吗",
+  "语义完整": "它在数据层是不是它看起来的那个东西",
+  "原生性": "是真内容,还是位图/图形/手打冒充的",
+  "规范落位": "用的是注册样式,还是直接格式",
+  "参数化": "里面的数是推导的、实测的,还是拍的",
+  "版面·分页": "断在哪里;整组会不会被拆开",
+  "图文环绕": "图与文的位置关系:缩进、绕排、是否出版心",
+  "渲染真值": "Word 自己导出来是不是这样(字体/拉伸/域)",
+  "静默失败": "这一类坏了,有东西会响吗"
+ },
+ "instantiatedFor": "g08-chemistry-huke-2026-topic3-4(八年级化学 专题3·4合册,230 页)",
+ "instantiatedAt": "2026-08-08",
+ "objects": {
+  "chapter": {
+   "count": 2,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "heading1": {
+   "count": 2,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "heading2": {
+   "count": 6,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "heading3": {
+   "count": 7,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "heading4": {
+   "count": 50,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "heading5": {
+   "count": 95,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "exercise_group_title": {
+   "count": 84,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "callout_title": {
+   "count": 72,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "callout_subpoint": {
+   "count": 26,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "所有标题类块型必须在 keepTogetherStandard 里;该表与样式 keepNext 必须一致"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "标题是原生段落,不存在位图冒充的路径"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "title-stranded:标题不得独自留在页尾",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "字体必须落在 fontStandard 声明∪已登记替换内"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "exercise": {
+   "count": 591,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "选项组每行等长;编号族内序号连续"
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "stem-from-options;题干与首块内容绑定",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "exercise_continuation": {
+   "count": 608,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ]
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "list_continuation": {
+   "count": 123,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations",
+      "声明落实门 annotation-binding-wrong-direction"
+     ],
+     "note": "注解(以 注/说明/备注 开头)必须向前粘住所注对象,且自己不得向后粘"
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "body": {
+   "count": 136,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations",
+      "声明落实门 annotation-binding-wrong-direction"
+     ],
+     "note": "注解(以 注/说明/备注 开头)必须向前粘住所注对象,且自己不得向后粘"
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "choice": {
+   "count": 928,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "option-rows-uneven:同一道题每行选项数量必须相同"
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "option-row-split",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "answer_line": {
+   "count": 3,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage"
+     ],
+     "note": "答题线是源对象,不是空段落"
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "groupBindings 答题线:与提示行同页",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "callout_body": {
+   "count": 106,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "文本必须与蓝图一致;只装反应条件的文本框应被回收为载体"
+    },
+    "原生性": {
+     "assurance": "构造保证"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "groupBindings 提示框正文:整组同页",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "table": {
+   "count": 55,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "单元格必须保留源的分段;行列数一致"
+    },
+    "原生性": {
+     "assurance": "只能靠看",
+     "note": "是否有本该是原生表的扫描件——本册人工逐张判过,发现 1 张"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ],
+     "note": "table-split;且表格会拉住它的引导句",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "image": {
+   "count": 254,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "每张图有归属块;登记的替换必须命中且到场"
+    },
+    "原生性": {
+     "assurance": "只能靠看",
+     "note": "是否本该是文字/表格/公式——本册 257 张逐张判过,转了 2 张"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "pullingTypes:图会拉住它的引导句",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "缩进=所属项正文起点;浮动图夹在版心内;通道<8字则单侧绕排"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "chart": {
+   "count": 1,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "每张图有归属块;登记的替换必须命中且到场"
+    },
+    "原生性": {
+     "assurance": "只能靠看",
+     "note": "是否本该是文字/表格/公式——本册 257 张逐张判过,转了 2 张"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "pullingTypes:图会拉住它的引导句",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "缩进=所属项正文起点;浮动图夹在版心内;通道<8字则单侧绕排"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "vector_figure": {
+   "count": 2,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "每张图有归属块;登记的替换必须命中且到场"
+    },
+    "原生性": {
+     "assurance": "只能靠看",
+     "note": "是否本该是文字/表格/公式——本册 257 张逐张判过,转了 2 张"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "pullingTypes:图会拉住它的引导句",
+     "instrument": "留白按最后一点墨量(含图形);豁免按样式名经注册表折回比对;目录条目(尾部点线加页码)不算正文行;「同一块横跨两页」在相邻性过滤之前判定,与留白同时命中即 split-with-hole"
+    },
+    "图文环绕": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "缩进=所属项正文起点;浮动图夹在版心内;通道<8字则单侧绕排"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "分页门 audit_summer_pdf_page_break_defects"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "反应式(段内)": {
+   "count": 40,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明的箭头必须在成品里是 oMath;非反应的箭头必须声明 chemistry 并排除"
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "OMML 原生公式"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "不适用"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "w:w 不得超 600%(Word 会整条丢弃)"
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "目录": {
+   "count": 1,
+   "lenses": {
+    "真源一致": {
+     "assurance": "有门",
+     "by": [
+      "覆盖门 gate_semantic_blueprint_source_coverage",
+      "源比对 verify_against_source"
+     ],
+     "note": "每个源对象恰好被认领一次;逐段文本、顺序、图片归属与尺寸"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "合规审计 audit_summer_word_full_compliance"
+     ]
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "真 TOC 域"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "不适用"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "合规审计 audit_summer_word_full_compliance"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  },
+  "页眉页脚": {
+   "count": 1,
+   "lenses": {
+    "真源一致": {
+     "assurance": "不适用"
+    },
+    "语义完整": {
+     "assurance": "有门",
+     "by": [
+      "合规审计 audit_summer_word_full_compliance"
+     ]
+    },
+    "原生性": {
+     "assurance": "构造保证",
+     "note": "真 PAGE 域"
+    },
+    "规范落位": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "块型必须用注册样式;段落级直接格式只允许出现在 directFormattingPolicy 列出的例外上;run 级不得裸格式"
+    },
+    "参数化": {
+     "assurance": "有门",
+     "by": [
+      "编译器测试 test_semantic_handout_compiler"
+     ],
+     "note": "derivation 逐条验算;来源棘轮 unrecorded 只降不升"
+    },
+    "版面·分页": {
+     "assurance": "不适用"
+    },
+    "图文环绕": {
+     "assurance": "不适用"
+    },
+    "渲染真值": {
+     "assurance": "有门",
+     "by": [
+      "合规审计 audit_summer_word_full_compliance"
+     ]
+    },
+    "静默失败": {
+     "assurance": "有门",
+     "by": [
+      "声明落实门 gate_semantic_output_declarations"
+     ],
+     "note": "声明→落实:每个块都要带着自己的书签到成品"
+    }
+   }
+  }
+ },
+ "revision": "v1.3",
+ "revisionNote": "2026-08-08 第二轮:分页门两处口径修正(墨迹含图形、豁免按样式名折回),新增注解粘向门。29 条留白告警收敛为 12 条真需人判断的;新增问题本质 P8(同一事物的两个名字跨口径比较,恒假)。 第三轮:新增 split-with-hole(撕开且留白过大,fail),题干加 keepLines(上限沿用 chainPropagation.maxHeightDxa);发现 table-split 分支此前不可达、目录条目造成假阳性,一并修正。",
+ "plannedColumns": {
+  "答案-题目对应性": {
+   "appliesTo": "教师版",
+   "status": "未建立",
+   "plan": "按 rollout-plan.v1.md 的补丁模型,教师版与学生版共用同一批语义块,答案块以 attachesTo 挂在题目上。该列因此应为「构造保证」而非「有门」——题干只存一份,对不上是做不出来的。前置条件:源对齐门(证明解析版题干与原卷版逐字相同)。"
+  }
+ }
+}

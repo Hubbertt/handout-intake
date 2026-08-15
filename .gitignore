@@ -1,0 +1,11 @@
+# 本机渲染的产物与探测报告:不进版本库,不进分发包(在目标机器上重新生成)
+styles/renders/
+styles/catalog.json
+runtime/probe-report.json
+runtime/paths.json
+# 册的中间产物与运行记录:随册走,不进版本库(体积大;含源文片段)
+volumes/*/work/
+volumes/*/runs/
+volumes/*/output/
+__pycache__/
+*.pyc
