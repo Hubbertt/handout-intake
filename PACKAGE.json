@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.3.0",
+ "version": "2.4.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.3.0:schema 基底 + 偏离(拆合无损两册自证);README 顶部加给人的一页使用说明。",
+ "versionWhy": "2.4.0:一套样式两册共用(1 根 × 1 包)。换包前后物理成品逐页相同。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -116,10 +116,9 @@
    "改名三层都通;组合自定义名在包改名重合成后保住"
   ],
   "currentPacks": {
-   "physics-g08-summer": "物理·八年级上册第二册(现行):黑体;三级底纹 exact 20pt 居中;四级蓝字不换页 380/110;五级黑粗;命名=大纲级别",
-   "chemistry-g08-summer": "化学·八年级全一册第二册:2026-08-08 成品 docx 实测样式(宋体 18/16/15/14/13,四级圆体-简蓝,无底纹边框,旧命名)。以成品为准,不以中途改过的参数表为准。"
+   "chengzi-summer": "橙子暑假班统一版式(物理化学共用):以物理样式为基准。样式与学科无关——版式是这套书的,不是某一科的;学科差异全在各册切分规则里。化学多用的第 6 级/answer_line/callout_subpoint 包里已有。"
   },
-  "retired": "chengzi-summer-v1/v2/blue(使用方 2026-08-16:只保留一版物理一版化学)"
+  "retired": "physics-g08-summer→改名 chengzi-summer;chemistry-g08-summer(2026-08-08 化学成品的样子)已删——它记录旧成品,不是要复用的设计。使用方 2026-08-16 定。"
  },
  "agents": {
   "supported": "任何能开 shell、能读文件的智能体:Claude Code / Codex / Kimi / 人。包对智能体零依赖——全部 python3 xxx.py,不调任何专属接口。",

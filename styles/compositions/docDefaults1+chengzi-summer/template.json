@@ -1,9 +1,9 @@
 {
  "schemaVersion": "handout-intake.style-template.v2",
- "id": "docDefaults1+chemistry-g08-summer",
+ "id": "docDefaults1+chengzi-summer",
  "root": "docDefaults1",
- "pack": "chemistry-g08-summer",
- "name": "化学·八年级全一册第二册(2026-08-08 成品样式) × 橙子暑假班基线根",
+ "pack": "chengzi-summer",
+ "name": "橙子暑假班版式(物理化学共用) × 橙子暑假班基线根",
  "params": "params.json",
  "spec": "../../base/橙子教室暑假班资料统一规范.md",
  "outlineLevels": "../../base/chengzi_word_outline_levels.v1.json",

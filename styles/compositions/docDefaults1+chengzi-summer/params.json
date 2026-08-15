@@ -8059,9 +8059,9 @@
     "inertPolicy": "version 以 -inert 结尾时,pendingImprovements 里每一项的 checks[].path 在参数表里的现值必须等于 inert、且不等于 proposed。由 GATE_INERT_VERSION 强制。★这条规则此前只是一句话,靠人记得——靠记性的规则等于没有规则,而本文件里已经有两次『拿我认为对的替换现在是的』(firstLineChars 与 color),同一天、同一份文件、同一个人。"
   },
   "styleRegistryRelease": {
-    "version": "ph-1",
+    "version": "1",
     "releasedAt": "2026-08-15",
-    "title": "物理局部偏离:黑体标题;三级整行底纹(exact 20pt 文字居中);四级蓝字不换页(段前 380/段后 110);五级黑粗;名字里的数字=大纲级别",
+    "title": "橙子暑假班统一版式:黑体标题;三级整行底纹(exact 20pt 文字居中);四级蓝字不换页(380/110);五级黑粗;六级备化学用;名字里的数字=大纲级别",
     "changes": [
       "二级 15pt #0C4396 + 整行浅底纹 E4EAF5(paragraphShading,走 pPr 非 rPr)",
       "三级 14pt #0C4396",
@@ -8081,25 +8081,26 @@
       "why": "版面键(firstLineDxa/keepLines/basedOnStyleId/outlineLevel 等)。Word 里「没写=从 basedOn 继承」与「写成默认值=显式覆盖继承」不是一回事,批量填默认会悄悄改版面,须逐样式裁决。"
     },
     "impact": "影响七本册子,每本须重跑合规复检后方可发版。",
-    "discovery": "全量清查发现 41 个段落样式中 36 个缺必填键,而完整的 5 个恰好就是 preflight 固定值钉住的那 5 个——完整性只存在于治理够得着的地方。H4 不特殊,它只是第一个被检查到的。"
+    "discovery": "全量清查发现 41 个段落样式中 36 个缺必填键,而完整的 5 个恰好就是 preflight 固定值钉住的那 5 个——完整性只存在于治理够得着的地方。H4 不特殊,它只是第一个被检查到的。",
+    "scope": "使用方 2026-08-16 定:以物理的样式为基准,一套样式适用于化学与物理两册。样式与学科无关——版式是「橙子暑假班」这套书的,不是某一科的;学科差异全在各册的切分规则(schema 偏离)里。化学多用一层(heading5→CZ_Heading5 第 6 级),包里已有定义(12pt 黑粗);化学的 answer_line/callout_subpoint 也在。原 chemistry-g08-summer 包(2026-08-08 化学成品的样子)已删——它记录的是旧成品,不是要复用的设计。"
   },
   "parameterTemplate": {
     "schemaVersion": "chengziclass.parameter-template-binding.v1",
     "model": "1 个全局默认根 + 1 个局部偏离包 = 一组样式模板;两者独立,任意组合。使用方 2026-08-15 定。",
-    "templateId": "docDefaults1+physics-g08-summer",
+    "templateId": "docDefaults1+chengzi-summer",
     "root": {
       "id": "docDefaults1",
       "sha256": "db1b0ee676a577751fb2bb9fb0b2021d7038c73f3f338f05d8645b7baabab4f0"
     },
     "pack": {
-      "id": "physics-g08-summer",
-      "sha256": "51cc1179f2c26633d7259ad46fd3db116d5c9a964dbc1742a49586d150dd8ec4"
+      "id": "chengzi-summer",
+      "sha256": "54687be4786c78687597665c9f33f967a302004bed5460f687772493aaff468a"
     },
     "base": {
       "sha256": "825e4f02b2059d1b124b3205b54fe831f8a9f3e529e6b619f067eabc7912d896"
     },
-    "combinedSha256": "88c4d925d6e656872539a5aa94ded6739e8636774c15a7ee8f6fb2cf4b9c83d1",
-    "composedAt": "2026-08-16T02:44:19+08:00",
+    "combinedSha256": "e4633884c0ef261e79c3f1affac756df05769787c8b7af115da650de853683a2",
+    "composedAt": "2026-08-16T02:54:03+08:00",
     "isProjection": true,
     "truthSources": [
       "styles/roots/",
