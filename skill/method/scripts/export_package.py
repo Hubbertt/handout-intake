@@ -106,6 +106,30 @@ def self_check(package: dict) -> list[dict]:
     if r.returncode != 0:
         findings.append({"check": "entrypoints-agree", "kind": "drift", "detail": r.stdout.strip()[:200],
                          "why": "README/SKILL/AGENTS 正文不一致。只改 README.md,再跑 sync_entrypoints.py。"})
+    # 声明的包 == 实际 import 的包。漏声明的包在陌生机器上是 ModuleNotFoundError,
+    # 而在开发机上永远不会暴露(它恰好装着)——所以必须在导出时拦,不能等运行时。
+    # 这道门要 ≥3.10 才准。优先用向导探到的引擎;没有就用当前解释器——门在老解释器上会拒绝而非误报。
+    py = sys.executable
+    rep = product_root() / "runtime" / "probe-report.json"
+    if rep.exists():
+        try:
+            eng = ((json.loads(rep.read_text(encoding="utf-8")).get("python") or {}).get("engine") or {}).get("found") or {}
+            if eng.get("exe") and Path(eng["exe"]).exists():
+                py = eng["exe"]
+        except Exception:
+            pass
+    r = subprocess.run([py, str(ROOT / "method/gates/gate_requirements_audit.py"),
+                        "--product", str(product_root())], capture_output=True, text=True)
+    if r.returncode == 2:
+        findings.append({"check": "requirements-agree", "kind": "unverifiable",
+                         "why": "没有 ≥3.10 的解释器可跑依赖审计。先跑安装向导让它探到引擎,再导出。"})
+    elif r.returncode != 0:
+        try:
+            fs = json.loads(r.stdout).get("findings", [])
+        except Exception:
+            fs = [{"raw": r.stdout[-200:]}]
+        findings.append({"check": "requirements-agree", "kind": "drift", "findings": fs,
+                         "why": "requirements.json 与代码 import 不一致。"})
     return findings
 
 

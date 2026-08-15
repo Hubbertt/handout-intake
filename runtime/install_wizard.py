@@ -253,6 +253,19 @@ def main() -> int:
     installed, declined = [], []
     if not args.probe_only and missing:
         print(f"\n共 {len(missing)} 项缺失。逐项询问:")
+        # ★沙盒实测:网络不通时 pip 无限期挂着,capture_output 又吞掉进度——用户面对一个不动的光标。
+        # 装包前先探一次 PyPI(5 秒);探不到就明说并跳过 pip,不让人猜是慢还是死。
+        need_net = any(m["kind"] == "package" for m in missing)
+        net_ok = True
+        if need_net:
+            import urllib.request
+            try:
+                urllib.request.urlopen("https://pypi.org/simple/", timeout=5).close()
+            except Exception as exc:
+                net_ok = False
+                print(f"  ⚠ 探不到 pypi.org({type(exc).__name__}):本机可能没网或需要代理。"
+                      f"pip 安装跳过;请联网或设置 HTTPS_PROXY 后重跑,或离线装 wheel:"
+                      f" {engine_exe.get('exe','python3')} -m pip install <文件.whl>")
         for m in missing:
             if m["kind"] == "package" and engine_exe.get("exe"):
                 cmd = [engine_exe["exe"], "-m", "pip", "install", m["name"]]
@@ -262,8 +275,14 @@ def main() -> int:
                     declined.append({**m, "reason": "engine 解释器无 pip", "fix": fix})
                     print(f"  ✗ {m['name']}: {fix}")
                     continue
+                if not net_ok:
+                    declined.append({**m, "reason": "网络不可达,未尝试 pip"}); continue
                 if ask(f"安装 Python 包 {m['name']}?  ({' '.join(cmd)})", args.yes):
-                    r = subprocess.run(cmd, capture_output=True, text=True)
+                    print(f"    → 正在安装 {m['name']}(最多约 3 分钟)…", flush=True)
+                    try:
+                        r = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+                    except subprocess.TimeoutExpired:
+                        declined.append({**m, "reason": "pip 超时(180s)——多半是网络"}); print(f"  ✗ {m['name']} 超时"); continue
                     rec = {**m, "returncode": r.returncode, "stderrTail": r.stderr[-300:]}
                     if r.returncode == 0:
                         installed.append(rec)

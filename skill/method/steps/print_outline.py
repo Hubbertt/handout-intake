@@ -35,6 +35,19 @@ def main() -> int:
                                  "但它含字体、**不可付印**——付印件必须 0 残留字体、0 可提取文本。"},
                          ensure_ascii=False, indent=1))
         return 1
+    # ★沙盒实测(2026-08-16):HOME 下没有 Acrobat 的用户级配置时,首次驱动 Acrobat 会弹
+    #   「找不到钥匙串」对话框——那是 Acrobat 自己弹的,静默门扫不到(它只扫我们的脚本),
+    #   而本步在弹窗背后照样跑完并报 ok。链不知道用户屏幕上多了一个框。
+    #   能做的:驱动前探一次;没有就明说「首次可能弹框,请先手动打开一次 Acrobat」,不默默让它弹。
+    from pathlib import Path as _Pth
+    acro_cfg = _Pth.home() / "Library/Application Support/Adobe/Acrobat"
+    if not acro_cfg.exists():
+        print(json.dumps({"step": "s6d-outline", "status": "needs-first-launch",
+                          "why": "本用户还没有 Acrobat 的用户级配置(~/Library/Application Support/Adobe/Acrobat 不存在)。"
+                                 "脚本驱动 Acrobat 时它可能弹「找不到钥匙串」对话框——请先**手动打开一次 Adobe Acrobat**"
+                                 "让它完成首次初始化,再重跑本步。不代你点掉那个框:那是你账户的安全设置。"},
+                         ensure_ascii=False, indent=1))
+        return 1
     m = P.bind_outline(CHAIN, cfg["key"], cfg["pdfName"])
     (CHAIN.workspace / "output" / "print" / "outlined-pdf").mkdir(parents=True, exist_ok=True)
     # vendor 的 main() 自己 parse sys.argv,会撞上本步的 --workspace/--volume。

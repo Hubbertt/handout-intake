@@ -124,5 +124,17 @@
    "其他/人": "README.md"
   },
   "rule": "三壳共正文,只改 README.md,sync_entrypoints.py 同步;导出自检 --check 拦漂移。"
+ },
+ "sandboxVerification": {
+  "at": "2026-08-16",
+  "method": "env -i + 空 HOME + PATH=系统四目录:无环境变量、无 codex python、无 ~/.cache;仅系统 3.9;干净 3.12(只有 pip)由用户「自装」并设 HANDOUT_INTAKE_PYTHON。Word 容器为唯一借用项(按真实 macOS 用户建,假 HOME 骗不过)。",
+  "result": "向导:探到 3.9 工具/3.12 引擎/5 包缺→pip 装(网络慢者超时报出,离线 wheel 装成)/Word 沙盒目录不可写正确报出/字体全部可用→自动 compose 2 组→渲 2 组;册:36 步 27 ok+1 等人工目视,付印件产出。",
+  "gapsFound": [
+   "★Pillow 漏声明——原机器恰好装着,五次「全新安装」都没暴露;沙盒的干净 3.12 一跑就露。连带查出 openpyxl 漏声明(条件依赖)、fontTools 多声明(无人 import)。新增 GATE_REQUIREMENTS_AUDIT(声明==实际 import)接进导出自检;门在 <3.10 上拒绝判定不猜——首版在 3.9 上退化手写名单,把 html/xml 报成第三方,门在自己的降级路径上误报比不报更坏",
+   "pip 无超时——网络不通时永远挂着,capture_output 又吞掉进度,用户面对一个不动的光标 → 装包前 5 秒探 PyPI、pip --timeout 30 --retries 1、外层 180s、进度可见、离线 wheel 提示",
+   "★Acrobat 首次驱动弹「找不到钥匙串」框——那是 Acrobat 自己弹的,静默门扫不到,链在弹窗背后照样报 ok。→ s6d 驱动前探用户级配置,缺则报 needs-first-launch 请用户手动打开一次 Acrobat;不代点",
+   "导出器现要求 ≥3.10 跑依赖审计——探不到引擎时记 unverifiable 并拒绝导出(导出前先跑向导)"
+  ],
+  "boundary": "方案 2 到不了:另一台没装 Word 的 Mac、不同 macOS/Word 版本、Word 容器按真实用户初始化。"
  }
 }
