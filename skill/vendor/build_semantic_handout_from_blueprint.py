@@ -3060,9 +3060,19 @@ def break_before_styles(registry: dict[str, Any]) -> set[str]:
     a rule written in one vocabulary and checked in another.
     """
     styles = registry.get("paragraphStyles") or {}
-    derived = {name for name, spec in styles.items()
-               if isinstance(spec, dict) and spec.get("tocLevel")}
     standard = registry.get("pageBreakStandard") or {}
+    # 「进目录」与「换页」原先绑死(进目录 ⇔ 换页)。使用方 2026-08-16 定:四级已足够醒目,
+    # 不必另起页,但仍进目录——两件事要解耦。加一个显式上限 maxBreakLevel(大纲级别),
+    # 大纲级别 ≤ 它且进目录的才换页。**不给时保持原行为**(全部进目录的都换),不悄悄改老册。
+    cap = standard.get("maxBreakLevel")
+    def _breaks(spec):
+        if not (isinstance(spec, dict) and spec.get("tocLevel")):
+            return False
+        if cap is None:
+            return True
+        lvl = spec.get("outlineLevel")
+        return isinstance(lvl, int) and lvl <= int(cap)
+    derived = {name for name, spec in styles.items() if _breaks(spec)}
     return derived or set(standard.get("breakBefore") or ())
 
 
