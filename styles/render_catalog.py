@@ -200,7 +200,10 @@ def main() -> int:
                         "paramsSha256": params_sha,
                         "renderedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
                         "renderedOn": os.uname().nodename,
-                        "engine": engine, "scenes": scenes,
+                        # ★engine 只记版本不记路径:解释器路径是本机事实,而 catalog 是要随包分享的。
+                        #   写绝对路径等于把一台机器的布局带进别人的仓——发布前复查抓到。
+                        "engine": {k: v for k, v in (engine or {}).items() if k != "exe"},
+                        "scenes": scenes,
                         "status": "ok" if ok else "failed"}
     # 只渲一个模板时,其余模板的条目原样保留——首版整份重写,渲 blue 把 v1 从清单里挤掉了。
     # 清单是「有哪些模板」的真源;渲染只更新自己那一条。
