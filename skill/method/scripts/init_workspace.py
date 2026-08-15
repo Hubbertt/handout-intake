@@ -53,7 +53,7 @@ VOLUME_BINDINGS_TEMPLATE = {
         "source": "inputs/<源.docx>",
         "assets.cover": "inputs/cover.pdf",
         "assets.back": "inputs/back.svg",
-        "params": "<产品根>/styles/<模板id>/params.json",
+        "params": "<产品根>/styles/compositions/<根id>+<包id>/params.json  ← 选一组样式=选一个根+一个包;没有的组合先 styles/compose.py --root X --pack Y",
         "word": "output/<按规范命名>.docx",
         "print-master": "output/print-master.pdf",
     },

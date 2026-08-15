@@ -1,0 +1,209 @@
+{
+  "rootId": "docDefaults1",
+  "name": "橙子暑假班基线根",
+  "schemaVersion": "chengziclass.docdefaults.v1",
+  "version": "1-inert",
+  "what": "我们自己完整编写的全局默认样式(继承根)。样式包模板 = 本根 + 一个偏离包。",
+  "why": [
+    "现有根一行都不是我们的:底子是 python-docx 自带 default.docx(英文库模板),",
+    "kern=2 与 pPr spacing 是本机 Word 存盘时追加的。库默认+本机 Word 默认,",
+    "两样都不在我们控制里、都随环境变。中文讲义的东亚语言是 en-US,",
+    "不是谁配错了——是从来没有人配过它。"
+  ],
+  "valuePolicy": "取当前生效值,不取『我认为对的值』。夺回所有权与改进取值是两件事:混在一起做,落地后出现差异就分不清是夺权引起的还是改值引起的。本版落地应为零渲染变化,可验证;之后每改一项都是单独一次有意的、可测的改动。",
+  "rPrDefault": {
+    "_carriedOver": "以下五项原样保留自现有根,先夺权不改值",
+    "rFonts": {
+      "asciiTheme": "minorHAnsi",
+      "eastAsiaTheme": "minorEastAsia",
+      "hAnsiTheme": "minorHAnsi",
+      "cstheme": "minorBidi",
+      "_todo": "去主题化:换成具体字体名,少一层 theme1.xml 间接。单独一次改动。"
+    },
+    "kern": 2,
+    "sz": 22,
+    "szCs": 22,
+    "lang": {
+      "val": "en-US",
+      "eastAsia": "en-US",
+      "bidi": "ar-SA",
+      "_todo": "eastAsia 应为 zh-CN。改它影响中文禁则断行,可能重新分页,单独一次改动并配逐页比对。"
+    },
+    "_newlyDeclared": "以下取 OOXML 规范默认值,即当前实际生效值,故显式化为惰性",
+    "b": false,
+    "bCs": false,
+    "i": false,
+    "iCs": false,
+    "caps": false,
+    "smallCaps": false,
+    "strike": false,
+    "u": "none",
+    "vertAlign": "baseline",
+    "highlight": "none",
+    "position": 0,
+    "spacing": 0,
+    "w": 100,
+    "color": {
+      "val": "auto",
+      "_why": "取当前生效值。Word/OOXML 的文字颜色默认是 auto(随底色自适应,白底渲为黑),**不是 000000**。我初稿写 000000 是又一次拿『我认为对的』替换『现在是的』——与 firstLineChars 那处同一个错,同一天,同一份文件。",
+      "_pending": "是否改为 000000 属改进取值:印刷件恒为白底,auto 的自适应用不上,写死更可控。但那是单独一次改动,须单独验。"
+    },
+    "_kernNote": "并入自 wordStyleRegistry.documentDefaults.runDefaults.kernHalfPt。原理由:kern=2(半磅,即1pt起)让西文字距成对调整,中文文档的 Word 缺省就是这个值。★这是根里**唯一本来就是我们自己声明**的一项——我此前说它是 Word 追加的,错了。"
+  },
+  "pPrDefault": {
+    "_carriedOver": "原样保留自现有根(Word 追加的),先夺权不改值",
+    "spacing": {
+      "after": 200,
+      "line": 276,
+      "lineRule": "auto"
+    },
+    "_newlyDeclared": "取 OOXML 规范默认值,即当前生效值",
+    "jc": "left",
+    "ind": {
+      "left": 0,
+      "right": 0,
+      "firstLine": 0,
+      "hanging": 0
+    },
+    "keepNext": false,
+    "keepLines": false,
+    "widowControl": true,
+    "contextualSpacing": false,
+    "pageBreakBefore": false,
+    "shd": "none",
+    "autoSpaceDE": true,
+    "autoSpaceDN": true,
+    "_autoSpaceNote": "并入自 documentDefaults.paragraphDefaults。原理由:『autoSpaceDE/DN 是中英之间、中文与数字之间自动留空;OOXML 缺省即为开,但缺省不是声明——写出来才审计得到,也才挡得住模板把它关掉。』★实测:它在成品里不存在。因 OOXML 缺省即为开,写成 val=1 是无操作,Word 存盘清掉。**这条声明想防的事恰恰发生在它自己身上**——docx 承载不了『等于默认值』的声明。保留声明(参数表才是自足载体),但审计须靠生效值门,不能靠它出现在 XML 里。"
+  },
+  "notInRoot": {
+    "why": "这些本质是样式级差异,不该有全局默认",
+    "keys": [
+      "outlineLvl",
+      "numPr",
+      "numId",
+      "ilvl",
+      "pBdr",
+      "top",
+      "bottom",
+      "left",
+      "right",
+      "insideH",
+      "insideV",
+      "autoRedefine"
+    ]
+  },
+  "notApplicable": {
+    "why": "表格属性走表样式,不走文档默认",
+    "keys": [
+      "tblPr",
+      "tblBorders",
+      "tblCellMar",
+      "tblInd",
+      "tblStylePr",
+      "tcPr",
+      "tcBorders"
+    ]
+  },
+  "pendingImprovements": [
+    {
+      "item": "lang.eastAsia en-US → zh-CN",
+      "risk": "影响中文禁则断行,可能让 106 页重新分页",
+      "needs": "逐页比对",
+      "checks": [
+        {
+          "path": "docDefaults1/rPrDefault/lang/eastAsia",
+          "inert": "en-US",
+          "proposed": "zh-CN"
+        }
+      ]
+    },
+    {
+      "item": "rFonts 去主题化",
+      "risk": "低,但要确认主题解析后的实际字体与写死值一致",
+      "needs": "解析 theme1.xml 比对",
+      "checks": [
+        {
+          "path": "docDefaults1/rPrDefault/rFonts/asciiTheme",
+          "inert": "minorHAnsi",
+          "proposed": null,
+          "proposedUnknown": "去主题化是结构性改动(键要消失、换成具体字体名),不是换一个值。门只能查现值仍是主题引用,查不了『改成什么』。"
+        }
+      ]
+    },
+    {
+      "item": "sz 22(11pt) 是否应与正文 12pt 一致",
+      "risk": "改根字号会影响所有未显式设字号的样式",
+      "needs": "先查有几个样式不设 sizePt",
+      "checks": [
+        {
+          "path": "docDefaults1/rPrDefault/sz",
+          "inert": 22,
+          "proposed": 24
+        },
+        {
+          "path": "docDefaults1/rPrDefault/szCs",
+          "inert": 22,
+          "proposed": 24
+        }
+      ]
+    },
+    {
+      "item": "pPrDefault spacing after=200/line=276 是 Word 加的,是否是我们要的",
+      "risk": "改则所有未显式设间距的样式跟着变",
+      "needs": "同上",
+      "checks": [
+        {
+          "path": "docDefaults1/pPrDefault/spacing/after",
+          "inert": 200,
+          "proposed": null,
+          "proposedUnknown": "「是否是我们要的」尚未裁定,没有目标值。门只查现值未被擅改。"
+        },
+        {
+          "path": "docDefaults1/pPrDefault/spacing/line",
+          "inert": 276,
+          "proposed": null,
+          "proposedUnknown": "同上"
+        }
+      ]
+    },
+    {
+      "item": "CZ_LongText.firstLineChars 0 → 200(规范原文的 2 字符)",
+      "why": "私有规范:「连续阅读材料、语文长文和说明性文本可使用首行缩进 2 字符」。现值 0 是对现状的诚实声明,不是对规范的实现。",
+      "risk": "当前三本册子(化学/物理/语文七上)使用该样式均为 0 处,故今日改动零影响;一旦有册子开始用长文样式,不修就会重演「规范说了但没生效」。",
+      "needs": "确认规范意图仍成立后改 200,并补一道门:字符单位的值须落在合理区间(100–400 = 1–4 字符),识别『这个数在这个单位下没有意义』,而不只是『这个键有没有值』。该门治的是「规范原文的数字被原样抄进不同单位的字段」这一整类。",
+      "checks": [
+        {
+          "path": "wordStyleRegistry/paragraphStyles/CZ_LongText/firstLineChars",
+          "inert": 0,
+          "proposed": 200
+        }
+      ]
+    },
+    {
+      "item": "rPrDefault.color auto → 000000",
+      "why": "印刷件恒为白底,auto 的自适应用不上;写死更可控,也更符合『不依赖环境』。",
+      "risk": "低。但 auto 与 000000 在极端情况(如底纹为深色的段落)渲染不同,本套刚给二级标题加了浅底纹 E4EAF5,虽仍是浅色,仍应实测一次再改。",
+      "needs": "改后比对含底纹段落的渲染",
+      "checks": [
+        {
+          "path": "docDefaults1/rPrDefault/color/val",
+          "inert": "auto",
+          "proposed": "000000"
+        }
+      ]
+    }
+  ],
+  "gatesRequired": [
+    "完整性:凡会影响渲染的属性,根里都有确定值。缺一项就是留一个由目标机器决定的值。",
+    "不可篡改:成品的 docDefaults 必须等于本声明。本机 Word 刚往根里加过 kern 与段落间距而我们毫不知情。",
+    "生效值比对:门查『根+样式解析后的生效值 = 声明值』,**不查元素是否存在**——Word 会合法清掉冗余,按元素存在去查必然误报。"
+  ],
+  "_mergedFrom": {
+    "key": "wordStyleRegistry.documentDefaults",
+    "removedAt": "2026-08-15",
+    "why": "同一事实两处必漂。该重复是 2026-08-15 加 docDefaults1 时造成的:当时没注意注册表里已有同名机制,于是 kern 与 autoSpaceDE/DN 有了两份。",
+    "preMergeProof": "删前逐值比对,确认未漂:kern 2==2、autoSpaceDE true==true、autoSpaceDN true==true。值一样时删是清理,值不一样时删是改产品——不先证就删,等于把一次改产品伪装成一次整理。",
+    "carriedRule": "autoSpaceDE/DN 是中英之间、中文与数字之间自动留空;OOXML 缺省即为开,但缺省不是声明——写出来才审计得到,也才挡得住模板把它关掉。kern=2(半磅,即 1pt 起)让西文字距成对调整,中文文档的 Word 缺省就是这个值。"
+  },
+  "inertPolicy": "version 以 -inert 结尾时,pendingImprovements 里每一项的 checks[].path 在参数表里的现值必须等于 inert、且不等于 proposed。由 GATE_INERT_VERSION 强制。★这条规则此前只是一句话,靠人记得——靠记性的规则等于没有规则,而本文件里已经有两次『拿我认为对的替换现在是的』(firstLineChars 与 color),同一天、同一份文件、同一个人。"
+}

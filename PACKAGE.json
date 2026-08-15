@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.0.0",
+ "version": "2.1.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.0.0:产品化验收成立——从导出的 zip 在全新目录解压 → 安装向导全绿并自动渲三套样式预览 → 只给源 Word+封面封底、选一套样式 → 全链 13 步跑到付印件(118 页/A4/0 字体/0 文本),与生产线成品逐项相同。付印四步、样式两种新增、静默与沙盒门、运行记录与经验闭环全部在包内。",
+ "versionWhy": "2.1.0:样式框架按使用方模型重做——根/包/底座三处真源独立存放,组合是投影,任意组合、三层可命名。2.0.0 的验收(全新安装到付印件)保持成立。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -74,6 +74,32 @@
    "{path:} 遇通配工件抛 ChainError 使执行器崩溃而非报步骤失败 → 解析失败记为该步失败",
    "册级绑定从参考册拷来带着别的机器的事实(写死解释器/通配产物名/生产线文件名)→ {python} 优先级 绑定显式>向导探测>当前;init 给新册绑定模板",
    "formal.filename.shape 拦了 讲义.docx → 输出名按规范,门拦是对的"
+  ],
+  "v2.1.0": {
+   "at": "2026-08-15",
+   "workspace": "reviews/2026-08-15-fresh-install-2.1",
+   "flow": "zip(0.9MB,不含 compositions/renders/probe-report/paths.json)→空目录→向导 --yes 全绿→自动 compose --all(2 组)→自动渲 2 组→init 识别 2.1.0→绑定 params 指向 compositions/docDefaults1+chengzi-summer-v1→全链 36 步(34 ok+1 已在+1 等人工目视)",
+   "result": "118 页/73.7 MB/A4/字体 0/文本 0,与 2.0 新装及生产线成品三方一致",
+   "gapFound": "重写导出器 styles 段时连带切掉了 runtime/ 段——解压件没有向导入口,导出成功包也能装,只是「安装向导」消失了;这种缺法最难发现。已补回。"
+  }
+ },
+ "styleModel": {
+  "rule": "1 个全局默认根 + 1 个局部偏离包 = 一组样式模板;根与包独立,任意组合;三者都可自定义命名。使用方 2026-08-15 定。",
+  "truthSources": [
+   "styles/roots/<rootId>.json",
+   "styles/packs/<packId>.json",
+   "styles/base/(底座:版面/页面/流程/渲染场景)"
+  ],
+  "projections": [
+   "styles/compositions/<root>+<pack>/(compose.py 合成,不进包)",
+   "styles/renders/(本机渲,不进包)"
+  ],
+  "naming": "每层 id(机器标识,不改)+ name(人读,随时改):new_template.py rename root|pack|composition <id> --name …",
+  "proofs": [
+   "拆分→合成与原参数表结构无损(仅多 rootId 标识键)",
+   "拆分时数据自证模型:school-b-v1 的包与 v1 包 sha 相同——它不是包是组合,已删",
+   "3 根×3 包=9 组全部合成过门渲出;新增根不动包、新增包不动根",
+   "改名三层都通;组合自定义名在包改名重合成后保住"
   ]
  }
 }

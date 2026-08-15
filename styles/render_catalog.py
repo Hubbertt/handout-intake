@@ -166,7 +166,9 @@ def main() -> int:
 
     catalog = json.loads(CATALOG.read_text(encoding="utf-8")) if CATALOG.exists() else {"templates": {}}
     results, failed = {}, False
-    for tdir in sorted(HERE.glob("*/")):
+    # 渲染对象是「组合」(compositions/<root>+<pack>/),不是根也不是包——
+    # 根和包单独都渲不出东西,预览只对一组完整参数有意义。
+    for tdir in sorted((HERE / "compositions").glob("*+*/")):
         tfile = tdir / "template.json"
         if not tfile.exists():
             continue
@@ -203,8 +205,28 @@ def main() -> int:
     # 只渲一个模板时,其余模板的条目原样保留——首版整份重写,渲 blue 把 v1 从清单里挤掉了。
     # 清单是「有哪些模板」的真源;渲染只更新自己那一条。
     for tid_prev, entry in (catalog.get("templates") or {}).items():
-        results.setdefault(tid_prev, entry)
-    catalog = {"schemaVersion": "handout-intake.style-catalog.v1",
+        # 只保留仍存在的组合;已退役的条目不再带着走。
+        if (HERE / "compositions" / tid_prev / "params.json").exists():
+            results.setdefault(tid_prev, entry)
+    # 清单三段:根 / 包 / 组合。根与包各自独立可选;组合是它们的笛卡尔积中已合成并渲过的。
+    def _meta(p):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+        return d
+    roots = {r.stem: {"id": r.stem, "name": _meta(r).get("name") or r.stem, "version": (_meta(r).get("version")),
+                      "what": (_meta(r).get("what") or "")[:80], "sha256": sha(r)}
+             for r in sorted((HERE / "roots").glob("*.json"))}
+    packs = {k.stem: {"id": k.stem, "name": _meta(k).get("name") or k.stem,
+                      "title": ((_meta(k).get("release") or {}).get("title") or ""),
+                      "version": ((_meta(k).get("release") or {}).get("version")),
+                      "styles": len(_meta(k).get("paragraphStyles") or {}) + len(_meta(k).get("characterStyles") or {}),
+                      "sha256": sha(k)} for k in sorted((HERE / "packs").glob("*.json"))}
+    catalog = {"schemaVersion": "handout-intake.style-catalog.v2",
+               "model": "1 个全局默认根 + 1 个局部偏离包 = 一组样式模板;根与包独立,任意组合。使用方 2026-08-15 定。",
+               "roots": roots, "packs": packs,
+               "howToChoose": "册级绑定 params 指向 compositions/<root>+<pack>/params.json;没有的组合先 compose.py --root X --pack Y。",
                "what": "样式模板清单。每个模板的预览在本机渲染,附 params 的 sha256;参数一变预览即过期。",
                "note": "★预览图不进包:renderedOn 记着是哪台机器渲的。发给别人时只发 styles/<id>/(不含 renders/),对方装好后自己渲一次。",
                "templates": results}

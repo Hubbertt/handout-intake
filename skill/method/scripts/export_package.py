@@ -146,17 +146,22 @@ def main() -> int:
     carried.append("skill/")
     if (PRODUCT / "styles").exists():
         (staging / "styles").mkdir()
-        for tdir in sorted((PRODUCT / "styles").glob("*/")):
-            if (tdir / "template.json").exists():
-                shutil.copytree(tdir, staging / "styles" / tdir.name,
+        # 样式库三层真源 + 工具进包;组合(compositions/)与渲染图(renders/)是投影,不进包——
+        # 装好后 compose --all 与向导渲一次即可再生。带投影进包会让人改投影而不改真源。
+        for sub in ("roots", "packs", "base"):
+            if (PRODUCT / "styles" / sub).exists():
+                shutil.copytree(PRODUCT / "styles" / sub, staging / "styles" / sub,
                                 ignore=shutil.ignore_patterns("__pycache__"))
-                carried.append(f"styles/{tdir.name}/")
-        for f in ("render_catalog.py",):
+                carried.append(f"styles/{sub}/")
+        for f in ("compose.py", "render_catalog.py", "new_template.py", "catalog.json"):
             if (PRODUCT / "styles" / f).exists():
                 shutil.copy2(PRODUCT / "styles" / f, staging / "styles" / f)
-        # ★不带 renders/ 与 catalog.json:它们是本机渲的,拿到包的人自己渲。
+        carried.append("styles/{compose,render_catalog,new_template}.py + catalog.json")
+    # runtime/:声明与向导进包;探测报告与 paths.json 是本机事实,不进。
+    # ★重写 styles 段时把这一段连带切掉了——解压件没有 runtime/,向导根本没得跑。
+    #   导出成功、包也能装,只是「安装向导」这个入口消失了;这种缺法最难发现。
     if (PRODUCT / "runtime").exists():
-        (staging / "runtime").mkdir()
+        (staging / "runtime").mkdir(exist_ok=True)
         for f in ("requirements.json", "install_wizard.py"):
             if (PRODUCT / "runtime" / f).exists():
                 shutil.copy2(PRODUCT / "runtime" / f, staging / "runtime" / f)

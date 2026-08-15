@@ -302,6 +302,10 @@ def main() -> int:
     print(f"\n{'✓ 环境就绪' if ready else '✗ 仍缺 '+str(len(blocking))+' 项必需依赖'}  →  报告 {REPORT}")
 
     if ready and not args.skip_render and not args.probe_only:
+        # 先把 根×包 全部合成(compositions/ 是投影,不进包),再渲。
+        composer = ROOT / "styles" / "compose.py"
+        if composer.exists():
+            subprocess.run([sys.executable, str(composer), "--all"], text=True)
         renderer = ROOT / "styles" / "render_catalog.py"
         if renderer.exists():
             print("\n环境就绪,渲染样式预览(渲染图不进包,在你的机器上渲一次才算数)…")

@@ -1,0 +1,74 @@
+{
+ "schemaVersion": "handout-intake.render-scenes.v1",
+ "what": "渲染预览用的场景(块型序列)。属底座:不随根、不随包——任何组合都用同一组场景渲,预览才可比。",
+ "renderScenes": [
+  {
+   "id": "headings",
+   "title": "六级标题梯队",
+   "blocks": [
+    [
+     "CZ_ChapterTitle",
+     "第四章 光"
+    ],
+    [
+     "CZ_Heading1",
+     "第10讲 光的反射"
+    ],
+    [
+     "CZ_Heading2",
+     "概念构建"
+    ],
+    [
+     "CZ_Heading3",
+     "一、光的直线传播"
+    ],
+    [
+     "CZ_Heading4",
+     "1. 光源"
+    ],
+    [
+     "CZ_Body",
+     "光在同种均匀介质中沿直线传播。小孔成像、影子的形成都是它的例子。"
+    ],
+    [
+     "CZ_Heading3",
+     "知识点01 光的直线传播"
+    ],
+    [
+     "CZ_Heading4",
+     "2. 光的直线传播"
+    ],
+    [
+     "CZ_Body",
+     "为了便于描述光传播的路径,在物理学中用一条带箭头的直线表示光的传播方向。"
+    ]
+   ]
+  },
+  {
+   "id": "body-and-lists",
+   "title": "正文与题目",
+   "blocks": [
+    [
+     "CZ_Heading2",
+     "过关检测"
+    ],
+    [
+     "CZ_ExerciseStem",
+     "1. 下列现象中,能用光的直线传播解释的是(  )"
+    ],
+    [
+     "CZ_ChoiceOption",
+     "A. 水中倒影   B. 手影形成   C. 筷子“弯折”   D. 激光准直"
+    ],
+    [
+     "CZ_ExerciseStem",
+     "2. 光在真空中的传播速度约为 3×10⁸ m/s,合多少 km/s?"
+    ],
+    [
+     "CZ_Body",
+     "真空中的光速是自然界中最快的速度。"
+    ]
+   ]
+  }
+ ]
+}
