@@ -160,5 +160,8 @@
    "fix": "strip 的 used 集合纳入 tblStyle/numStyleLink;registry.objects 算 declared;新增 GATE_TABLE_BORDERS(读成品 docx:每张语义表须挂带可见边框的表样式或自带非 nil 边框,选项排版表排除)",
    "proof": "修前成品 16/16 无框门 fail;修后重出 16/16 有框门 pass;PDF 目视线框全回。"
   }
- ]
+ ],
+ "license": "MIT",
+ "repository": "handout-intake",
+ "licenseNote": "包内不含任何来源教材原文;vendor/ 是橙子教室自己的生产实现,同以 MIT 发布。"
 }

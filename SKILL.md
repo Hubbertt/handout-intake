@@ -209,3 +209,12 @@ python3 skill/method/scripts/export_package.py --out handout-intake.zip
 - **不猜。** 判不了的挂队列问人,不填一个看着合理的值。
 - **不手敲绕过链。** 执行器存在的理由就是不给机会;绕过它的那次今天已经把 ❌ 带进了 PDF。
 - **未填 debrief 不算完。** 写在规范里没有门守着的纪律等于没有——所以这一条有门。
+
+---
+
+## 许可
+
+[MIT](LICENSE) © 2026 橙子教室 (ChengziClass)
+
+包内 `skill/vendor/` 的 15,393 行是橙子教室在真实生产中写就的 Word/PDF 编制与审计实现，同样以 MIT 发布。
+**不含任何来源教材原文**——讲义内容、封面封底素材、册级裁决均不在仓内。
