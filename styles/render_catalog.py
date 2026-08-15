@@ -202,7 +202,11 @@ def main() -> int:
                         "renderedOn": os.uname().nodename,
                         # ★engine 只记版本不记路径:解释器路径是本机事实,而 catalog 是要随包分享的。
                         #   写绝对路径等于把一台机器的布局带进别人的仓——发布前复查抓到。
-                        "engine": {k: v for k, v in (engine or {}).items() if k != "exe"},
+                        # engine 只记版本不记路径。★首版写成 dict 推导,而这里的 engine
+                        #   是**字符串**(解释器路径),推导对字符串无效,路径原样写进 catalog——
+                        #   过滤器与被过滤的东西类型对不上,过滤等于没做,而它看着做了。
+                        "engine": (engine.get("version") if isinstance(engine, dict)
+                                   else (Path(str(engine)).name if engine else None)),
                         "scenes": scenes,
                         "status": "ok" if ok else "failed"}
     # 只渲一个模板时,其余模板的条目原样保留——首版整份重写,渲 blue 把 v1 从清单里挤掉了。

@@ -79,10 +79,12 @@ def self_check(package: dict) -> list[dict]:
         if r.is_dir(): files += list(r.rglob("*"))
         elif r.exists(): files.append(r)
     for path in sorted(set(files)):
-        # catalog.json 与 renders/ 是本机渲染的产物(记着本机解释器路径),不进包也不扫——
-        # 它们本来就该在收包的机器上重新生成。
+        # renders/ 是本机渲染的图,不进包也不扫。
+        # ★catalog.json 曾一并豁免,理由写的是「本机产物不进包」——**而它进包了也进仓了**。
+        #   注释与事实不符,豁免就成了漏洞:发布到 GitHub 后线上仍有一条本机解释器路径,
+        #   本地自检全绿。豁免必须与「进不进包」这件事实对齐,不能各说各的。现在扫它。
         if path.suffix not in (".py", ".json", ".md") or "__pycache__" in path.parts \
-                or "renders" in path.parts or path.name == "catalog.json":
+                or "renders" in path.parts:
             continue
         rel = str(path.relative_to(PRODUCT)) if str(path).startswith(str(PRODUCT)) else str(path)
         for i, line in enumerate(path.read_text(encoding="utf-8",

@@ -33,7 +33,7 @@
    "paramsSha256": "60e15814a08706e22a1f1b7914793fa8ade96b99781789afe57161bd5193bfe0",
    "renderedAt": "2026-08-16T02:55:06+08:00",
    "renderedOn": "CZClass-Mac-mini.local",
-   "engine": "/Users/czclass/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+   "engine": "python3",
    "scenes": [
     {
      "scene": "headings",
