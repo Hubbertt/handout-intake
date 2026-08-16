@@ -47,12 +47,12 @@ def section_numbering(docx: Path) -> dict:
     return {"sections": len(secs), "starts": starts}
 
 
-def builtin_checks(docx: Path) -> list[dict]:
+def builtin_checks(docx: Path, extra: dict | None = None) -> list[dict]:
     """补上对账查出的缺口里可机器判定的部分。
 
-    第三条 toc-pages-own-their-pages 不在此列:它要求「目录页上没有正文内容」,
-    而页与内容的对应关系只有 Word 分页后才知道,本门读的是 docx 静态结构。
-    **不假装能查**——如实留在 unverified 里,由 ① 使整门失败并提示它还缺。
+    三条判据都在:page-numbers-start-at-1 / toc-shares-body-numbering 读 sectPr;
+    toc-pages-own-their-pages 读**成品 PDF**(--content-pdf)——它是分页后的结果,判得了。
+    给不了 PDF 时报 unverifiable,不假装查过。
     """
     num = section_numbering(docx)
     out = []
@@ -64,6 +64,35 @@ def builtin_checks(docx: Path) -> list[dict]:
         "asserts": "首节声明 w:pgNumType w:start=1。缺声明则由本地 Word 决定起始页,"
                    "而目录页码与正文页码必须落在同一序列上。",
     })
+    # toc-pages-own-their-pages:目录页上不许有正文。
+    # ★这一条曾长期 unverified,理由是「页与内容的对应只有 Word 分页后才知道,静态读 docx 判不了」——
+    #   那是对的,但结论下早了:**成品 PDF 就是分页后的结果**。给了 --content-pdf 就能判,
+    #   给不了才是真的判不了。判据从「读不到就说查不了」改成「读得到就查,读不到就如实说没查」。
+    content_pdf = extra.get("contentPdf") if extra else None
+    if content_pdf and Path(content_pdf).exists():
+        try:
+            import fitz
+            doc = fitz.open(content_pdf)
+            toc_pages, offenders = [], []
+            for index in range(doc.page_count):
+                text = doc[index].get_text()
+                if text.count("....") > 3 or text.count("…") > 3:
+                    toc_pages.append(index + 1)
+                    for line in (l.strip() for l in text.split("\n")):
+                        # 正文行的特征:长句、不带页码引导点、不以页码结尾
+                        if len(line) > 34 and "...." not in line and not line.replace(" ", "").endswith(
+                                tuple("0123456789")):
+                            offenders.append({"page": index + 1, "line": line[:60]})
+            out.append({
+                "check": "builtin.toc-pages-own-their-pages",
+                "status": "pass" if (toc_pages and not offenders) else "fail",
+                "detail": {"tocPages": toc_pages, "bodyLinesOnTocPages": offenders[:5]},
+                "asserts": "目录所占的页上不得出现正文行。目录是读者的检索面,"
+                           "正文混进来会让「翻到这一页」和「这一页是什么」对不上。",
+            })
+        except ImportError:
+            out.append({"check": "builtin.toc-pages-own-their-pages", "status": "unverifiable",
+                        "detail": {"why": "缺 PyMuPDF,读不了成品 PDF。不假装查过。"}})
     restarts = [i + 2 for i, v in enumerate(num["starts"][1:]) if v is not None]
     out.append({
         "check": "builtin.toc-shares-body-numbering",
@@ -81,6 +110,7 @@ def main() -> int:
     ap.add_argument("--params", required=True, type=Path)
     ap.add_argument("--docx", required=True, type=Path)
     ap.add_argument("--compliance-report", required=True, type=Path)
+    ap.add_argument("--content-pdf", type=Path, help="成品内容 PDF;给了才能判目录页归属")
     ap.add_argument("--report", type=Path)
     args = ap.parse_args()
 
@@ -97,7 +127,8 @@ def main() -> int:
             # 于是 20 项全 pass 的报告被读成「一项都没跑」——**判据看的是自己的 bug**。
             # 幸而它当时报的是 fail:恒真的解析错误会静默通过,恒假的会吵。
             ran[check.get("id") or check.get("code")] = check.get("status")
-    for check in builtin_checks(args.docx):
+    extra = {"contentPdf": str(args.content_pdf)} if args.content_pdf else None
+    for check in builtin_checks(args.docx, extra):
         ran[check["check"]] = check["status"]
 
     rows, findings = [], []
@@ -132,7 +163,7 @@ def main() -> int:
     report = {"gate": "GATE_ACCEPTANCE_RECONCILIATION",
               "criteria": len(criteria), "checksAvailable": len(ran),
               "rows": rows, "findings": findings,
-              "builtin": builtin_checks(args.docx),
+              "builtin": builtin_checks(args.docx, extra),
               "status": "pass" if not findings else "fail",
               "shape": "完整性只存在于治理触及之处。验收项写在规范里、检查项写在脚本里,"
                        "两张表各自都齐,中间那层对应关系没人维护——"

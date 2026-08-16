@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.4.1",
+ "version": "2.5.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.4.0:一套样式两册共用(1 根 × 1 包)。换包前后物理成品逐页相同。",
+ "versionWhy": "2.5.0:验收对账 8/8 全过(补上最后一条 unverified);物理 A10-A14 定稿。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -166,6 +166,13 @@
    "rootCause": "两层各有一个洞叠在一起:① 渲染器写 catalog 时用 dict 推导过滤 engine,而 engine 是**字符串**,过滤对字符串无效——过滤器与被过滤的东西类型对不上,过滤等于没做而它看着做了;② 导出自检整个豁免 catalog.json,注释理由写「本机产物不进包」,**而它进包了也进仓了**——注释与事实不符,豁免就成了漏洞。",
    "shape": "本地自检全绿、线上有路径。★「推完复查线上实际内容」这一步是唯一能发现它的地方——本地干净不等于线上就对。",
    "fix": "渲染器 engine 只记版本/文件名(按类型分支);自检不再豁免 catalog.json。"
+  },
+  {
+   "at": "2026-08-16",
+   "what": "toc-pages-own-their-pages 补上判据,验收 8/8 全过",
+   "rootCause": "该条长期 unverified,理由写的是「页与内容的对应只有 Word 分页后才知道,静态读 docx 判不了」——那是对的,但**结论下早了**:成品 PDF 就是分页后的结果。判据从「读不到就说查不了」改成「读得到就查(--content-pdf),读不到才如实说没查」。",
+   "shape": "把「当前手段做不到」写成「这件事做不到」,缺口就永久化了。",
+   "fix": "gate_acceptance_reconciliation 加 --content-pdf 与 builtin.toc-pages-own-their-pages;底座登记 verifiedBy。"
   }
  ],
  "license": "MIT",

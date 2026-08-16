@@ -1926,7 +1926,9 @@
         "word.toc.entries.right-page-column",
         "builtin.toc-shares-body-numbering"
       ],
-      "toc-pages-own-their-pages": [],
+      "toc-pages-own-their-pages": [
+        "builtin.toc-pages-own-their-pages"
+      ],
       "content-page-numbers-start-at-1-on-first-toc-page": [
         "word.footer.visible-page-number",
         "builtin.page-numbers-start-at-1"
