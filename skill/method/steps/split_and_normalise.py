@@ -36,9 +36,24 @@ VOLUME_THEME = str(CHAIN.bindings.get('theme') or '').strip()
 # 否则下一个人只看到一个凭空的字符串。P6 对账时它正是 registry 唯一的残余差异。
 VOLUME_THEME_EVIDENCE = str(CHAIN.bindings.get('themeEvidence') or '').strip()
 REPORT = CHAIN.path_for('gate.split-banner')
+# 解析版(教师版)。册里没有就是 None——有的册天然没有,那不是错误。
+# 它是「带答案解析」的唯一入口:carve_engine 的答案从 annotated_word 伙伴档取,
+# 没有伙伴档时每道题都记 MISSING_ANSWER(2026-08-20 教师版首跑:158 题全中、withAnswer=0)。
+_ANNOTATED = CHAIN.resolve('source.annotated.stripped')
+ANNOTATED_SRC = _ANNOTATED[0] if _ANNOTATED else None
+ANNOTATED_OUTDIR = CHAIN.dir_for('lessons.annotated')
 # 范围由 bindings.scope.lessons 给,None = 源里有几讲做几讲。首版写死 [10..14]。
 WANT = CHAIN.scope_lessons()
-EXPECTED_BANNERS = ['概｜念｜构｜建', '深｜研｜精｜炼']
+# 横幅清单的真源是**模板表的 subModules**,不是这里。
+# 首版这里写死 ['概｜念｜构｜建', '深｜研｜精｜炼'],与模板表里同名字段并存——
+# 同一事实两处,而且代码那一处赢。2026 新版教材加了第三个栏目「情｜境｜启｜思」
+# (实测教师版与学生版各 40 处 = 20 讲 × 2 份副本;旧母本 0 处),模板表可以改,
+# 代码里那份不改就永远拦着。现在只留模板表一处。
+_SCHEMA = json.loads(Path(str(CHAIN.only('schema'))).read_text(encoding='utf-8'))
+EXPECTED_BANNERS = list(_SCHEMA.get('subModules') or [])
+if not EXPECTED_BANNERS:
+    raise SystemExit('模板表没有声明 subModules(栏目横幅)。'
+                     '拒绝用一个空清单去判——那会把每一个横幅都判成未知。')
 
 
 def banner_text(paragraph):
@@ -105,8 +120,11 @@ def _make_zip_deterministic(path) -> None:
     shutil.move(str(tmp), str(src))
 
 
-def main():
-    OUTDIR.mkdir(parents=True, exist_ok=True)
+def split_one(SRC, outdir, label):
+    """把一份源按讲切开。原卷与解析版走**同一段**逻辑——
+    两份各写一遍必然漂,今天已经在讲边界与横幅清单上各栽过一次。"""
+    outdir.mkdir(parents=True, exist_ok=True)
+    print(f'切分 {label}: {SRC.name}')
     package = zipfile.ZipFile(SRC)
     root = etree.fromstring(package.read('word/document.xml'))
     body = root.find(W + 'body')
@@ -162,7 +180,7 @@ def main():
                                  'why': f'承载文本框的段落内容不是已知横幅: {text!r}'})
             rebuilt.append(node)
 
-        # 门:每讲恰好 2 个横幅,且就是这两个
+        # 门:每讲的横幅集合必须与模板表声明的一致(不是「至少」,是「就是」)
         if sorted(seen) != sorted(EXPECTED_BANNERS):
             failures.append({'lesson': number, 'why': f'横幅数目/内容不符,实测 {seen}'})
             continue
@@ -176,7 +194,9 @@ def main():
         if sectpr is not None:
             newbody.append(etree.fromstring(etree.tostring(sectpr)))
 
-        target = OUTDIR / f'A{number}-{title.replace(" ", "")}.docx'
+        # 讲号补零:册只做 10-14 时看不出问题,做满 20 讲时 A1/A2 会排到 A10 后面。
+        # 「只在小范围里试过」的默认值,扩大范围时才露馅。
+        target = outdir / f'A{number:02d}-{title.replace(" ", "")}.docx'
         # 每档新开一个读句柄:复用同一个 ZipFile 跨多次全量重读会撞 CRC 校验状态。
         # 且不复用源的 ZipInfo——它带着原条目的 CRC 与长度。
         with zipfile.ZipFile(SRC) as source, \
@@ -188,29 +208,54 @@ def main():
             out.writestr('word/document.xml',
                          etree.tostring(newroot, xml_declaration=True,
                                         encoding='UTF-8', standalone=True))
-        results.append({'lesson': f'第A{number}讲', 'title': title,
+        results.append({'lesson': f'第A{number:02d}讲', 'title': title,
                         'path': str(target), 'bodyChildren': len(rebuilt),
                         'bannersNormalised': replaced})
-        print(f'第A{number}讲 {title}: {len(rebuilt)} 个 body 子元素, 横幅正规化 {replaced} 个')
+        print(f'  第A{number:02d}讲 {title}: {len(rebuilt)} 个 body 子元素, 横幅正规化 {replaced} 个')
 
-    status = 'pass' if not failures and len(results) == len(wanted) else 'fail'
+    return results, failures
+
+
+def main():
+    results, failures = split_one(Path(str(SRC)), OUTDIR, '原卷')
+    annotated_results, annotated_failures = [], []
+    if ANNOTATED_SRC is not None:
+        annotated_results, annotated_failures = split_one(
+            Path(str(ANNOTATED_SRC)), Path(str(ANNOTATED_OUTDIR)), '解析版')
+        # 配对判据:两侧讲号集合必须相同。差一个就不许静默——
+        # 少配到的那一讲会整讲没有答案,而链照样能跑完。
+        left = {r['lesson'] for r in results}
+        right = {r['lesson'] for r in annotated_results}
+        if left != right:
+            annotated_failures.append({
+                'why': f'原卷与解析版的讲号不一致:只在原卷 {sorted(left - right)}、'
+                       f'只在解析版 {sorted(right - left)}'})
+
+    wanted_n = len(results)
+    status = ('pass' if not failures and not annotated_failures and wanted_n
+              and (ANNOTATED_SRC is None or len(annotated_results) == wanted_n)
+              else 'fail')
     REPORT.write_text(json.dumps({
         'schemaVersion': 'chengziclass.gate-split-and-banner.v1',
         'gate': 'GATE_LESSON_SPLIT_AND_BANNER_COUNT',
-        'rule': '每讲必须恰好 2 个栏目横幅(概念构建、深研精练),且必须能拆出全部目标讲',
+        'rule': ('每讲的栏目横幅集合必须与模板表 subModules 声明的一致(是「就是」不是「至少」),'
+                 '且必须能拆出全部目标讲;册若有解析版,两侧讲号必须一一对应。'),
+        'expectedBanners': EXPECTED_BANNERS,
         'status': status,
         'lessons': results,
-        'failures': failures,
+        'annotatedLessons': annotated_results,
+        'failures': failures + annotated_failures,
     }, ensure_ascii=False, indent=2), encoding='utf-8')
 
     if status != 'pass':
-        print('门未通过:', json.dumps(failures, ensure_ascii=False))
+        print('门未通过:', json.dumps(failures + annotated_failures, ensure_ascii=False))
         raise SystemExit(1)
 
     registry = {
         'schemaVersion': 'chengziclass.source-registry.v1',
-        'note': ('一讲一档,与化学册「一课题一档」同构。物理无解析版,故无 annotated_word。'
-                 '每档由已清零宽的工作副本切出,横幅已正规化为普通段落。'),
+        'note': ('一讲一档,与化学册「一课题一档」同构。每档由已清零宽的工作副本切出,'
+                 '横幅已正规化为普通段落。册若绑定了解析版,同一讲另写一条 annotated_word,'
+                 '答案由 carve_engine 从伙伴档取——**这是「带答案解析」的唯一接线处**。'),
         # ★P6 空手复现抓出:本步只写 physicalPath,而下游 build_blueprint_from_atoms
         # 读的是 path 与 theme —— 基线里这两键是**手工补进去的**,空工作区里不存在,
         # 下游直接 KeyError。手工补过一次在工序表里没有痕迹,下一个人必在同处失败。
@@ -222,8 +267,18 @@ def main():
         'documents': [{'role': 'original_word', 'lesson': item['lesson'], 'period': None,
                        'physicalPath': item['path'], 'path': item['path'],
                        **({'theme': VOLUME_THEME} if VOLUME_THEME else {})}
-                      for item in results],
+                      for item in results]
+                     + [{'role': 'annotated_word', 'lesson': item['lesson'], 'period': None,
+                         'physicalPath': item['path'], 'path': item['path'],
+                         **({'theme': VOLUME_THEME} if VOLUME_THEME else {})}
+                        for item in annotated_results],
     }
+    if annotated_results:
+        registry['annotatedNote'] = (
+            f'解析版 {len(annotated_results)} 讲,与原卷按讲号一一配对(门已校验集合相同)。'
+            'carve_engine 只在 partner 存在时才读【答案】【详解】;'
+            '在此之前物理册的 withAnswer 恒为 0,而链照样跑完——'
+            '「有答案的源」与「答案进了成品」是两件事。')
     if VOLUME_THEME_EVIDENCE:
         registry['themeEvidence'] = VOLUME_THEME_EVIDENCE
     if not VOLUME_THEME:

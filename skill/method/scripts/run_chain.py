@@ -127,11 +127,21 @@ def run_one(step: dict, chain: Chain, state: dict, dry: bool) -> dict:
     result = {"step": sid, "phase": step.get("phase")}
 
     # 1) 输入必须存在——跳步在结构上不可能
+    #
+    # 唯一的例外是**声明为 optional 的产物**:有些册天然没有某样东西(物理暑假
+    # 讲义在 2026-08 之前就没有解析版),缺它不是错误,是这一册的形态。
+    # optional 不是「可以不管」:它仍在工序表里、仍按 sha256 追踪、册里一旦提供
+    # 就参与失效判定。它只是允许「这一册没有」这件事被如实表达,而不是逼人
+    # 要么伪造一个空文件、要么把这一路径挪到表外私下判断——后者会让它脱离
+    # 哈希追踪,源变了下游不会失效,那才是真的漏。
     missing = []
     for token in step["consumes"]:
         aid = token.split("@", 1)[0]
-        if not chain.resolve(aid):
-            missing.append(aid)
+        if chain.resolve(aid):
+            continue
+        if (chain.spec(aid) or {}).get("optional"):
+            continue
+        missing.append(aid)
     if missing:
         result.update(status="blocked", why="输入不存在,拒绝运行", missing=missing)
         return result

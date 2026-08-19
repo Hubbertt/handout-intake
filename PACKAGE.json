@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.6.0",
+ "version": "2.8.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.6.0:引擎不再写死某一册的讲范围与标题样式 id;第二册不用改代码。",
+ "versionWhy": "2.8.0:带答案解析的接线补上;缺解析版仍可跑,给了就必须配齐。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -180,6 +180,20 @@
    "rootCause": "fingerprint / census / split_and_normalise 三个步骤各自写死 pStyle=='3' 与 WANT={10..14}。前者只对 2026 物理学生版母本成立——同一套教材的教师版正文讲标题根本没有 pStyle,旧规则命中 0 个;fingerprint 拿 0 作分母抛 ZeroDivisionError,把「源读不出内容」报成了除法错误。",
    "shape": "_bootstrap 的 docstring 说「改代码换一册正是要消灭的东西」,并为**路径**建了 Chain 接口;但**范围**和**样式 id**这两层没治,于是同一个病在上一层复发,而且同一条规则抄了三份。",
    "fix": "新增 steps/_lessons.py(判据:形如第NN讲 + 段内无域代码 + 与紧邻前一条同名者判重),Chain.scope_lessons() 读 bindings.scope.lessons;三步共用。判据在两份形态不同的源上验过:教师版 20/20、学生版母本 19/19,旧规则在教师版上 0。fingerprint 的 0 分母改为显式拒绝。"
+  },
+  {
+   "at": "2026-08-20",
+   "what": "栏目横幅清单改由模板表 subModules 给,代码里不再另写一份",
+   "rootCause": "split_and_normalise 里 EXPECTED_BANNERS 与模板表同名字段并存——同一事实两处,而且代码那一处赢。2026 新版教材加了第三个栏目「情｜境｜启｜思」(实测新教师版/新学生版各 40 处 = 20 讲 × 2 份副本,旧母本 0 处),模板表可以改,代码里那份不改就永远拦着。",
+   "shape": "今天同一形状第三次:缓存根抄四处、讲范围与标题样式 id 抄三处、横幅清单抄两处。共同点都是「本该是数据的东西写进了代码」,而且每次都有一个正确的数据位就在旁边空着或被无视。",
+   "fix": "读 schema.subModules;空清单显式拒绝(空清单会把每个横幅都判成未知)。"
+  },
+  {
+   "at": "2026-08-20",
+   "what": "接上解析版:册可绑定 source.annotated,registry 按讲写出配对的 annotated_word",
+   "rootCause": "carve_engine 早就按 original_word/annotated_word 配对取答案,但链从没提供接线——两个步骤里只有注释「物理无解析版,故无 annotated_word」。于是有答案的源进来,158 题全部 MISSING_ANSWER、withAnswer=0,而链照样跑完。「有答案的源」与「答案进了成品」是两件事。",
+   "alsoFixed": "① run_chain 支持 optional 产物(缺解析版是册的形态不是错误,但给了就按 sha256 追踪);② prepare_input 在源本来就干净时直接 return 不产出工作副本——下一步因缺 source.stripped 阻塞而本步报门通过,一条干净的源就能卡住整条链;③ 讲号补零 A1→A01(册只做 10-14 时看不出,做满 20 讲时 A1 排到 A10 之后);④ 原卷与解析版共用同一段切分逻辑,不各写一遍。",
+   "gate": "两侧讲号集合必须相同,差一个即 fail——少配到的那一讲会整讲没答案,而链本来照样能跑完。"
   }
  ],
  "license": "MIT",

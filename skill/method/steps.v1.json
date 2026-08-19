@@ -291,6 +291,24 @@
    "defaultPath": "output/print/structure-manifest/*.structure.json",
    "glob": true,
    "what": "已复核的结构清单,sha256 绑定当前 Word。付印导出的硬前置。"
+  },
+  "source.annotated": {
+   "external": true,
+   "optional": true,
+   "authoredBy": "shared-asset",
+   "what": "解析版原始稿(教师版):与 source 同一批教材、同样的讲,但题后带【答案】【详解】。",
+   "why": "carve_engine 的答案是从 annotated_word 伙伴档里取的,不是从原卷里认的。没有它,每道题都会记 MISSING_ANSWER——2026-08-20 教师版首跑正是这样:158 题全部 MISSING_ANSWER、withAnswer=0。",
+   "optionalWhy": "有的册天然没有解析版(物理暑假讲义 2026-08 之前就没有)。缺它不是错误,是这一册的形态;给了就按 sha256 追踪,改了下游照样失效。"
+  },
+  "source.annotated.stripped": {
+   "defaultPath": "work/source.annotated.zero-width-stripped.docx",
+   "optional": true
+  },
+  "lessons.annotated": {
+   "defaultPath": "work/per-lesson-annotated/*.docx",
+   "glob": true,
+   "optional": true,
+   "what": "解析版按讲切出的每讲一档,与 lessons 按讲号配对写进 registry 的 annotated_word。"
   }
  },
  "steps": [
@@ -412,12 +430,14 @@
    "id": "s4a-strip-zero-width",
    "phase": "施工",
    "consumes": [
-    "source@sha256"
+    "source@sha256",
+    "source.annotated@sha256"
    ],
    "produces": [
     "source.stripped@sha256",
     "gate.no-zero-width",
-    "registry"
+    "registry",
+    "source.annotated.stripped@sha256"
    ],
    "command": [
     "{python}",
@@ -435,11 +455,13 @@
    "phase": "施工",
    "consumes": [
     "source.stripped@sha256",
-    "schema"
+    "schema",
+    "source.annotated.stripped@sha256"
    ],
    "produces": [
     "lessons@sha256",
-    "gate.split-banner"
+    "gate.split-banner",
+    "lessons.annotated@sha256"
    ],
    "command": [
     "{python}",
@@ -449,7 +471,8 @@
     "--volume",
     "{volume}"
    ],
-   "gate": "GATE_LESSON_SPLIT_AND_BANNER_COUNT"
+   "gate": "GATE_LESSON_SPLIT_AND_BANNER_COUNT",
+   "note": "拆讲并正规化栏目横幅。册若绑定了 source.annotated(解析版),同样拆一遍并按讲号配对,registry 里同时写 original_word 与 annotated_word——**这是「带答案解析」的唯一接线处**,carve_engine 只在 partner 存在时才读答案。"
   },
   {
    "id": "s4c-carve",
