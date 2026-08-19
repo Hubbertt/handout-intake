@@ -17,6 +17,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -163,6 +164,42 @@ class Chain:
             raise ChainError(f"{artifact_id} 期望恰好 1 个文件,实际 {len(found)} 个"
                              f"(模式 {self.pattern(artifact_id)})")
         return found[0]
+
+    def scope_lessons(self) -> list[int] | None:
+        """本册做哪几讲。None = 源里有几讲就做几讲。
+
+        首版没有这个接口,于是 fingerprint / census / split_and_normalise 各自
+        在文件头写死 `WANT = {10, 11, 12, 13, 14}`——同一个事实抄了三份,而且是
+        某一册的事实抄进了产品。第二册要做别的讲就得改代码,这正是 _bootstrap
+        的 docstring 里说要消灭的东西:路径那一层治好了,范围这一层没治。
+
+        bindings 写法(三种等价):
+            "scope": {"lessons": "all"}      源里有几讲做几讲(缺省)
+            "scope": {"lessons": "10-14"}    闭区间
+            "scope": {"lessons": [1, 3, 7]}  显式列举
+        """
+        raw = (self.bindings.get("scope") or {}).get("lessons")
+        if raw in (None, "", "all", "ALL"):
+            return None
+        if isinstance(raw, str):
+            text = raw.strip()
+            match = re.fullmatch(r"(\d{1,2})\s*-\s*(\d{1,2})", text)
+            if match:
+                low, high = int(match.group(1)), int(match.group(2))
+                if low > high:
+                    raise ChainError(f"scope.lessons 区间反了:{text}")
+                return list(range(low, high + 1))
+            try:
+                return sorted({int(part) for part in re.split(r"[,、\s]+", text) if part})
+            except ValueError:
+                raise ChainError(f"scope.lessons 看不懂:{raw!r};"
+                                 f'用 "all"、"10-14" 或 [1, 3, 7]')
+        if isinstance(raw, list):
+            try:
+                return sorted({int(item) for item in raw})
+            except (TypeError, ValueError):
+                raise ChainError(f"scope.lessons 列表里有非整数:{raw!r}")
+        raise ChainError(f"scope.lessons 类型不支持:{type(raw).__name__}")
 
     def unbound_externals(self) -> list[str]:
         return sorted(aid for aid, spec in self.artifacts.items()

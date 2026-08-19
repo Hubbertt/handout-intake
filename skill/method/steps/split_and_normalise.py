@@ -25,6 +25,7 @@ W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 MC = '{http://schemas.openxmlformats.org/markup-compatibility/2006}'
 
 from _bootstrap import chain_from_argv  # noqa: E402
+from _lessons import check_monotonic, pick_headings  # noqa: E402
 
 CHAIN = chain_from_argv(__doc__)
 SRC = CHAIN.path_for('source.stripped')
@@ -35,7 +36,8 @@ VOLUME_THEME = str(CHAIN.bindings.get('theme') or '').strip()
 # 否则下一个人只看到一个凭空的字符串。P6 对账时它正是 registry 唯一的残余差异。
 VOLUME_THEME_EVIDENCE = str(CHAIN.bindings.get('themeEvidence') or '').strip()
 REPORT = CHAIN.path_for('gate.split-banner')
-WANT = [10, 11, 12, 13, 14]
+# 范围由 bindings.scope.lessons 给,None = 源里有几讲做几讲。首版写死 [10..14]。
+WANT = CHAIN.scope_lessons()
 EXPECTED_BANNERS = ['概｜念｜构｜建', '深｜研｜精｜炼']
 
 
@@ -112,26 +114,33 @@ def main():
     sectpr = body.find(W + 'sectPr')
 
     # 讲边界(document order)
-    bounds = []
-    for index, child in enumerate(children):
-        if child.tag != W + 'p':
-            continue
-        style = child.find(W + 'pPr/' + W + 'pStyle')
-        if style is None or style.get(W + 'val') != '3':
-            continue
-        text = ''.join(t.text or '' for t in child.iter(W + 't')).strip()
-        match = re.match(r'^第(\d{2})讲\s+(\S.*)$', text)
-        if match:
-            bounds.append((index, int(match.group(1)), match.group(2)))
+    # 讲边界与 fingerprint / census 共用 _lessons 的同一条判据。
+    # 首版这里独立写了一遍 `pStyle == '3'`——同一条规则三处各写一份,
+    # 而它只对某一份源文件成立。
+    def _rows():
+        for index, child in enumerate(children):
+            if child.tag != W + 'p':
+                continue
+            text = ''.join(t.text or '' for t in child.iter(W + 't')).strip()
+            field = any(node.tag in (W + 'instrText', W + 'fldChar')
+                        for node in child.iter())
+            yield index, text, field
+
+    bounds = pick_headings(_rows())
+    for problem in check_monotonic(bounds):
+        print(f'  [讲号存疑] {problem}')
+    if not bounds:
+        raise SystemExit('源里没找到任何讲标题,拒绝切分。')
 
     spans = {}
     for position, (start, number, title) in enumerate(bounds):
         end = bounds[position + 1][0] if position + 1 < len(bounds) else len(children)
         spans[number] = (start, end, title)
 
+    wanted = [n for _, n, _ in bounds] if WANT is None else list(WANT)
     results = []
     failures = []
-    for number in WANT:
+    for number in wanted:
         if number not in spans:
             failures.append({'lesson': number, 'why': '未找到该讲的正文标题'})
             continue
@@ -184,7 +193,7 @@ def main():
                         'bannersNormalised': replaced})
         print(f'第A{number}讲 {title}: {len(rebuilt)} 个 body 子元素, 横幅正规化 {replaced} 个')
 
-    status = 'pass' if not failures and len(results) == len(WANT) else 'fail'
+    status = 'pass' if not failures and len(results) == len(wanted) else 'fail'
     REPORT.write_text(json.dumps({
         'schemaVersion': 'chengziclass.gate-split-and-banner.v1',
         'gate': 'GATE_LESSON_SPLIT_AND_BANNER_COUNT',

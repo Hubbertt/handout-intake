@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""块型普查(第1步):全册 19 讲。模板表是模板级,所以普查覆盖全册,裁决只做 10-14。
+"""块型普查(第1步):全册。模板表是模板级,所以普查覆盖全册;裁决范围由册的 scope 给。
 
 产出建表候选:每个候选形态给出全册命中数 + 10-14 讲命中数 + 样本。
 命中数是升格判据之一(1->1 不升格),所以必须先量再写规则。
@@ -11,17 +11,25 @@ import zipfile
 from collections import Counter, defaultdict
 
 from _bootstrap import chain_from_argv  # noqa: E402
+from _lessons import is_field_xml, pick_headings  # noqa: E402
 
 CHAIN = chain_from_argv(__doc__)
 SRC = str(CHAIN.only('source'))
 OUT = str(CHAIN.path_for('census'))
-WANT = {10, 11, 12, 13, 14}
+# 裁决范围由 bindings.scope.lessons 给,None = 全册。首版这里写死 {10..14}。
+_scope = CHAIN.scope_lessons()
+WANT = None if _scope is None else set(_scope)
 T = re.compile(r'<w:t(?:\s[^>]*)?>(.*?)</w:t>', re.S)
 
 
 def clean(s):
     """去掉零宽/控制字符再判形。源里有 115 处 U+200C 会打断行首判据。"""
     return ''.join(c for c in s if unicodedata.category(c) not in ('Cf', 'Cc'))
+
+
+def _in_scope(ch):
+    """WANT 为 None 时全册都算范围内。"""
+    return ch is not None and (WANT is None or ch in WANT)
 
 
 def main():
@@ -83,7 +91,7 @@ def main():
         for name, rx in compiled:
             if rx.search(t):
                 total[name] += 1
-                if ch in WANT:
+                if _in_scope(ch):
                     scoped[name] += 1
                 if len(samples[name]) < 4:
                     samples[name].append(t[:56])
@@ -91,15 +99,16 @@ def main():
                 break
         else:
             body_total += 1
-            if ch in WANT:
+            if _in_scope(ch):
                 body_scoped += 1
                 if len(body_samples) < 6:
                     body_samples.append(t[:60])
 
     print('=' * 72)
-    print('块型普查 · 全册 19 讲(模板级) / 第10-14讲(本轮裁决范围)')
+    _label = '全册' if WANT is None else f'第{min(WANT):02d}-{max(WANT):02d}讲'
+    print(f'块型普查 · 全册 {len(heads)} 讲(模板级) / {_label}(本轮裁决范围)')
     print('=' * 72)
-    print(f'{"候选角色":<16}{"全册":>7}{"10-14":>8}   主样式   升格判据2(命中数)')
+    print(f'{"候选角色":<16}{"全册":>7}{"范围内":>8}   主样式   升格判据2(命中数)')
     for name, _ in compiled:
         if not total[name]:
             continue
@@ -122,7 +131,10 @@ def main():
     payload = {
         'schemaVersion': 'handout-intake.census.v1',
         'source': SRC,
-        'scope': {'chapters': sorted(WANT), 'templateCensusCoversWholeVolume': True},
+        'scope': {'chapters': (None if WANT is None else sorted(WANT)),
+                  'scopeSource': 'bindings.scope.lessons(None=全册)',
+                  'lessonsFound': [n for _, n, _ in heads],
+                  'templateCensusCoversWholeVolume': True},
         'chapters': [{'index': n, 'title': t, 'startParagraph': i} for i, n, t in heads],
         'candidates': [
             {

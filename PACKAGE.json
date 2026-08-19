@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.5.0",
+ "version": "2.6.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.5.0:验收对账 8/8 全过(补上最后一条 unverified);物理 A10-A14 定稿。",
+ "versionWhy": "2.6.0:引擎不再写死某一册的讲范围与标题样式 id;第二册不用改代码。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -173,6 +173,13 @@
    "rootCause": "该条长期 unverified,理由写的是「页与内容的对应只有 Word 分页后才知道,静态读 docx 判不了」——那是对的,但**结论下早了**:成品 PDF 就是分页后的结果。判据从「读不到就说查不了」改成「读得到就查(--content-pdf),读不到才如实说没查」。",
    "shape": "把「当前手段做不到」写成「这件事做不到」,缺口就永久化了。",
    "fix": "gate_acceptance_reconciliation 加 --content-pdf 与 builtin.toc-pages-own-their-pages;底座登记 verifiedBy。"
+  },
+  {
+   "at": "2026-08-20",
+   "what": "讲边界识别与册范围收敛为一处真源;引擎不再写死某一册的事实",
+   "rootCause": "fingerprint / census / split_and_normalise 三个步骤各自写死 pStyle=='3' 与 WANT={10..14}。前者只对 2026 物理学生版母本成立——同一套教材的教师版正文讲标题根本没有 pStyle,旧规则命中 0 个;fingerprint 拿 0 作分母抛 ZeroDivisionError,把「源读不出内容」报成了除法错误。",
+   "shape": "_bootstrap 的 docstring 说「改代码换一册正是要消灭的东西」,并为**路径**建了 Chain 接口;但**范围**和**样式 id**这两层没治,于是同一个病在上一层复发,而且同一条规则抄了三份。",
+   "fix": "新增 steps/_lessons.py(判据:形如第NN讲 + 段内无域代码 + 与紧邻前一条同名者判重),Chain.scope_lessons() 读 bindings.scope.lessons;三步共用。判据在两份形态不同的源上验过:教师版 20/20、学生版母本 19/19,旧规则在教师版上 0。fingerprint 的 0 分母改为显式拒绝。"
   }
  ],
  "license": "MIT",

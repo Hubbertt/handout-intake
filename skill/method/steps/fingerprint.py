@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""指纹识别 + 块型普查:物理暑假讲义 第10-14讲 对照沪科版化学模板表。
+"""指纹识别 + 块型普查:把本册范围内的讲对照已知模板表。
 
 只读,不写任何工作区文件。输出两件:
   1) 沪科表 20 个角色在物理源上的命中率(指纹)
@@ -9,9 +9,11 @@ import json
 import re
 import sys
 import zipfile
+from pathlib import Path
 from collections import Counter, OrderedDict
 
 from _bootstrap import chain_from_argv  # noqa: E402
+from _lessons import check_monotonic, is_field_xml, pick_headings, select_scope  # noqa: E402
 
 CHAIN = chain_from_argv(__doc__)
 SRC = str(CHAIN.only('source'))
@@ -26,7 +28,9 @@ CHEM_SCHEMA = str(CHAIN.only('schema.reference'))
 OUT = CHAIN.path_for('fingerprint')
 
 T = re.compile(r'<w:t(?:\s[^>]*)?>(.*?)</w:t>', re.S)
-WANT = {10, 11, 12, 13, 14}
+# 范围不写在这里:由册的 bindings.scope.lessons 给,None = 全册。
+# 首版这里是 `WANT = {10, 11, 12, 13, 14}`——某一册的事实写进了产品。
+WANT = CHAIN.scope_lessons()
 
 
 def paragraphs(path):
@@ -45,20 +49,27 @@ def pstyle(p):
 
 def main():
     paras = paragraphs(SRC)
-    heads = []
-    for i, p in enumerate(paras):
-        if pstyle(p) != '3':
-            continue
-        m = re.match(r'第(\d{2})讲\s*(\S.*)', ptext(p))
-        if m:
-            heads.append((i, int(m.group(1)), m.group(2)))
+    # 讲边界由 _lessons 一处判定(不依赖 pStyle:同一套教材的教师版正文标题
+    # 根本没有 pStyle,旧的 `pstyle(p) != '3'` 在它上面命中 0 个)。
+    heads = pick_headings((i, ptext(p), is_field_xml(p)) for i, p in enumerate(paras))
+    for problem in check_monotonic(heads):
+        print(f'  [讲号存疑] {problem}', file=sys.stderr)
+    if not heads:
+        raise SystemExit('源里没找到任何讲标题(形如「第NN讲 标题」且不在目录域里)。'
+                         '拒绝在 0 个讲上做指纹判定——判不了就说判不了,不给一个看着合理的百分比。')
 
     # slice out chapters 10-14
+    chosen, missing = select_scope(heads, WANT)
+    if missing:
+        raise SystemExit(f'册范围要第 {missing} 讲,源里没有。'
+                         f'源里有的是 {[n for _, n, _ in heads]}。'
+                         '改 bindings.scope.lessons,或换源——不静默少做几讲。')
+    index_of = {h[0]: k for k, h in enumerate(heads)}
     scope = []
-    for k, (st, num, name) in enumerate(heads):
+    for st, num, name in chosen:
+        k = index_of[st]
         end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
-        if num in WANT:
-            scope.extend(range(st, end))
+        scope.extend(range(st, end))
     scope = sorted(set(scope))
 
     tpl = json.load(open(TPL))
@@ -93,8 +104,13 @@ def main():
             unmatched.append((i, txt))
 
     nonempty = len(scope) - empty
+    if nonempty == 0:
+        raise SystemExit(f'范围内 {len(scope)} 段全是空段,没有可判定的文字。'
+                         '拒绝以 0 为分母——首版在这里抛 ZeroDivisionError,'
+                         '把「源读不出内容」报成了一个除法错误。')
     print('=' * 66)
-    print('指纹识别:沪科版化学模板表 → 物理暑假讲义 第10-14讲')
+    scope_label = '全册' if WANT is None else f'第{min(WANT):02d}-{max(WANT):02d}讲'
+    print(f'指纹识别:模板表 {Path(TPL).name} → 本册 {scope_label}({len(chosen)} 讲)')
     print('=' * 66)
     print(f'范围内段落 {len(scope)}(空段 {empty},有文字 {nonempty})')
     print()
