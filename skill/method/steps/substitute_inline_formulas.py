@@ -55,7 +55,12 @@ def holders(node):
 
 def main():
     blueprint = json.loads(BLUEPRINT.read_text(encoding='utf-8'))
-    table = json.loads(SUBS.read_text(encoding='utf-8'))['objects']
+    _subs = json.loads(SUBS.read_text(encoding='utf-8'))
+    table = _subs['objects']
+    # 有意保留为原图的对象:词表接不住的形态(如堆叠分式)。
+    # 它们不是「漏了」,是**明写理由的例外**。门仍然对未登记的残留 fail——
+    # 放宽门等于把「还没处理」和「决定不处理」混成一件事,而前者会悄悄进成品。
+    held = _subs.get('heldAsImage') or {}
 
     substituted, missed = [], []
     for block in blueprint.get('blocks') or []:
@@ -150,23 +155,40 @@ def main():
     # ★这一处是按名匹配的,名字一变就得跟着改,否则 STYLEREF 找不到样式、
     #   页眉右区整片落空——而落空的页眉和「这一页恰好没有讲标题」长得一样。
     blueprint['headerRightStyleRef'] = '橙子二级标题'
-    blueprint['headerRight'] = '第10讲 光的反射'   # 域的缓存结果,Word 更新域后按页刷新
+    # 域的缓存结果,Word 更新域后按页刷新。取本册第一讲的标题——
+    # 首版这里写死「第10讲 光的反射」,是**旧册的事实留在共享代码里**;
+    # 换一册就带着上一册的讲名进成品,直到 Word 更新域才被盖掉。
+    _first = next((str(b.get('text') or '').strip()
+                   for b in (blueprint.get('blocks') or [])
+                   if str(b.get('style') or '') == blueprint['headerRightStyleRef']), '')
+    blueprint['headerRight'] = _first
+    blueprint['headerRightCacheWhy'] = (
+        '取本册第一个 %s 块的文本作为域缓存值;真值由 Word 更新域后按页产生。'
+        '不写死某一册的讲名。' % blueprint['headerRightStyleRef'])
     blueprint['headerRightRule'] = (
         '页眉右区写所在目录的讲级标题(PM 2026-08-15 裁定为长期规定),由 STYLEREF 域'
         '按页取 CZ_Heading1。此前写死「第四章 光」是取了最粗的一级,反了。')
 
-    remaining = sum(1 for b in (blueprint.get('blocks') or [])
-                    for h in holders(b) for s in h['segments']
-                    if isinstance(s, dict) and s.get('kind') == 'inline_image'
-                    and str(s.get('path') or '').endswith('.wmf'))
+    def _stem(seg):
+        return Path(str(seg.get('path') or '')).stem
+
+    residual = [_stem(s) for b in (blueprint.get('blocks') or [])
+                for h in holders(b) for s in h['segments']
+                if isinstance(s, dict) and s.get('kind') == 'inline_image'
+                and str(s.get('path') or '').endswith('.wmf')]
+    remaining = len(residual)
+    undeclared = sorted({stem for stem in residual if stem not in held})
+    undeclared_occurrences = sum(1 for stem in residual if stem not in held)
+    declared_occurrences = remaining - undeclared_occurrences
 
     distinct = {item['stem'] for item in substituted}
     failures = []
     if distinct != set(table):
         failures.append(f'登记 {len(table)} 个对象,替换到 {len(distinct)} 个;'
                         f'漏掉 {sorted(set(table) - distinct)}')
-    if remaining:
-        failures.append(f'仍有 {remaining} 个 .wmf 行内图未被替换')
+    if undeclared:
+        failures.append(f'仍有 {len(undeclared)} 个 .wmf 行内图既未替换、也未在 '
+                        f'heldAsImage 里登记理由:{undeclared[:8]}')
     status = 'pass' if not failures else 'fail'
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -189,6 +211,10 @@ def main():
         'occurrences': len(substituted),
         'occurrenceVsObject': '出现次数多于对象数是正常的:同一张公式图可在多段复用(#82 的 m 用了两次)',
         'remainingWmfInline': remaining,
+        'residualDeclaredHeld': declared_occurrences,
+        'residualUndeclared': undeclared_occurrences,
+        'heldAsImageObjects': {k: v.get('reads') for k, v in held.items()},
+        'heldAsImageWhy': '词表接不住的形态,明写理由保持原图;不计入失败,但计数照登。',
         'unregisteredInlineImages': {
             'count': len(missed),
             'verdict': '按裁定 R1「有实际含义且清晰的原图不动」,这些是普通行内插图,不替换',

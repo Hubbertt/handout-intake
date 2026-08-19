@@ -13,16 +13,26 @@
     而「改代码换一册」正是 _bootstrap 的 docstring 里说要消灭的东西。
     路径那一层治好了,范围和样式 id 这一层没治。
 
-现在的判据不依赖样式,只依赖结构,并且在两份形态不同的源上都验过:
+现在的判据不依赖样式,只依赖结构。每一条都是被某一份源打脸之后才加上的:
+
   ① 段落文本形如「第NN讲 <标题>」
-  ② 段内不含域代码(PAGEREF / HYPERLINK / fldChar / instrText)—— 排除目录行
-  ③ 标题与**紧邻的前一条**相同者视为重复行,只取第一条
+  ② 段内不含域代码(PAGEREF / HYPERLINK / fldChar / instrText)—— 排除**域生成的**目录
+  ③ 下一非空段也是讲标题、且**标题不同** —— 当前这条是**手打目录**的一行,跳过
+  ④ 下一非空段也是讲标题、且**标题相同** —— 后一条是重复行,留当前这条
+  ⑤ 与已收的前一条同名者跳过(兜底)
 
-第③条不是想出来的,是量出来的:学生版母本在 `第18讲 摩擦力` 之后紧跟一个无样式的
-`第19讲  摩擦力`(**重复且带错号**),在 `第19讲 牛顿第一定律` 之后同样跟一个重复行。
-旧的 pStyle 规则是**碰巧**把它们滤掉的——碰巧不是判据。
+②③ 都是「排除目录」,但排的是两种目录:新学生合并本的目录是**手打的纯文本**
+(`第02讲  长度的测量19`,页码直接打在标题后面),没有任何域代码,② 一个都滤不掉,
+于是 20 个目录行 + 20 个正文标题 = 40。③ 才接得住它。
 
-实测:教师版 20/20、学生版母本 19/19,两者讲号均连号递增;旧规则在教师版上是 0。
+④ 的存在是因为 ③ 会误伤:学生版母本在 `第18讲 摩擦力` 之后紧跟一个无样式的
+`第19讲  摩擦力`(**重复且带错号**),两条相邻,③ 会把真的那条当目录扔掉。
+目录里相邻两行必然不同名,重复行必然同名——这就是 ③④ 的分界。
+旧的 pStyle 规则是**碰巧**把重复行滤掉的,碰巧不是判据。
+
+实测(三份形态各不同的源,全对):
+  新教师版 20/20 · 新学生合并本 20/20 · 旧学生版母本 19/19,讲号均连号递增。
+  旧规则(pStyle=='3')在新教师版上是 0。
 """
 from __future__ import annotations
 
@@ -42,21 +52,37 @@ def pick_headings(items):
 
     title 是**原文**,不做规范化——它会进档名与登记,改了就是悄悄改产物。
     去空白只用于判重(「弹力 重力」与「弹力　重力」是同一条),不写回返回值。
+
+    需要看「下一段」,所以先物化成列表:目录行只有跟它后面那一段比较才认得出来。
     """
+    rows = [(index, (text or '').strip(), bool(field)) for index, text, field in items]
+    nonempty = [k for k, (_, text, _) in enumerate(rows) if text]
+
+    def head_key(k):
+        """第 k 行若是讲标题,返回去空白的标题;否则 None。"""
+        _, text, field = rows[k]
+        if field:
+            return None
+        match = LESSON_RE.match(text)
+        return re.sub(r'\s+', '', match.group(2)) if match else None
+
     out: list[tuple[int, int, str]] = []
     previous_key = None
-    for index, text, field in items:
-        if field:
+    for position, k in enumerate(nonempty):
+        key = head_key(k)
+        if key is None:
             continue
-        match = LESSON_RE.match((text or '').strip())
-        if not match:
-            continue
-        title = match.group(2).strip()
-        key = re.sub(r'\s+', '', title)
+        following = nonempty[position + 1] if position + 1 < len(nonempty) else None
+        if following is not None:
+            next_key = head_key(following)
+            if next_key is not None and next_key != key:
+                continue          # 手打目录的一行:紧跟着另一条**不同名**的讲标题
+            # next_key == key:后一条是重复行,留当前这条
         if key == previous_key:
             continue
         previous_key = key
-        out.append((index, int(match.group(1)), title))
+        match = LESSON_RE.match(rows[k][1])
+        out.append((rows[k][0], int(match.group(1)), match.group(2).strip()))
     return out
 
 
