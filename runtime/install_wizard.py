@@ -319,7 +319,14 @@ def main() -> int:
     # fontFiles:字体名 → 实体文件。它是这台机器的事实,由向导探一次、写在这里;
     # 字形门读它,不再要求每册的 bindings 各写一份(拷来的 fontFiles 是别的机器的)。
     font_files = {f["font"]: f["file"] for f in fonts if f.get("file")}
-    report = {"schemaVersion": "handout-intake.probe-report.v1", "fontFiles": font_files,
+    # ★写下是哪个版本探的。probe-report 会跨升级留存,而它装的是「这台机器的事实」——
+    # 旧版本探错了,新版本照样把它当有效事实读。2026-08-20 实测:2.1.0 的向导把
+    # Arial 解析成 ArialHB.ttc(Arial Hebrew)、Times New Roman 解析成 Bold Italic,
+    # 升到 2.9.0 后字形门仍在拿 Arial Hebrew 当 Arial 量——**没有任何东西会响**。
+    report = {"schemaVersion": "handout-intake.probe-report.v1",
+              "packageVersion": (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+                                if (ROOT / "VERSION").exists() else None,
+              "fontFiles": font_files,
               "probedAt": datetime.now().astimezone().isoformat(timespec="seconds"),
               "python": py, "packages": pkgs, "applications": apps, "fonts": fonts,
               "usableTemplates": templates_ok, "unusableTemplates": templates_bad,

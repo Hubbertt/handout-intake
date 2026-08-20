@@ -49,6 +49,12 @@
    "importName": "openpyxl",
    "why": "源文含图表对象时,编译器把图表数据写成可编辑工作簿(Word「编辑数据」打开)。无图表的册不触发,但装上才不会在有图表那天才发现。",
    "install": "pip install openpyxl"
+  },
+  {
+   "name": "fontTools",
+   "importName": "fontTools",
+   "why": "GATE_GLYPH_COVERAGE 逐 face 实测字形覆盖。**必须逐 face**:fitz.Font(fontfile=…) 对 .ttc 只加载第 0 个 face,而 Songti.ttc 的 face0(Songti SC Black)恰是整个集合里唯一没有 U+2081/U+2082 的那一个——门因此把两个能正常渲染的字符报成未覆盖。反过来同样危险:face0 有而实际使用的 face 没有时,门会放行。",
+   "install": "pip install fontTools"
   }
  ],
  "applications": [
@@ -85,5 +91,6 @@
   "why": "vendor 脚本原写死本机路径,进包时改为:环境变量 > runtime/paths.json > 可移植默认。安装向导写这份文件。"
  },
  "installWizard": "runtime/install_wizard.py —— 探测以上全部,列出缺项,逐项请求授权,授权后执行安装,写 runtime/probe-report.json;装好后自动触发 styles/render_catalog.py 渲染一次。",
- "_auditRule": "★声明的包与代码实际 import 必须一致,由 GATE_REQUIREMENTS_AUDIT 守。2026-08-16 沙盒实测抓出三种漂法:漏声明(Pillow——原机器恰好装着,五次「全新安装」都没暴露)、多声明(fontTools——声明了但没有任何代码 import,用户白装)、条件依赖(openpyxl——只在源文含图表时才 import)。sandbox 的干净 3.12 一跑就露;这就是沙盒的价值。"
+ "_auditRule": "★声明的包与代码实际 import 必须一致,由 GATE_REQUIREMENTS_AUDIT 守。2026-08-16 沙盒实测抓出三种漂法:漏声明(Pillow——原机器恰好装着,五次「全新安装」都没暴露)、多声明(fontTools——声明了但没有任何代码 import,用户白装)、条件依赖(openpyxl——只在源文含图表时才 import)。sandbox 的干净 3.12 一跑就露;这就是沙盒的价值。",
+ "_addedAt2026_08_20": "fontTools 此前未声明,而字形门 2.9.0 起依赖它。声明缺失时向导探不出,装机就少一个包——直到跑到那一步才炸。"
 }

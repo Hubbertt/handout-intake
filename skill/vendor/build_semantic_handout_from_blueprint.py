@@ -126,6 +126,41 @@ RUN_STYLE_IDS = {
     "source_tag": "CZ_SourceTag",
 }
 
+
+def run_style_ids(params: dict[str, Any] | None = None) -> dict[str, str | None]:
+    """语义名 → 字符样式。内置为底,样式包可自行声明扩充。
+
+    ★为什么要能扩:上面 italic 那条注释记着这个病的样子——
+      「样式本体一直在 wordStyleRegistry 里,只是没有语义名指向它,
+       于是蓝图无从表达斜体,run_type_for 也就没必要产出它,两边互相印证着
+       『不需要』。物理量符号源里 254 个、成品里 0 个,没有任何门报警。」
+      那次是往这个字典里手加一条解决的。手加意味着:**每加一个样式都要改代码**,
+      而样式本来是数据。2026-08-20 要加两个教学标记(√ 深琥珀 / ！亮琥珀)时,
+      同一个循环又出现了一次,于是改成让样式包自己声明。
+
+    样式包写法:在 wordStyleRegistry.characterStyles 的某个样式上加
+        "semanticName": "mark_ok"
+    该语义名即可在蓝图的 segment.run_type 里使用。
+
+    内置名不可被覆盖:样式包声明了同名的,视为冲突并报错——
+    悄悄改掉 emphasis 指向哪个样式,是最难查的一类漂移。
+    """
+    ids = dict(RUN_STYLE_IDS)
+    registry = ((params or {}).get("wordStyleRegistry") or {})
+    for style_id, spec in (registry.get("characterStyles") or {}).items():
+        if not isinstance(spec, dict):
+            continue
+        semantic = spec.get("semanticName")
+        if not semantic:
+            continue
+        if semantic in RUN_STYLE_IDS:
+            raise BlueprintError(
+                f"样式包把 semanticName {semantic!r} 指向 {style_id!r},"
+                f"但它是内置语义名(内置指向 {RUN_STYLE_IDS[semantic]!r})。"
+                "内置名不可被覆盖——悄悄改掉 emphasis 指向哪个样式是最难查的漂移。")
+        ids[str(semantic)] = style_id
+    return ids
+
 FORBIDDEN_STUDENT_MARKERS = (
     "source_id",
     "OCR复核",
@@ -468,9 +503,10 @@ def strip_inherited_unused_styles(document, params: dict) -> list[str]:
     return removed
 
 
-def style_type_for(style_id: str) -> WD_STYLE_TYPE:
+def style_type_for(style_id: str, params: dict[str, Any] | None = None) -> WD_STYLE_TYPE:
+    """★本函数当前全仓无调用。保留并保持正确,不留一个跑不到但写错的分支。"""
     return WD_STYLE_TYPE.CHARACTER if style_id in {
-        value for value in RUN_STYLE_IDS.values() if value
+        value for value in run_style_ids(params).values() if value
     } or style_id.startswith("CZ_Chemical") or style_id in {
         "CZ_Emphasis",
         "CZ_Highlight",
@@ -770,7 +806,7 @@ def install_registered_styles(document: Document, params: dict[str, Any]) -> set
     if isinstance(character_specs, dict):
         specs.update({str(k): v for k, v in character_specs.items() if isinstance(v, dict)})
     required = set(BLOCK_STYLE_IDS.values()) | {
-        value for value in RUN_STYLE_IDS.values() if value
+        value for value in run_style_ids(params).values() if value
     } | {"CZ_TableHeader", "CZ_TableText", "CZ_TocTitle"}
     missing = sorted(required - set(specs))
     if missing:
@@ -1558,9 +1594,12 @@ def add_segments(paragraph: Any, block: dict[str, Any],
             continue
         run = paragraph.add_run(str(segment.get("text") or ""))
         run_type = str(segment.get("run_type") or "plain")
-        if run_type not in RUN_STYLE_IDS:
-            raise BlueprintError(f"Unknown run_type {run_type!r} in block {block.get('id')}")
-        set_run_style(run, RUN_STYLE_IDS[run_type])
+        known = run_style_ids(params)
+        if run_type not in known:
+            raise BlueprintError(
+                f"Unknown run_type {run_type!r} in block {block.get('id')};"
+                f" 已知:{sorted(known)}。样式包可用 characterStyles.<样式>.semanticName 扩充。")
+        set_run_style(run, known[run_type])
 
 
 def toc_field_code(params: dict[str, Any]) -> str:

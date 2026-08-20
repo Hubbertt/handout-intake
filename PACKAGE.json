@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.9.0",
+ "version": "2.10.1",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.8.0:带答案解析的接线补上;缺解析版仍可跑,给了就必须配齐。",
+ "versionWhy": "2.10.0:样式词表回归数据;字形实测口径修正。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
@@ -210,6 +210,19 @@
    "howNotWeakened": "没有放宽门:未在 heldAsImage 里登记理由的残留照样 fail。放宽等于把「还没处理」和「决定不处理」混成一件事,而前者会悄悄进成品。",
    "alsoFixed": "blueprint.headerRight 的域缓存值写死为「第10讲 光的反射」——旧册的事实留在共享代码里,换一册就带着上一册的讲名进成品,直到 Word 更新域才被盖掉。改为取本册第一个该样式块的文本。",
    "gapRecorded": "分式缺口与已记录的 italic 缺口同类:都是**词表缺口不是裁决**。要替换须先给编译器加分式能力。"
+  },
+  {
+   "at": "2026-08-20",
+   "what": "run 语义名可由样式包声明扩充;字面量替换可自带 run_type;字形门逐 face 实测;probe-report 记版本",
+   "rootCause": "RUN_STYLE_IDS 是编译器里的硬编码字典,加一个字符样式要改一次代码——而样式本来是数据。该字典自己的注释就记着这个病:斜体样式一直在 registry 里、只是没有语义名指向它,于是蓝图无从表达,物理量符号源里 254 个成品里 0 个、没有任何门报警。那次是手加一条了事,病根没动。",
+   "fix": "样式包在 characterStyles.<样式>.semanticName 里自己声明语义名,编译器 run_style_ids() 合并;内置名不可被覆盖(悄悄改掉 emphasis 指向哪个样式是最难查的漂移)。substitute_literal_supersub 的 run_type 从写死两档改为规则可指定——写死的是用途不是机制。",
+   "alsoFixed": "① 字形门用 fitz.Font 读 .ttc 只加载第 0 个 face,而 Songti.ttc 的 face0(Songti SC Black)恰是集合里唯一没有 U+2081/2082 的那个,门把两个能正常渲染的字符报成未覆盖;改为 fontTools 逐 face,并记录「部分 face 有」(换字重会回退)。② probe-report 不记写它的版本,升级后旧报告照样被当有效事实读——实测 2.1.0 写下的报告把 Arial 指向 ArialHB.ttc(Arial Hebrew)、Times 指向 Bold Italic,升到 2.9.0 后门仍在拿 Arial Hebrew 当 Arial 量而没有任何东西会响;现记 packageVersion 并在不符时明说。③ fontTools 此前未声明为依赖。"
+  },
+  {
+   "at": "2026-08-20",
+   "what": "字形门:替换目标允许为空串(删除)或多字",
+   "rootCause": "describe() 直接 unicodedata.name(ch),它只接受单个字符。目标为空串时抛 TypeError——**不是 ValueError,所以连 except 都没接住**——整步崩在报告拼装上,而替换本身早已正确完成。",
+   "why": "删除是一种正当的替换:U+FE0F 这类不可见变体选择符只能删,不能换成别的字符。假设「替换目标总是一个字符」把这一类挡在门外。"
   }
  ],
  "license": "MIT",

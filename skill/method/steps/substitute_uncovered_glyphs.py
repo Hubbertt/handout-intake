@@ -76,11 +76,23 @@ def declared_font_names(params: dict) -> set[str]:
 
 
 def load_fonts(names: set[str], files: dict[str, str]) -> tuple[dict, list[str]]:
-    """字体名 → 可查字形的字体对象。查不到文件的单独返回,由调用方拒绝。"""
+    """字体名 → {face 名: 该 face 的 cmap 码位集合}。查不到文件的单独返回。
+
+    ★必须逐 face 读,不能只读第 0 号。
+      首版用 `fitz.Font(fontfile=path)`,而它对 .ttc **只加载第 0 个 face**。
+      2026-08-20 实测:Songti.ttc 的 face0 是 Songti SC Black —— 整个集合里
+      **唯一**没有 U+2081/U+2082 的那一个;face1–7(含实际使用的 SC Regular)全都有。
+      于是门把两个能正常渲染的字符报成未覆盖。
+      这不是「严格」,是**量错了对象**:它测的是没人选的那个 face。
+      反过来同样危险——换一份 ttc,face0 有而实际使用的 face 没有,门就会放行,
+      到 PDF 阶段才由 undeclared-font 报出来。
+
+    用 fontTools 而不是 fitz:它能逐 face 取 cmap,且已是本包声明的依赖。
+    """
     try:
-        import fitz
+        from fontTools.ttLib import TTCollection, TTFont
     except ImportError:
-        raise SystemExit("GATE_GLYPH_COVERAGE 需要 PyMuPDF(fitz)才能实测字形覆盖。"
+        raise SystemExit("GATE_GLYPH_COVERAGE 需要 fontTools 才能逐 face 实测字形覆盖。"
                          "装不上就不能声称覆盖已验证——这一步宁可停,不出假绿灯。")
     loaded, missing = {}, []
     for name in sorted(names):
@@ -88,7 +100,20 @@ def load_fonts(names: set[str], files: dict[str, str]) -> tuple[dict, list[str]]
         if not path or not Path(path).exists():
             missing.append(name)
             continue
-        loaded[name] = fitz.Font(fontfile=path)
+        faces = {}
+        try:
+            if str(path).lower().endswith(".ttc"):
+                for index, font in enumerate(TTCollection(path).fonts):
+                    label = font["name"].getDebugName(4) or f"face{index}"
+                    faces[str(label)] = set(font.getBestCmap())
+            else:
+                font = TTFont(path, fontNumber=0, lazy=True)
+                label = font["name"].getDebugName(4) or Path(path).stem
+                faces[str(label)] = set(font.getBestCmap())
+        except Exception as exc:                      # noqa: BLE001
+            missing.append(f"{name}(读不出:{exc})")
+            continue
+        loaded[name] = faces
     return loaded, missing
 
 
@@ -127,6 +152,26 @@ def main() -> int:
                     font_files = {}
                 if font_files:
                     break
+    # probe-report 是跨升级留存的机器事实。它由某个版本的向导写下,而那个版本
+    # 可能探错——2026-08-20 实测:2.1.0 写下的报告把 Arial 指向 ArialHB.ttc
+    # (Arial Hebrew)、Times New Roman 指向 Bold Italic;升到 2.9.0 后这一步
+    # 仍在拿 Arial Hebrew 当 Arial 量,而没有任何东西会响。
+    # 版本不符不阻断(旧报告未必错),但必须让人看见。
+    _probe_version = None
+    _pkg_version = None
+    try:
+        _pkg = Path(__file__).resolve().parent.parent.parent.parent / "VERSION"
+        if _pkg.exists():
+            _pkg_version = _pkg.read_text(encoding="utf-8").strip()
+        for _base in (Path(__file__).resolve().parents[3],):
+            _rep = _base / "runtime" / "probe-report.json"
+            if _rep.exists():
+                _probe_version = json.loads(_rep.read_text(encoding="utf-8")).get("packageVersion")
+                break
+    except Exception:                                   # noqa: BLE001
+        pass
+    _probe_stale = bool(_pkg_version and _probe_version != _pkg_version)
+
     fonts, missing_files = load_fonts(names, font_files)
     if missing_files:
         REPORT.parent.mkdir(parents=True, exist_ok=True)
@@ -148,11 +193,24 @@ def main() -> int:
     ignored = [e for e in (policy.get("acceptedWithEvidence") or [])
                if not (e.get("evidence") and e.get("queuedFix"))]
 
+    partial: dict[str, list[str]] = {}
+
     def covered(ch: str) -> bool:
+        """任一声明字体的**任一 face** 有该字形即算覆盖。
+
+        同时记下「有的 face 有、有的没有」的情况:那意味着换个字重就会回退,
+        不阻断,但必须让人看见——沉默地按最宽的一档放行,是把风险藏起来。
+        """
         code = ord(ch)
         if fast_covered(code) or ch in accepted:
             return True
-        return any(font.has_glyph(code) for font in fonts.values())
+        hit, miss = [], []
+        for name, faces in fonts.items():
+            for label, cmap in faces.items():
+                (hit if code in cmap else miss).append(f"{name}/{label}")
+        if hit and miss:
+            partial.setdefault(ch, sorted(miss))
+        return bool(hit)
 
     holders: list = []
     walk_text(blueprint, holders)
@@ -176,9 +234,19 @@ def main() -> int:
             holder["text"] = new
 
     def describe(ch: str) -> str:
+        """字符的 Unicode 名。**替换目标可以是空串(删除)或多字**。
+
+        首版直接 unicodedata.name(ch),它只接受单个字符:目标为空串时抛
+        TypeError(不是 ValueError,所以连 except 都没接住),整步崩在报告拼装上。
+        删除是一种正当的替换——U+FE0F 这类不可见修饰符只能删,不能换成别的字符。
+        """
+        if not ch:
+            return "(删除)"
+        if len(ch) > 1:
+            return " + ".join(describe(c) for c in ch)
         try:
             return unicodedata.name(ch)
-        except ValueError:
+        except (ValueError, TypeError):
             return "?"
 
     report = {
@@ -186,6 +254,14 @@ def main() -> int:
         "schemaVersion": "handout-intake.gate.glyph-coverage.v1",
         "declaredFonts": sorted(names),
         "fontFilesUsed": {n: font_files[n] for n in sorted(fonts)},
+        "probeReportVersion": _probe_version,
+        "packageVersion": _pkg_version,
+        "probeReportStale": _probe_stale,
+        "probeReportStaleWhy": ("probe-report 由别的版本的向导写下。它装的是本机字体路径,旧版本探错时新版本照样当有效事实读——重跑 runtime/install_wizard.py --probe-only 可刷新。"
+                                if _probe_stale else None),
+        "facesPerFont": {n: sorted(f) for n, f in sorted(fonts.items())},
+        "partiallyCoveredByFace": {c: v for c, v in sorted(partial.items())},
+        "partiallyCoveredWhy": "该字符只有部分 face 有;换字重可能回退。不阻断,但登记。",
         "substitutionsApplied": [
             {"from": src, "to": subs[src], "occurrences": n,
              "fromName": describe(src), "toName": describe(subs[src])}

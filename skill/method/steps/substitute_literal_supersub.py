@@ -62,9 +62,14 @@ def split_segments(segments: list, rules: dict[str, dict]) -> tuple[list, int]:
                 buf = ""
             marked = dict(seg)
             marked["text"] = rule["to"]
-            # 与既有 19 个公式对象同一套标记,不另起一套命名
-            marked["run_type"] = ("chemical_superscript" if rule.get("form") == "superscript"
-                                  else "chemical_subscript")
+            # 规则可直接指定 run_type;不指定时按 form 落到上下标那两档。
+            # ★放开这一层是因为机制本来就是「字面量 → 带 run_type 的段」,
+            #   与「是不是上下标」无关。2026-08-20 要把 ✅/⚠️ 换成带色的
+            #   √/！时撞上:同一个机制、只差一个 run_type,却因为这里写死了
+            #   两个值而用不了。写死的是**用途**,不是**机制**。
+            marked["run_type"] = str(rule.get("runType") or (
+                "chemical_superscript" if rule.get("form") == "superscript"
+                else "chemical_subscript"))
             marked["literalSource"] = ch
             out.append(marked)
             changed += 1
