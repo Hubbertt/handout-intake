@@ -1,0 +1,605 @@
+{
+ "schemaVersion": "chengziclass.handout-carve-schema.v1",
+ "id": "physics-g08-summer-2026.v2",
+ "status": "provisional",
+ "statusNote": "v2 为 2026-08-20 新建,答案解析层未建角色,未经使用方审核。",
+ "rule": "Every rule the carve applies lives here, not in code. Adding a role, a banner or a tag is a data change. Order matters: within roles the first match wins, so the list is written most specific first.",
+ "provenance": {
+  "builtBy": "建表流程(SKILL.md 开始一次任务 第2步)",
+  "why": "指纹识别:沪科版化学模板表 huke-wusi-2024.v1 对本源仅覆盖 62.7%(670/1068),12 个角色零命中。按「不像→走建表流程,绝不强行套最像的那个」重建。",
+  "censusReport": "../../census/block-census.v1.json",
+  "sourceOriginal": "<来源 Word 原稿:橙子教室-八年级物理暑假班-教师版.docx>(内部资料,不随包分发;仅作溯源标识)",
+  "sourceSha256": "65d3521c68b3ad7b546a00726ec609ba5ff8d1ab525868cbebf08dbb8e47701b",
+  "censusScope": "模板表是模板级,普查覆盖全册 19 讲;本轮裁决只做第10-14讲。",
+  "v2BuiltFrom": "source-originals/2026-08-19-physics-g08-summer-teacher-and-student/8上物理暑假预习原卷/橙子教室-八年级物理暑假班-教师版.docx",
+  "v2SourceSha256": "f6d936066800e4501304…(见 manifests/2026-08-19-physics-g08-summer-source-batch.json)",
+  "v2LessonNumbering": "20 讲制,序言=第01讲。真源 manifests/2026-08-19-physics-g08-summer-lecture-roster.json",
+  "v2AnswerLayerStatus": "★未建角色。教师版含【答案】460/【详解】450/【解析】10/【分析】3/【点睛】2 = 925 处,v1 的 13 个角色无一对应。按真源图第④条,建表前先普查计数、命中数是升格判据,当前尚未做——**本表在此项上不完整,不得据此宣称覆盖答案解析**。"
+ },
+ "fingerprint": {
+  "hints": [
+   "讲标题为 style=3 的「第NN讲 标题」,目录项为 style=26 同形但行尾带页码",
+   "栏目横幅是全角竖线分隔的文本「概｜念｜构｜建」「深｜研｜精｜炼」,每处两份(文本框一份+普通段一份)",
+   "知识点标题为「知识点NN 名称」,不带◆",
+   "例题/即练用【例N】【即练N】,归纳用【探究归纳】",
+   "无【答案】标记——学生版无配套解析版"
+  ],
+  "distinguishFromHuke": "沪科版用◆知识点/考点/专题/课题/课时,本模板一个都没有;本模板的讲/栏目横幅/即练沪科版一个都没有。"
+ },
+ "questionNumberRegex": "^(\\d{1,2})\\s*(?:[．、]|\\.(?=\\s|\\D))",
+ "optionMarkers": {
+  "chars": "ABCDEFGH",
+  "separators": [
+   "．",
+   "."
+  ],
+  "boundaryRule": "A marker counts unless the character before it is an ASCII letter. 本源同样把选项挤在一行(「A．月亮  B．钻石C．太阳  D．玻璃」),要求空白会丢掉大部分选项。",
+  "boundaryChars": [
+   " ",
+   "\t",
+   "　"
+  ],
+  "rejectPrecedingClass": "ASCII letter",
+  "groups": "A question may carry several option groups when it has sub-questions; completeness is judged per group, not over the concatenation.",
+  "charsUsedBy": "optionMarkers.chars 是选项标号的唯一定义。roles 里的选项行模式写 {optionChars} 占位,由 carve_engine 代入。本册实测第11讲出现 E 选项(「E．玻璃从中间破裂了,所以不成像」),故字符集必须到 E 以上——写 ABCD 会让 E 掉出选项组单独成行。"
+ },
+ "sectionBanners": {
+  "92b848c96151": {
+   "label": "新知导航",
+   "caption": null,
+   "layout": "banner",
+   "role": "块标题",
+   "_evidence": "word/media/image3.png 3997B。学生合并本引用 20 次、教师版 20 次(=每讲一次)。文档顺序实测(A02):@1 出现,**早于** 01 预习航标(@12)——它是讲首的块标题,不是三栏之一。与化学册的「教学目标」同类:当栏目处理会凭空多出一个文档结构里没有的栏目。"
+  },
+  "10ee9fcbf9e5": {
+   "label": "预习航标",
+   "caption": null,
+   "layout": "banner",
+   "role": "栏目",
+   "_evidence": "word/media/image4.png 18015B,图面作「01 预习航标」。学生 20 次 / 教师 20 次。A02 实测 @12,其后是「关键词」「学习目标导航」。与序言的内容导航「01 预习航标→析目标·明方向」对应。"
+  },
+  "d5fa6ea404fd": {
+   "label": "教材全解",
+   "caption": null,
+   "layout": "banner",
+   "role": "栏目",
+   "_evidence": "word/media/image5.png 18283B,图面作「02 教材全解」。学生 22 次 / 教师 20 次——★学生本多 2 次,未查明多在哪,如实记录,不当作 20 处理。A02 实测 @22,其下依次是子模块 情｜境｜启｜思(@23)/概｜念｜构｜建(@26)/深｜研｜精｜炼(@40)。"
+  },
+  "596a821562bc": {
+   "label": "过关检测",
+   "caption": null,
+   "layout": "banner",
+   "role": "栏目",
+   "_evidence": "word/media/image20.png 19060B,图面作「03 过关检测」。学生 20 次 / 教师 20 次。A02 实测 @142,其后是「一、单选题」「二、填空题」。★label 写「过关检测」而非「03 过关检测」:下游 normalise_atoms 以 section=='过关检测' 为判据,图面上的编号是版式,不是这个栏目的名字。"
+  }
+ },
+ "sectionBannersNote": "★2026-08-20 重建。v1 只声明了一张 698c6dd8dc10「过关检测」(旧母本 image26.png,引用 19 次=每讲一次)。新版教材把栏目头全部换成了带编号的新图,旧哈希在新学生合并本与新教师版里**各 0 处**,于是四个栏目一个都认不出来——实测新册全部 796 个原子的 section 都是 None,而链照样跑到 s4c2 才停、停的还是别的原因(「还原 0 条」)。★形状:sectionBanners 的键是**图片内容哈希**,即某一次导出的事实。教材重新导出一次,键就全废,而失效方式是**静默的**——不是报错,是所有栏目消失。判据依赖内容哈希时,必须有一条门盯着「命中数是否为 0」。旧母本与新学生合并本共有 607 张图完全相同,差的就是这几张栏目头,所以这不是换了一套教材,是同一套换了版式。",
+ "subModules": [
+  "情｜境｜启｜思",
+  "概｜念｜构｜建",
+  "深｜研｜精｜炼"
+ ],
+ "subModulesNote": "命中证明(2026-08-20 实测,先量再写规则):三个横幅在新教师版各 40 处、新学生合并本各 40 处,= 20 讲 × 2 份副本(mc:Choice + mc:Fallback),比例与 v1 时代的 38=19×2 一致。旧母本「情｜境｜启｜思」0 处——所以它不是 v1 漏登记,是新版教材真的加了这个栏目。承载段原本装在绘图对象里,自身文本是被打散的残文;预处理把它们正规化成普通段落后 probe 才等于横幅原文。★清单的真源就是本字段:2.7.0 起 split_and_normalise 读它,不再在代码里另写一份 EXPECTED_BANNERS。",
+ "retiredRoles": [
+  {
+   "id": "栏目横幅",
+   "retiredAt": "2026-08-14 试制第二阶段",
+   "firstVersion": {
+    "kind": "section-banner",
+    "pattern": "^[概深][｜|][念研]",
+    "sortOrder": 12
+   },
+   "why": [
+    "错一:kind=section-banner 的分支做 role.split('·')[1],要求 id 形如「栏目横幅·标签」。裸 id 一旦命中就 IndexError。",
+    "错二(更根本):它永远不会命中。role_of 只拿 probe(段落自身文本)匹配,而横幅承载段的自身文本是被打散的残文「｜念｜构｜建概｜念｜｜」。引擎里 kind=section-banner 只能由 banner_of 产生,banner_of 按图片哈希查 sectionBanners——化学横幅是图片,物理横幅是文字,天生查不到。",
+    "留记录不删干净:这是登记册 P8「判据恒假」的一个实例。删掉就没人知道这里踩过坑,下一个建表的人会照着化学表再写一遍。"
+   ]
+  }
+ ],
+ "hierarchyMapping": {
+  "document": "讲(一讲一档,与化学「一课题一档」同构)",
+  "section": "栏目,由 sectionBanners 的图片横幅产生:预习航标 / 教材全解 / 过关检测。★v1 这里写的是「本模板不使用…物理没有图片横幅」——那对 2026 旧版成立(它只有过关检测一张图),对新版不成立。新版四张图片横幅,三张是栏目、一张(新知导航)是讲首块标题。",
+  "subsection": "子模块,由 subModules 的文本横幅接住:情｜境｜启｜思 / 概｜念｜构｜建 / 深｜研｜精｜炼,都挂在「教材全解」之下。v1 只有后两个。",
+  "node": "知识点标题(kind=section)",
+  "note": "讲 → 栏目 → 子模块 → 知识点。★v1 note 写「过关检测块无横幅,边界由 exerciseBlockBoundary 推导」——那也已不成立:新版过关检测有自己的图片横幅。",
+  "_threePlacesRule": "一个栏目要真正生效,必须同时在三处登记:① schema.sectionBanners(按图片哈希认图)或 schema.subModules(按文本认)② 私有规范 blocks 的 '栏目横幅·<label>' / '子模块横幅·<文本>' 条目(给版式)。缺 ② 时 carve 认得出、却一个块都不产出,源对象成为未归属——**认得出 ≠ 排得出**。"
+ },
+ "calloutHeads": [],
+ "calloutHeadsNote": "命中证明:本册文本框内容只有上面两种横幅,没有任何提示框。按前置纪律3「每个筛子上线时证明它命中过」,不写永不命中的判据——写了就是 P8 判据恒假。本模板的【探究归纳】是普通段落,已作为 role 登记。",
+ "roles": [
+  {
+   "id": "目录项",
+   "kind": "toc",
+   "pattern": "^第\\d{2}讲\\s+\\S.*\\d$",
+   "sortOrder": 10,
+   "note": "目录与正文标题同形,唯一判别是行尾页码。全册 19 个讲标题的标题文字无一以数字结尾(长度的测量/光的反射/牛顿第一定律…),故此判据不会误吃正文标题。不排除目录,普查会把 19 个目录项算成讲标题,得出 40 个讲标题而全册只有 19 讲。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "正文里的讲标题(同形,唯一差别是行尾页码)"
+    ],
+    "howDistinguished": "行尾必须是数字。全册 20 个讲标题的标题文字无一以数字结尾,故不会误吃正文标题。",
+    "measuredNote": "实测 20 处。不排除目录的话,普查会把目录项算成讲标题,得出 40 个而全册只有 20 讲。"
+   }
+  },
+  {
+   "id": "讲标题",
+   "kind": "header",
+   "pattern": "^第\\d{2}讲\\s+\\S",
+   "sortOrder": 11,
+   "note": "正文讲标题,源里样式为 3。全册应恰好 19 个;多于 19 说明源里有重复标题行(已知第18/19讲各多挂一行,第18讲那行编号还写错成「第19讲 摩擦力」)。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "目录项(同形,行尾带页码)",
+     "源里每讲开头重复写的第二行讲标题"
+    ],
+    "howDistinguished": "目录项由更靠前的角色接走;重复行由 hierarchy.titleRoleLevels 的同层去重接走(2026-08-20 实测每讲 2 条,20 讲全中)。",
+    "measuredNote": "实测 40 处 = 20 讲 × 2(源里每讲开头写两遍,样式 Heading1 + 无样式)。"
+   }
+  },
+  {
+   "id": "知识点标题",
+   "kind": "section",
+   "pattern": "^知识点\\s*\\d+",
+   "sortOrder": 20,
+   "note": "全册 50 处。沪科版写「◆知识点」,本模板不带◆,这是两表不能互套的判据之一。",
+   "evidence": {
+    "shapeIsUnique": true,
+    "why": "「知识点NN」这个前缀在本源里只用于深研精炼的知识点标题;沪科版写「◆知识点」,本模板不带◆,这是两表不能互套的判据之一。"
+   }
+  },
+  {
+   "id": "题型小标题",
+   "kind": "section",
+   "pattern": "^[一二三四五六七八九十]+[、．.]\\s*(单选题|多选题|选择题|填空题|实验题|简答题|计算题|作图题|综合题)",
+   "sortOrder": 21,
+   "note": "源里不一致:全册 24 处,第10-14讲只有 1 处(第10讲「一、单选题」)。第11-14讲的题块无任何题型标记,直接从「1．」开始。因此过关检测边界不能靠这条判据,见 exerciseBlockBoundary。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "中文编号标题(同为「一、xxx」,只是 xxx 不是题型词)"
+    ],
+    "howDistinguished": "题型词表限定(单选题/多选题/选择题/填空题/实验题/简答题/计算题/作图题/综合题),且 sortOrder 21 排在中文编号标题 22 之前。",
+    "measuredNote": "实测 26 处,只在 10/20 讲出现。"
+   }
+  },
+  {
+   "id": "中文编号标题",
+   "kind": "section",
+   "pattern": "^[一二三四五六七八九十]+[、．.]\\s*\\S",
+   "sortOrder": 22,
+   "evidence": {
+    "alsoMatchesShape": [
+     "题型小标题",
+     "单元卷的带分值节标题「一、学科基础（共38分）」"
+    ],
+    "howDistinguished": "更具体的两者排在前面先命中;本表用于教材全解下的概念小节。",
+    "measuredNote": "实测 75 处。"
+   }
+  },
+  {
+   "id": "例题题干",
+   "kind": "stem",
+   "pattern": "^【例\\s*\\d*】",
+   "sortOrder": 30,
+   "evidence": {
+    "shapeIsUnique": true,
+    "why": "【例N】是方括号标记,本源里只用于例题。"
+   }
+  },
+  {
+   "id": "即练题干",
+   "kind": "stem",
+   "pattern": "^【即练\\s*\\d*】",
+   "sortOrder": 31,
+   "evidence": {
+    "shapeIsUnique": true,
+    "why": "【即练N】同上。"
+   }
+  },
+  {
+   "id": "探究归纳",
+   "kind": "body",
+   "pattern": "^【探究归纳】",
+   "sortOrder": 32,
+   "note": "全册 50 处,与例题同数量级——每个知识点一处。沪科版的对应物走 calloutHeads(文本框),本模板是普通段落。",
+   "evidence": {
+    "shapeIsUnique": true,
+    "why": "【探究归纳】同上;沪科版的对应物走文本框(calloutHeads),本模板是普通段落。"
+   }
+  },
+  {
+   "id": "编号项",
+   "kind": "stem",
+   "pattern": "^\\d{1,2}\\s*(?:[．、]\\s*\\S|\\.(?:\\s+\\S|\\s*[^\\s\\d]))",
+   "sortOrder": 33,
+   "note": "源里三种分隔符都用(1. / 1． / 1、),写死一种会漏。排在选项行之前:以数字开头的行是题干,哪怕行内含选项标号,选项由 split_options 从题干里切。\n★2026-08-20 收紧。原判据 `^\\d{1,2}\\s*[．.、]\\s*\\S` 把**小数**也当成题号:「0.04s×3=0.12s故B符合题意…」(详解的续行)因此被判成一道新题,题干变成「04s×3=0.12s故B符合题意…」——一道凭空多出来的题,内容是别人的答案。全语料实测:旧判据 1738 命中里 232 条其后紧跟数字。\n收紧的关键是**别一刀切**。先试「其后是数字就否」——会误伤 `7. 1583年…`;再试「分隔符后要有空格」——会误伤 `4．2025年我国在航空领域…`(全角句点,后面直接是年份)。真正的分界是**分隔符宽度**:小数一律用半角 `.`,题号三种都用。所以:全角 `．`/`、` 一律是题号;半角 `.` 只有在其后有空白、或紧跟非数字时才是题号。\n实测该判据排除 226 条,全部是小数与量值(38.7℃ / 0.1 / 33.2 …),超过 16 字的只有那条详解续行;两道以年份开头的真题干(4．2025年… / 5．2026年 2月 11日…)保住。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "小数与量值(0.1 / 38.7℃ / 0.04s×3=0.12s)",
+     "学习目标与讲解条目的编号(1. 知道物理学…)"
+    ],
+    "howDistinguished": "分隔符宽度:全角 ．、 一律题号;半角 . 需其后有空白或紧跟非数字。讲解类编号由 questionScope 按所在栏目排除,不靠形状分辨。",
+    "tightenedAt": "2026-08-20",
+    "redGreen": {
+     "before": "^\\d{1,2}\\s*[．.、]\\s*\\S",
+     "red": "详解续行「0.04s×3=0.12s故B符合题意，ACD不符合题意。故选B。」被判成新题,题干变成「04s×3=…」——第A03讲因此多出 1 道幻影题(21 题)。",
+     "green": "第A03讲 20 题,幻影题消失。收紧判据排除 226 条全为小数量值;两道以年份开头的真题(4．2025年… / 5．2026年 2月 11日…)保住。",
+     "triedAndRejected": [
+      "「其后是数字就否」→ 误伤 7. 1583年，意大利物理学家…",
+      "「分隔符后须有空格」→ 误伤 4．2025年我国在航空领域…(全角句点直接接年份)"
+     ]
+    },
+    "measuredNote": "收紧后实测 756 处(收紧前 1738 命中里 232 条其后紧跟数字)。"
+   }
+  },
+  {
+   "id": "教科书体例·分析",
+   "kind": "body",
+   "pattern": "^分析[：:]",
+   "sortOrder": 34,
+   "tag": "explanation",
+   "inline": true,
+   "note": "★源里有一小部分题不用【答案】/【详解】,而用教科书体例:「分析：…」「解：…」「答：…」。实测全册 11 处(分析 8 / 解 1 / 答 2),分布在第03/07/08/11/12/18/20讲。不认这一类,A18【例1】这样的题进库就是**有题干无答案**。\n★必须做成 role 而不是 tag:tags 作用在**拼接后的整串**上(joined 无分隔符),锚不了行首;而「分析：」在段中有 10 处(都是小问里的「（1）分析：反射光线和入射光线与镜面的关系。」),「答：」段中 2 处(其中一处是**填空**「答：______；原因是______」)。非锚定判据会把这些全吃掉。role 是逐段匹配,天然锚定。\ntag=explanation + inline=true:管线的 _INLINE_TAG_STRIP_RE 会剥掉「分析：」这类短前缀,正文进解析字段。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "小问里的行内「（1）分析：反射光线和入射光线与镜面的关系。」(段中,10 处)"
+    ],
+    "howDistinguished": "做成 role 而非 tag:role 逐段匹配、天然锚行首;tag 作用在 joined(段落直接拼接、无分隔符)上锚不了行首。",
+    "measuredNote": "实测段首 9 处(教师版单源计),段中另有 10 处必须排除。"
+   }
+  },
+  {
+   "id": "教科书体例·答解",
+   "kind": "body",
+   "pattern": "^(?:解|答)[：:]",
+   "sortOrder": 35,
+   "tag": "answer",
+   "inline": true,
+   "note": "与「教科书体例·分析」同因,见其 note。实测段首:解 1 处、答 2 处,均为解答;段中:解 1 处(在【详解】里)、答 2 处(「请回答：」与填空「答：______」)——故必须锚定行首。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "【详解】里的「解：」(段中 1 处)",
+     "正文里的「请回答：」与填空「答：______；原因是______」(段中 2 处)"
+    ],
+    "howDistinguished": "同上,锚行首。",
+    "measuredNote": "实测段首 3 处。★段中那处填空若被吃掉,会把一道题的空当成答案。"
+   }
+  },
+  {
+   "id": "小问",
+   "kind": "body",
+   "pattern": "^[（(]\\s*\\d+\\s*[)）]",
+   "sortOrder": 36,
+   "note": "源里全角半角括号混用,两种都收。 讲义册实测 原卷5+解析版16=21 段。★2026-08-20 前移到选项行之前。原本 小问 41 / 圈号项 42 排在 选项行 39/40 之后,而源里大量小问自带行内选填(「（1）实验采用的科学方法是_____（选填“A．控制变量法”或“B．等效替代法”）；」),两个选项标号让它先命中选项行——**整条小问文本被拆成两个假选项而销毁**(实测该题的 options 变成 ['控制变量法”或“', '等效替代法”）；'],小问 (1) 从原子里整条消失)。本表 编号项 早就写着「排在选项行之前:以数字开头的行是题干,哪怕行内含选项标号」——同一条道理,小问与圈号项当时没跟上。全量实测(两册原卷+解析版共 43 段、去重 15 条):无一是真正的选项行,重排不误伤。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "自带行内选填的小问会同时命中选项行判据"
+    ],
+    "howDistinguished": "sortOrder 36 排在选项行 39/40 之前。",
+    "tightenedAt": "2026-08-20",
+    "redGreen": {
+     "before": "小问 sortOrder 41,排在选项行之后",
+     "red": "「（1）实验采用的科学方法是＿（选填\"A．控制变量法\"或\"B．等效替代法\"）」整条被拆成两个假选项而销毁,小问从原子里消失。",
+     "green": "小问全文归位,假选项消失。全量实测 43 段(去重 15 条)受影响,无一是真正的选项行。"
+    },
+    "measuredNote": "实测 1131 处。"
+   }
+  },
+  {
+   "id": "圈号项",
+   "kind": "body",
+   "pattern": "^[①-⑳]",
+   "sortOrder": 37,
+   "note": "与小问同因同修,见小问的 note。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "与小问同因(行内选填)"
+    ],
+    "howDistinguished": "同小问,sortOrder 37 排在选项行之前。",
+    "measuredNote": "实测 237 处。"
+   }
+  },
+  {
+   "id": "选项行",
+   "kind": "body",
+   "pattern": "^.*?[{optionChars}][．.]\\s*\\S.*?[{optionChars}][．.]\\s*\\S",
+   "sortOrder": 39,
+   "note": "两个以上选项标号就是选项行,哪怕行首不是 A．。沿用沪科表这条经验:行首漏写标号时按行首形态会判成别的角色,自动编号再把标号补回去,看着对而结构是错的。",
+   "idMustStayExactly选项行": "**这两条选项规则必须共用同一个 id。** 引擎在 carve() 里按 `if role == \"选项行\"` 精确分派才做选项切分——id 一改,这一整段就跳过,选项全部退化成正文,图片选项的图会挂到题干上。我第一版把这条改名成「选项行·多标号」以便命中统计能分开两条,结果 3 处纯图片选项行共 10 张图全部丢失选项归属(optionsCarryingImages=0)。沪科表里两条同名不是笔误,是承重结构;我当时把它记成缺陷,是我判错了。要区分命中统计,得在 note 里另加标识,不能动 id。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "【详解】里逐选项讲解的「A．量角器是…故A不符合题意；」——**形状完全相同**",
+     "小问/圈号项里的行内选填"
+    ],
+    "howDistinguished": "逐选项讲解只能靠上下文分辨(标签激活期间一切归标签),形状分辨不了——这条在 handout-intake 侧靠 questionScope/答案区截断,在题库侧靠 pipeline 的 active_tag 分支优先。行内选填靠 sortOrder(小问/圈号项在前)。",
+    "measuredNote": "两条同 id 规则合计实测 299 + 793 处。★两条必须共用同一个 id:引擎按 role==\"选项行\" 精确分派才做选项切分,改名会让选项全部退化成正文。"
+   }
+  },
+  {
+   "id": "选项行",
+   "kind": "body",
+   "pattern": "^[{optionChars}][．.]\\s*\\S",
+   "sortOrder": 40,
+   "evidence": {
+    "alsoMatchesShape": [
+     "【详解】里逐选项讲解的「A．量角器是…故A不符合题意；」——**形状完全相同**",
+     "小问/圈号项里的行内选填"
+    ],
+    "howDistinguished": "逐选项讲解只能靠上下文分辨(标签激活期间一切归标签),形状分辨不了——这条在 handout-intake 侧靠 questionScope/答案区截断,在题库侧靠 pipeline 的 active_tag 分支优先。行内选填靠 sortOrder(小问/圈号项在前)。",
+    "measuredNote": "两条同 id 规则合计实测 299 + 793 处。★两条必须共用同一个 id:引擎按 role==\"选项行\" 精确分派才做选项切分,改名会让选项全部退化成正文。"
+   }
+  }
+ ],
+ "exerciseBlockBoundary": {
+  "rule": "每讲的过关检测块 = 引用过关检测横幅图片(sectionBanners 键 698c6dd8dc10)的那一段起,到该讲结束。",
+  "measured": "第A10-A14讲逐讲验证,横幅各引用一次、位置在题块起点前 1-2 段:A10 p[177]→题起 p[179]、A11 p[125]→p[126]、A12 p[146]→p[147]、A13 p[166]→p[167]、A14 p[141]→p[142]。5/5。",
+  "fallback": {
+   "rule": "查不到横幅时,退回「该讲最后一个【即练】之后的首个 1．/1./1、编号项」",
+   "status": "兜底,不是主判据",
+   "why": "这条曾被我当成主判据。当时的理由是「源里没有过关检测栏目,它是老流程加的」——错的,见 sectionBannersNote。留作兜底而不是删掉:万一某讲的横幅换了图,兜底能接住并让门报出差异,而不是静默丢掉整个题块。"
+  },
+  "gate": "GATE_EXERCISE_BOUNDARY_UNIQUE:每讲必须且只能检出一个边界,且主判据与兜底判据应指向同一位置(允许 1-2 段偏移)。两者不一致或检出数≠1,报错,不猜。",
+  "adjudication": "栏目名沿用「过关检测」——源里横幅上印的就是这四个字,不是老流程起的名。"
+ },
+ "sourceDefects": {
+  "ZERO_WIDTH_NON_JOINER": {
+   "phenomenon": "U+200C 零宽不连字,第10-14讲共 115 处,其中 10 处在段首",
+   "judgement": "段首的会打断 ^\\d{1,2}[．.] 等行首判据,把编号项判成正文",
+   "essence": "污染,不是笔误也不是漏做——成对包裹形态(‌文字‌)是从外部粘贴带入的强调标记,无语义",
+   "disposition": "全量清除 + 配门",
+   "gate": "GATE_NO_ZERO_WIDTH:雕刻前扫描,源里出现零宽字符即报告并清除,清除数记入报告",
+   "shape": "有确定形状(Unicode 类别 Cf),不会吃到别的东西",
+   "status": "provisional"
+  },
+  "DUPLICATE_LESSON_TITLE": {
+   "phenomenon": "第18/19讲的正文标题各多挂一行,且第18讲那行编号写错成「第19讲  摩擦力」",
+   "judgement": "全册讲标题应为 19,实测 21",
+   "essence": "源缺陷,笔误类(一次写错,无形状)",
+   "disposition": "逐条覆盖,不做成模式",
+   "inScope": false,
+   "note": "第18/19讲不在本轮范围。记录在此是因为它会让「讲标题数=19」这道门在全册运行时报错,下一轮做 15-19 讲时会撞上。",
+   "status": "provisional"
+  },
+  "NODE_TITLE_TYPO_声色": {
+   "phenomenon": "第A09讲 深研精炼的知识点标题作「知识点03 声色」",
+   "judgement": "同讲正文/例题/答案/解析共 105 处全作「音色」,概念构建侧对应标题为「三、音色」;全批「声色」仅此 1 处",
+   "essence": "源缺陷,笔误类(一次写错,无形状)",
+   "disposition": "逐条覆盖,不做成模式。显示名取「音色」,源文件不动;裁决记在 manifests/2026-08-20-physics-g08-summer-knowledge-roster.json",
+   "inScope": true,
+   "status": "provisional"
+  },
+  "DUPLICATE_NODE_TITLE": {
+   "phenomenon": "第A09/A12/A15讲的知识点标题下,紧跟一行同名的「一、xxx」(概念构建体例的残留),两行统领同一段内容",
+   "judgement": "实测各 1 处,共 3 处;其余 17 讲无此现象",
+   "essence": "源缺陷,体例残留",
+   "disposition": "真源取带编号的那一行;「一、xxx」在深研精炼下的这 3 处不另立知识点",
+   "inScope": true,
+   "status": "provisional"
+  }
+ },
+ "tags": [
+  {
+   "id": "answer",
+   "pattern": "【答案】\\s*([^【]+)",
+   "required": false,
+   "evidence": {
+    "alsoMatchesShape": [
+     "教科书体例的「解：」「答：」(不带方括号,由 role 携带 tag 接住)"
+    ],
+    "howDistinguished": "本判据只认【答案】;教科书体例另由 roles 的 tag 机制接。",
+    "measuredNote": "实测 460 处。"
+   }
+  },
+  {
+   "id": "explanation",
+   "pattern": "【(?:详解|解析)】\\s*((?:【小题\\d+】|[^【])+)",
+   "required": false,
+   "note": "★2026-08-20 放宽:原判据 `【(?:详解|解析)】\\s*([^【]+)` 里的 `[^【]+` 遇到紧跟的另一个方括号标记就停,捕到空串。全批实测 1 处如此:「【解析】【小题1】火车的速度为…」(第A06讲第9题),该题因此**有答案无解析**。\n放宽只放到「允许嵌套小题标记」这一步:`(?:【小题\\d+】|[^【])+`——仍然在遇到【答案】【详解】等**别的**标记时停下,不会把下一道题的内容吃进来。实测正常 458 / 嵌套 1 / 标记后为空 1。",
+   "evidence": {
+    "alsoMatchesShape": [
+     "【解析】后紧跟【小题N】的嵌套写法(1 处)",
+     "教科书体例的「分析：」"
+    ],
+    "howDistinguished": "捕获段允许嵌套【小题N】,仍在遇到别的标记时停;教科书体例另由 role tag 接。",
+    "tightenedAt": "2026-08-20",
+    "redGreen": {
+     "before": "【(?:详解|解析)】\\s*([^【]+)",
+     "red": "「【解析】【小题1】火车的速度为…」捕到空串,第A06讲第9题**有答案无解析**。",
+     "green": "全册 461 题 461 有解析。放宽只到「允许嵌套小题标记」,不会吃到下一题。"
+    },
+    "measuredNote": "实测 459 处(段首计 458 正常 + 1 嵌套 + 1 标记后为空)。"
+   }
+  }
+ ],
+ "tagsNote": "本册结构性不可达:学生版无配套解析版,registry 里没有 annotated_word,carve_engine 只在 partner 存在时才读这两条。保留是因为 Schema 构造要求该键存在,且将来出教师版时它们即刻生效。这不是判据恒假——是尚未接入的入口,已在此显式记录。",
+ "diagnostics": {
+  "MISSING_ANSWER": {
+   "severity": "info",
+   "detail": "题在解析版中没有【答案】",
+   "reachable": true,
+   "measured": 149,
+   "correction": "首版本表把这条标成 reachable:false,理由「本册无解析版」——错了。实测雕刻一次就报了 149 条:它对每道题都判一次,与有没有解析版无关。改判 info 并非消音,是这条诊断的前提(存在解析版)在本册根本不成立,拿它当 error 会让 149 条同形噪音淹掉真正的 2 条 FIELD_UNRENDERED 和 1 条 OPTION_GAP。教训:声明可达性之前先跑一次,别照着理由推。"
+  },
+  "ANSWER_STARTS_WITH_NUMBER": {
+   "severity": "error",
+   "detail": "答案以题号开头,合并答案未拆分",
+   "reachable": false,
+   "why": "只在读 partner(解析版)的分支里 add,本册 registry 无 annotated_word,该分支进不去",
+   "verifiedBy": "实测 0 条"
+  },
+  "OPTIONS_OUT_OF_ORDER": {
+   "severity": "error",
+   "detail": "选项标号未按顺序出现"
+  },
+  "OPTION_GAP": {
+   "severity": "warning",
+   "detail": "选项标号不连续"
+  },
+  "UNATTRIBUTED_BLOCK": {
+   "severity": "error",
+   "detail": "块没有任何角色归属"
+  },
+  "SUBANSWER_UNPAIRED": {
+   "severity": "warning",
+   "detail": "小问没有配到对应的答案分片",
+   "reachable": false,
+   "why": "本册无解析版"
+  },
+  "FIGURE_UNATTRIBUTED": {
+   "severity": "error",
+   "detail": "题内有图片没有归属到选项/小问/题干"
+  },
+  "SUBANSWER_SHARED": {
+   "severity": "info",
+   "detail": "源文档把相邻小问的答案合并写在一个标记下,已共享绑定",
+   "reachable": false,
+   "why": "本册无解析版"
+  },
+  "FIGURE_ASSET_MISSING": {
+   "severity": "error",
+   "detail": "题内图片有归属但没有取到图片实体"
+  },
+  "FIELD_UNRENDERED": {
+   "severity": "error",
+   "detail": "Word 域没有结果文本且未登记渲染,内容会丢失"
+  },
+  "ARROW_UNPLACED": {
+   "severity": "error",
+   "detail": "段内有图形箭头但找不到可回填的位置",
+   "reachable": false,
+   "why": "本册无反应条件箭头(化学专用)"
+  },
+  "OPTION_LABEL_MISSING": {
+   "severity": "warning",
+   "detail": "选项行首个选项没有标号,按后一个标号推出所缺标号并保留其正文"
+  }
+ },
+ "diagnosticsNote": "标 reachable:false 的四条是结构性不可达(无解析版/无化学箭头),保留是因为 carve_engine 会按码查表,缺键会 KeyError。显式标注不可达,避免将来有人看到它们长期为 0 就以为「确实没问题」——那正是登记册 P8 判据恒假的形状。",
+ "embeddedObjects": {},
+ "embeddedObjectsNote": "第10-14讲共 226 处图片引用、210 张有显示尺寸。使用方已定:逐张看完 210 张。裁决结果逐张回填到这里,每条带 essence(该图本该是图/本该是文字/本该是表)与 adjudicatedBy。空表代表尚未开始逐张裁决,不代表没有图。",
+ "fieldRenderings": {},
+ "fieldRenderingsNote": "源里 Word 域标记 171 处,主要在目录区。若雕刻报出 FIELD_UNRENDERED,按域的 instrText 逐类登记渲染文本,不静默丢弃。",
+ "hierarchy": {
+  "titleRoleLevels": {
+   "讲标题": "subject"
+  },
+  "pathPrefixLevels": [],
+  "why": "★2026-08-20 由空表改为 {讲标题: subject}。此前写的是「本册是平铺结构,不需要去重」——**那句话是错的**,而且它自己的 note 早写着「若将来某册出现同层重述,在此填」。源里每讲开头把讲标题写了两遍(段0 样式 Heading1、双空格;段1 无样式、单空格),两条都命中 讲标题 角色,于是成品里每一讲的标题都印两次——20 讲全中。repeats() 按 titleRoleLevels 判「这一层的标题是否已经排过」,填上之后第二条自动降为 spacer。tree 的层名是固定的(theme/topic/subject/unit/period),registry 的 lesson 字段映射到 subject,故填 subject。",
+  "measured": "源实测:20 讲每讲 2 条讲标题(structure.json 课时标题=40),蓝图里 20 种标题各 ×2。"
+ },
+ "runMarks": {
+  "topicLabelColor": "114599",
+  "note": "物理源的栏目标签主题色。实测第A10-A14讲:加粗+114599 共 93 个 run,内容是「知识点」「【例1】」「【即练1】」「【即练2】」「【探究归纳】」及其序号——与沪科版的 1F4E79 同构,色值不同。",
+  "sourceTagColor": "0070C0",
+  "sourceTagNote": "沿用默认。物理源里 0070C0 零命中(全册非黑色值只有 114599 一种),**这是一条恒假判据**,登记在此是因为默认值必须显式,不是因为它会命中。",
+  "measured": {
+   "纯斜体": 254,
+   "纯加粗": 146,
+   "加粗+114599": 77,
+   "加粗+斜体+114599": 16,
+   "无装饰": 1677
+  },
+  "italicMeaning": "物理量符号与几何点名:f 焦距(51)、A(41)、u 物距(24)、v 像距(18)、O/S/B、AO/OO′"
+ },
+ "supersedes": "physics-g08-summer-2026.v1",
+ "versionWhy": "v1 建自 2026 物理暑假**学生版母本**(19 讲、每讲 2 个栏目横幅)。2026 新版教材是**不同的版本**,不是同一份的重排:多出「第01讲 序言-踏上物理学奇妙旅途」(19→20 讲),并新增第三个栏目横幅「情｜境｜启｜思」。实测:新教师版与新学生合并本各 40 处(=20 讲 × mc:Choice/Fallback 两份副本),旧母本 0 处。另加答案解析层(教师版 925 处答案标记)。★不改 v1:旧册 physics-a10a14 仍以 v1 为准,改 v1 会让它的横幅门立刻判不符。版本变了就出新版本,不是就地改。",
+ "sectionBannersGateTodo": "待加的门:每张声明的横幅在本册源里的引用数必须 >0 且与讲数同量级;任一张 0 命中即 fail。没有这条门,换一次导出就静默失去全部栏目结构。",
+ "questionScope": {
+  "by": "section",
+  "equals": "过关检测",
+  "restoredKind": "过关检测题",
+  "_what": "哪些原子是题。carve_engine 把无答案的编号项一律降级为讲解条目(化学册形状),本步按此判据还原。",
+  "_why": "此前这条写死在 normalise_atoms.py 的 `EXERCISE = '过关检测'`。值不变,位置变了——写死时它对本册恰好成立,对单元卷那类没有该栏目的文档则选中 0 条,而门只会说「一条都没还原」。",
+  "_measured": "本册实测:section==过关检测 的原子 244 条,其中被降级的 2 条已还原。"
+ },
+ "documentBoundary": {
+  "_what": "文档边界判据。2.11.0 起由本表给,此前写死在 _lessons.py 的 `^第(\\d{1,2})讲`。",
+  "specs": [
+   {
+    "class": "讲",
+    "pattern": "^第(\\d{1,2})讲\\s*(\\S.*)$",
+    "numberGroup": 1,
+    "titleGroup": 2
+   },
+   {
+    "class": "单元卷",
+    "pattern": "^第(\\d{1,2})章\\s+(\\S.*?)\\s*单元自测\\s*$",
+    "numberGroup": 1,
+    "titleGroup": 2
+   }
+  ],
+  "select": [
+   "讲"
+  ],
+  "_whyTwoClasses": "本册只要「讲」,但「单元卷」这一类**必须一并声明**。教师版里 5 份单元自测分别紧跟在第04/07/10/15/20讲之后,跨度止于下一个**任意类**边界;只声明「讲」的话,这 5 讲的解析版分档会各自把整份单元自测吞进去(2026-08-20 实测确实如此:A04/A07/A10/A15/A20 的解析版档里各含 1 份单元自测)。配对不会因此错(单元卷的题 node=学科基础,原卷侧没有这个 node,配不上),但那些内容不属于这几讲——拿去做题库导入就会把单元卷的题算进第A04讲。",
+  "_measured": "教师版:讲 20 + 单元卷 5;学生合并本:讲 20 + 单元卷 0(合并本里没有单元卷)。",
+  "labelsByClass": {
+   "讲": {
+    "lessonLabel": "第A{number:02d}讲",
+    "fileLabel": "A{number:02d}-{title}"
+   },
+   "单元卷": {
+    "lessonLabel": "第C{number:02d}卷",
+    "fileLabel": "C{number:02d}-{title}"
+   }
+  },
+  "_selectWhy": "★只要「讲」。教师版一份里两类都有,但**两类用的是两张模板表**(讲义 vs 试卷),而引擎一册只吃一张表——所以形态是「一份源、两册」,各取各的类,不是一册切两类。「单元卷」这一类仍必须在 specs 里声明:跨度止于下一个**任意类**边界,不声明的话第04/07/10/15/20讲会各自把整份单元自测吞进去(实测确实如此)。\n★2026-08-20 改为教师版单源:它是学生版的严格超集(实测学生原卷 1792 段实质文本在教师版里 1792 段全部找得到,0 缺;801 段作答线仍留空,答案一律另起【答案】段)。前提是同日修好了标签路由——在此之前,教师版里逐选项讲解与选项行同形,单源会让答案漏进题干。"
+ },
+ "quizImport": {
+  "note": "quizImport 由 QuizLocalServer 附加:决定 carve 产物如何变成题库题与知识点标签;不是 handout-intake 原表的一部分。**写在这里是为了让它跟着模板表走**——题库侧 templates.py 里那份是按 v1 老表写的(横幅只有两个),新表若不自带,注册时会漏。",
+  "exerciseSections": [
+   "过关检测"
+  ],
+  "exerciseSubModules": [],
+  "exerciseKind": "过关检测题",
+  "questionKinds": [
+   "例题题干",
+   "即练题干"
+  ],
+  "numberedItemsAreQuestions": false,
+  "documentRoles": [
+   "讲标题"
+  ],
+  "parentRoles": [],
+  "nodeRoles": [
+   "知识点标题",
+   "题型小标题",
+   "中文编号标题"
+  ],
+  "nodePrefixStrip": "^知识点\\s*\\d+\\s*|^[一二三四五六七八九十]+[、．.]\\s*",
+  "documentPrefixStrip": "^第\\s*[A-Za-z]?\\d+\\s*讲\\s*",
+  "expositionKinds": [
+   "讲解条目"
+  ],
+  "banners": [
+   "情｜境｜启｜思",
+   "概｜念｜构｜建",
+   "深｜研｜精｜炼"
+  ],
+  "_bannersWhy": "★题库侧 templates.py 的 _PHYSICS_QUIZ_IMPORT 只列了后两个——那是 v1 老教材的事实。新版加了「情｜境｜启｜思」(教师版与学生合并本各 40 处 = 20 讲 × 2 份副本,旧母本 0 处)。与 subModules 同源,漏一个就少一层结构。",
+  "_knowledgeRoster": "知识点显示名的真源是 manifests/2026-08-20-physics-g08-summer-knowledge-roster.json(53 条,含 6 条措辞裁决与「声色→音色」错别字)。nodePrefixStrip 只剥前缀,**不做措辞裁决**——那是数据,不是正则能干的事。",
+  "_nodeRolesWhy": "★必须含「题型小标题」,否则**源声明的题型会丢**。题库管线取题型的路径是 node → type_from_hint(node);而 node 只从 nodeRoles 里的角色产生。v2 表把「一、单选题」单列为 题型小标题(sortOrder 21,排在 中文编号标题 22 之前),若不列进 nodeRoles,它就不成为 node,那 10 讲声明过的题型全部退化成「按选项/空位推断」。v1 老表能拿到是因为它…也有这个角色,但当时 nodeRoles 同样没列——旧库 379 题的题型因此**全部是推断的**(库里实测 single_choice 189/fill_blank 149/solution 41,而源只在 10/20 讲声明过题型)。把题型 node 放进来不会污染概念图:管线的 is_type_hint(node) 会挡住它注册成概念(旧库实测没有「单选题」这类概念)。",
+  "multiChoiceIgnoresSubQuestionAnswers": true,
+  "_multiChoiceWhy": "★「答案里出现多个字母 → 多选题」这条升格判据,在答案跨小问时不成立。带小问的题答案写成「（1）C；（2）3.7 m/s；（3）A」,C 与 A 来自不同小问,按字母去重就成了两个,于是实验题被判成多选题。2026-08-20 首批实测:21 道被判多选的题里 13 道是这么来的,而全语料源里真正标注「（多选）」的只有 3 处。true = 答案跨小问时不按字母升格(缺省)。",
+  "multiChoiceRequiresLettersOnlyAnswer": true,
+  "_multiChoiceWhy2": "第二道闸:答案里除选项字母与分隔符之外还有别的内容时,也不按字母升格。「0.1 A B 频率相同，音调相同；振幅相同…」是多空填空题,A、B 是其中两个空的答案,不是同一空的多个正确项。与「答案跨小问」是同一件事的两种形状。",
+  "conceptFreeDocuments": [
+   "."
+  ],
+  "_conceptFreeWhy": "★2026-08-21 由「仅序言」扩到**全册**。PM:所有题目来源中都不包含可以使用的知识点属性。大纲层照常登记(讲仍注册为 topic、题仍归到这一讲),只是不再建 atom 层的知识点概念。正则 \".\" 匹配任意文档名——写成显式的全册生效,而不是把 nodeRoles 清空:清空 nodeRoles 会连题型一起丢(题型靠 node 取)。",
+  "_conceptFreeScope": "拦「登记概念」与拦「题上挂概念」是两件事,两处都要拦(2026-08-20 漏过一次)。",
+  "_nodeRolesRetired": {
+   "at": "2026-08-21",
+   "previous": [
+    "知识点标题",
+    "题型小标题",
+    "中文编号标题"
+   ],
+   "why": "PM 2026-08-21:「所有的题目来源中,不包含可以使用的知识点属性」。「知识点01 长度的单位」是标语不是知识点实体,把它注册成概念是把结构层升格成语义层。nodeRoles 保留是因为**题型仍靠 node 取**(题型小标题必须在里面,否则源声明的题型会丢);但 node 不再注册成 atom 概念——由 conceptFreeDocuments 全册生效实现。"
+  },
+  "_noKnowledgePoints": "PM 2026-08-21:所有题目来源中都不包含可以使用的知识点属性。不建 atom 概念,也不拿 topic 名充当知识点。",
+  "linkQuestionsToConcepts": false,
+  "_noConceptLinksWhy": "PM 2026-08-21「删」:题不挂任何概念,包括讲/卷这一层。「这道题属于哪一讲」在 question_dimensions.document 里已有真源,再挂一条 question→topic 边就是同一事实的第二处记录,两处必漂(一事一真源)。★概念注册表本身不动:讲/卷仍作为**大纲登记**存在(PM 2026-08-20 已定「大纲登记相同」),只是题不挂上去。"
+ },
+ "answersInSameDocument": true,
+ "_answersInSameDocumentWhy": "答案就在本文档里,不需要解析版伙伴档。此前的「原卷 ↔ 解析版」配对按 section|subsection|node|题干前18字 做键,**两侧差一个句号或一个下划线就配不上**:实测 A04即练2(下划线数量不同)、C02第4题(「旅游」vs「旅游。」)都因此丢了答案,而源里其实都有。同源不存在这个问题。"
+}
