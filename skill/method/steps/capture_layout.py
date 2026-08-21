@@ -16,6 +16,7 @@
 取舍是编制成册那一步的事。
 """
 import json
+import re
 import zipfile
 from collections import Counter
 from pathlib import Path
@@ -75,6 +76,14 @@ def drawing_facts(paragraph):
                 entry['wrap'] = [f'w10:{wrap.get("type") or "inline"}']
             else:
                 entry['wrap'] = ['w10:absent(随文)']
+            # ★VML 的尺寸写在 style 的 CSS 串里(width:18.95pt;height:26.75pt),
+            #   不在 DrawingML 的 <wp:extent> 标签里。此前只把 style 原样记下,
+            #   没解析出尺寸 —— 于是 2026-08-22 首次落库时 342 张 VML 图**一张都算不出相对比例**,
+            #   而算不出就写不进库(scale_to_body_font 是 NOT NULL)。
+            #   记了 style 不等于记了尺寸:原样留着是对的,但下游要用的是数,得解出来。
+            emu = _vml_extent(holder.get('style'))
+            if emu:
+                entry['extentEmu'] = emu
         for mode in ('inline', 'anchor'):
             node = holder.find(f'{WP}{mode}')
             if node is not None:
@@ -90,8 +99,98 @@ def drawing_facts(paragraph):
     return facts
 
 
+# CSS 长度 → EMU。只认真实出现过的单位;认不出的**不猜**,留给普查报出来。
+_CSS_UNIT_EMU = {'pt': 12700, 'in': 914400, 'cm': 360000, 'mm': 36000, 'pc': 152400, 'px': 9525}
+_CSS_LEN = re.compile(r'(width|height)\s*:\s*(-?[0-9.]+)\s*([a-z]*)', re.I)
+
+
+def _vml_extent(style):
+    """VML style 串里的 width/height → {'cx','cy'}(EMU)。
+
+    单位认不出(如无单位)就整条不给尺寸——宁可缺一项被普查抓到,
+    也不要按某个默认单位猜一个数出来:猜错了没人知道,而图会漂。
+    """
+    if not style:
+        return None
+    got = {}
+    for name, value, unit in _CSS_LEN.findall(style):
+        factor = _CSS_UNIT_EMU.get(unit.lower())
+        if not factor:
+            continue
+        got['cx' if name.lower() == 'width' else 'cy'] = str(int(round(float(value) * factor)))
+    return got if {'cx', 'cy'} <= set(got) else None
+
+
+def font_resolver(zf):
+    """段落的**生效**正文字号(半点)解析器:直接 rPr > 段落样式(含 basedOn 链)> docDefaults。
+
+    ★为什么必须解继承链。2026-08-22 首次落库实测:962 张图里 617 张所在的段落
+    **没有任何直接 rPr 写字号** —— 字号来自样式。只看直接 rPr 就等于「这段没有正文字号」,
+    于是相对比例算不出、图写不进库。而「样式里写着」和「没有」是两回事。
+
+    docDefaults 是整份 docx 的默认值来源:样式没写的属性都从它取值。
+    三层的优先级是 OOXML 定死的,不是我们的选择。
+    """
+    try:
+        styles = ET.fromstring(zf.read('word/styles.xml'))
+    except KeyError:
+        return lambda p: None
+    default_sz = None
+    dd = styles.find(f'{W}docDefaults/{W}rPrDefault/{W}rPr/{W}sz')
+    if dd is not None:
+        default_sz = dd.get(f'{W}val') or dd.get('val')
+    own, based, default_style = {}, {}, None
+    for st in styles.iter(W + 'style'):
+        if st.get(f'{W}type') != 'paragraph':
+            continue
+        sid = st.get(f'{W}styleId')
+        sz = st.find(f'{W}rPr/{W}sz')
+        if sz is not None:
+            own[sid] = sz.get(f'{W}val') or sz.get('val')
+        b = st.find(W + 'basedOn')
+        if b is not None:
+            based[sid] = b.get(f'{W}val') or b.get('val')
+        if st.get(f'{W}default') in ('1', 'true'):
+            default_style = sid
+
+    def of_style(sid, seen=None):
+        seen = seen or set()
+        while sid and sid not in seen:
+            seen.add(sid)
+            if sid in own:
+                return own[sid]
+            sid = based.get(sid)
+        return None
+
+    def resolve(paragraph):
+        # 一、直接 rPr:取块内出现字符最多的那个 run —— 首个 run 常是编号或空 run
+        best, best_chars = None, -1
+        for run in paragraph.iter(W + 'r'):
+            chars = len(''.join(x.text or '' for x in run.iter(W + 't')))
+            sz = run.find(f'{W}rPr/{W}sz')
+            val = sz.get(f'{W}val') or sz.get('val') if sz is not None else None
+            if val and chars > best_chars:
+                best, best_chars = val, chars
+        if best:
+            return {'halfPoints': int(best), 'from': 'run'}
+        # 二、段落样式(含 basedOn 链)
+        pstyle = paragraph.find(f'{W}pPr/{W}pStyle')
+        sid = (pstyle.get(f'{W}val') or pstyle.get('val')) if pstyle is not None else default_style
+        val = of_style(sid)
+        if val:
+            return {'halfPoints': int(val), 'from': f'style:{sid}'}
+        # 三、docDefaults
+        if default_sz:
+            return {'halfPoints': int(default_sz), 'from': 'docDefaults'}
+        return None
+
+    return resolve
+
+
 def capture(path, document):
-    root = ET.fromstring(zipfile.ZipFile(path).read('word/document.xml'))
+    zf = zipfile.ZipFile(path)
+    resolve_font = font_resolver(zf)
+    root = ET.fromstring(zf.read('word/document.xml'))
     body = root.find(W + 'body')
     rows = []
     para = table = 0
@@ -124,6 +223,11 @@ def capture(path, document):
         figs = drawing_facts(child)
         if figs:
             entry['drawings'] = figs
+            # 只在有图的段落上解:相对比例是**图**的属性,别的段落不需要,
+            # 全量解会让非内容层凭空多出 5351 条没人用的事实。
+            font = resolve_font(child)
+            if font:
+                entry['bodyFont'] = font
         rows.append(entry)
     sect = body.find(W + 'sectPr')
     section = props(sect) if sect is not None else {}

@@ -35,23 +35,14 @@ def sha256_file(path: Path) -> str:
 
 
 def body_font_half_points(block: dict) -> int | None:
-    """该块的正文字号(半点)。
+    """该块的**生效**正文字号(半点)。
 
-    取块内**出现字符最多**的那个 run 的 sz —— 不取第一个 run:
-    第一个 run 常常是编号或空 run(chars=0),它的字号不代表正文。
+    取非内容层解好的 bodyFont —— 继承链(直接 rPr > 段落样式 > docDefaults)
+    在 capture_layout 里解,不在这里重解:那是非内容层该记的事实,
+    两处各解一遍必然漂,而且漂了没人知道。
     """
-    best, best_chars = None, -1
-    for run in block.get("runs") or []:
-        chars = int(run.get("chars") or 0)
-        sz = ((run.get("rPr") or {}).get("sz") or {}).get("val")
-        if sz and chars > best_chars:
-            best, best_chars = int(sz), chars
-    if best is None:  # 整块没有显式字号 → 落到文档默认
-        for run in block.get("runs") or []:
-            sz = ((run.get("rPr") or {}).get("szCs") or {}).get("val")
-            if sz:
-                return int(sz)
-    return best
+    font = block.get("bodyFont") or {}
+    return int(font["halfPoints"]) if font.get("halfPoints") else None
 
 
 BLANK_RE = re.compile(r"[_＿]{2,}")
@@ -147,6 +138,8 @@ def main() -> int:
                             (source_id, f"{doc}/sectPr", key, json.dumps(val, ensure_ascii=False)))
                 facts += 1
         report["counts"]["blocks"] = len(block_id_of)
+        block_text = {f'{a.get("document")}/{b.get("locator")}': (b.get("text") or "")
+                      for a in atoms for b in (a.get("bodyBlocks") or [])}
         report["counts"]["layoutFacts"] = facts
 
         # ── 内容模块 ────────────────────────────────────────────────
@@ -177,26 +170,37 @@ def main() -> int:
         report["counts"]["units"] = units
 
         # ── 图:相对比例现在算 ────────────────────────────────────────
-        figs, no_font = 0, 0
+        figs, no_font, font_sources, no_owner_block = 0, 0, {}, 0
+        # ordinal 是「在**所属模块**里的第几张」,不是「在这一块里的第几张」——
+        # 一个模块可以横跨多个块(题干一块、选项行两块、图片块一块),
+        # 按块内序号编,跨块的图就会撞在同一个 (unit_id, ordinal) 上被丢掉。
+        # 2026-08-22 实测:1045 张可算,按块内序号只写进去 876 张,差的 169 张就这么没的。
+        fig_ordinal = {}
         for blk in blocks_detail:
             drawings = blk.get("drawings") or []
             if not drawings:
                 continue
             loc = f"{blk['document']}/{blk['locator']}"
             hp = body_font_half_points(blk)
+            src = (blk.get("bodyFont") or {}).get("from", "(缺)")
+            font_sources[src] = font_sources.get(src, 0) + len(drawings)
             if not hp:
                 no_font += len(drawings)     # 算不出比例就不写——库里那列是 NOT NULL
                 continue
             owner = _owner_unit(atoms, blk, source_id)
             if not owner:
+                # 静默跳过是最坏的处置:这些块没有归属到任何原子,与「字符归属」是同一个洞。
+                no_owner_block += len(drawings)
                 continue
-            for i, d in enumerate(drawings, 1):
+            for d in drawings:
+                fig_ordinal[owner] = fig_ordinal.get(owner, 0) + 1
+                i = fig_ordinal[owner]
                 ext = d.get("extentEmu") or {}
                 cy = int(ext.get("cy") or 0)
                 if not cy:
                     no_font += 1
                     continue
-                mid = f"m-{source_id}-{loc}-{i}".replace("/", "_")
+                mid = f"m-{source_id}-{loc}-{d.get('kind')}-{i}".replace("/", "_")
                 cur.execute("""insert into atomize.media(media_id,source_id,sha256)
                                values(%s,%s,%s) on conflict do nothing""",
                             (mid, source_id, hashlib.sha256(mid.encode()).hexdigest()))
@@ -214,46 +218,121 @@ def main() -> int:
                 figs += 1
         report["figures"] = {"written": figs, "skippedNoBodyFontOrSize": no_font,
                              "_why": "算不出相对比例的图不写——库里 scale_to_body_font 是 NOT NULL。"
-                                     "宁可少一行看得见,不可填个绝对值假装记住了。"}
+                                     "宁可少一行看得见,不可填个绝对值假装记住了。",
+                             "_fontSource": font_sources,
+                             "noOwnerUnit": no_owner_block,
+                             "_noOwnerWhy": "这些图所在的块没有归属到任何原子——与「字符归属」是同一个洞,"
+                                            "不是图的问题。静默跳过是最坏的处置,所以计在这里。"}
 
         # ── 字符归属:选项的 range 已有,其余按块登记;如实报覆盖 ──────────
         spans, chars_attributed, image_only = 0, 0, 0
+
+        def add_span(bkey, start, end, uid, role):
+            nonlocal spans, chars_attributed
+            if end <= start or bkey not in block_id_of:
+                return False
+            try:
+                cur.execute("""insert into atomize.spans(block_id,char_start,char_end,unit_id,role)
+                               values(%s,%s,%s,%s,%s)""",
+                            (block_id_of[bkey], start, end, uid, role))
+            except psycopg.errors.UniqueViolation:
+                return False
+            spans += 1
+            chars_attributed += end - start
+            return True
+
         for atom in atoms:
+            uid = f'{source_id}:{atom.get("document")}/{atom.get("locator")}'
+            doc = atom.get("document")
+            # 选项所在的块:先放选项正文的区间,再把**空隙**补给紧随其后的那个选项。
+            # ★空隙就是选项标签(「A．」「B．」)。引擎的 range 指选项正文,不含标签;
+            #   标签也是字符,也必须有归属——否则「每个字符都有归属」这条判准永远差一截。
+            by_block = {}
             for opt in atom.get("options") or []:
-                rng, oloc = opt.get("range"), (opt.get("locator") or "").split("#")[0]
-                key = f"{atom.get('document')}/{oloc}"
-                if not rng or key not in block_id_of:
+                oloc = (opt.get("locator") or "").split("#")[0]
+                by_block.setdefault(f"{doc}/{oloc}", []).append(opt)
+            for bkey, opts in by_block.items():
+                ranges = []
+                for opt in opts:
+                    rng = opt.get("range")
+                    if not rng:
+                        continue
+                    if rng[1] <= rng[0]:
+                        image_only += 1     # 图片选项:内容是图不是字,确实占 0 个字符
+                    ranges.append((int(rng[0]), int(rng[1]), opt))
+                ranges.sort()
+                cursor = 0
+                for start, end, _opt in ranges:
+                    if start > cursor:
+                        add_span(bkey, cursor, start, uid, "option")   # ← 标签归给它后面的选项
+                    add_span(bkey, start, end, uid, "option")
+                    cursor = max(cursor, end)
+                blk_text = block_text.get(bkey)
+                if blk_text is not None and cursor < len(blk_text):
+                    add_span(bkey, cursor, len(blk_text), uid, "option")
+
+            # 其余块整块归属:块的角色决定模块类型,由模板表给
+            for b in atom.get("bodyBlocks") or []:
+                bkey = f'{doc}/{b.get("locator")}'
+                if bkey in by_block:
+                    continue                     # 选项行已在上面逐区间处理
+                text = b.get("text") or ""
+                if not text:
                     continue
-                if rng[1] <= rng[0]:
-                    # 零宽区间不是缺陷:这是**图片选项**——选项的内容是图不是字
-                    # (实测 1057 个带 range 的选项里 29 个如此,如「A．[图] B．[图]」)。
-                    # 不造一个假的区间把它填上:它确实占 0 个字符,图的归属走 figures。
-                    # ★但顺带看见一件事:选项标签「A．」这些字符现在谁也没归属——
-                    #   引擎的 range 指的是「选项正文」的范围,不含标签。记在报告里,别装作没有。
-                    image_only += 1
-                    continue
-                try:
-                    cur.execute("""insert into atomize.spans(block_id,char_start,char_end,unit_id,role)
-                                   values(%s,%s,%s,%s,'option')""",
-                                (block_id_of[key], int(rng[0]), int(rng[1]),
-                                 f'{source_id}:{atom.get("document")}/{atom.get("locator")}'))
-                    spans += 1
-                    chars_attributed += int(rng[1]) - int(rng[0])
-                except psycopg.errors.ExclusionViolation:
-                    conn.rollback()          # 区间重叠 = 归属打架,不是可以忽略的小事
-                    return _fail(f"字符区间重叠:{key} {rng} —— 一个字符只能有一个归属")
-        total_chars = sum(int(r.get("chars") or 0) for b in blocks_detail for r in (b.get("runs") or []))
+                add_span(bkey, 0, len(text), uid, block_roles[b["role"]])
+
+            # 题干所在的块
+            stem = atom.get("stem")
+            if stem:
+                add_span(f'{doc}/{atom.get("locator")}', 0, len(stem), uid, "stem")
+
+        # ★分母必须取真值,不能拿非内容层的 runs 去数:
+        #   layout 只收**带属性**的 run(`if rpr or breaks`),没属性的 run 压根不在里面。
+        #   2026-08-22 用它当分母,算出「归属率 112%」——比 100% 还高,一眼就知道分母错了。
+        #   量法自己会骗人,而且骗得比缺陷更像真的:这次是数字太好看,所以露了馅。
+        # ── 没有任何原子认领的块:档标题、栏目横幅、知识点标题、横幅下的引导正文 ──
+        #    结构层知道它们,原子里没有。判准是**每个字符都有归属**——
+        #    「不属于任何一道题」不等于「不用记」:编制成册要排它们,少一个就还原不出原貌。
+        gate = json.loads((args.work / "gate_split_and_banner.json").read_text(encoding="utf-8"))
+        lessons = {x["path"]: x["lesson"] for x in gate["lessons"]}
+        headings = {x for a in atoms for x in (a.get("section"), a.get("subsection"), a.get("node"))
+                    if x} | {x["title"] for x in gate["lessons"]}
+        src_blocks = _source_blocks(args.work, lessons)
+        # ★分母取**整份源**的字符,不是「我数得着的那些块」的字符。
+        #   _source_blocks 只遍历 body 的直接 p 子节点,表格单元里的段落不在其中;
+        #   拿它当分母,归属率会从 96% 虚涨到 99% —— 那不是归属做多了,是分母做小了。
+        #   把分母做小是最容易骗过自己的一种量法错:数字变好看,而缺口原封不动。
+        total_chars = _source_char_total(args.work, lessons)
+        in_tables = total_chars - sum(len(x[2]) for x in src_blocks)
+        claimed = set(block_text) | {f'{a.get("document")}/{a.get("locator")}' for a in atoms}
+        unclaimed = 0
+        for document, locator, text in src_blocks:
+            key = f"{document}/{locator}"
+            if key in claimed or not text.strip():
+                continue
+            # 是标题还是正文,由它在层级里出现过没有决定,不靠形状猜
+            kind = "heading" if any(h and h in text for h in headings) else "prose"
+            uid = f"{source_id}:{key}#unclaimed"
+            cur.execute("""insert into atomize.units(unit_id,source_id,kind,ordinal,hierarchy_path,meta)
+                           values(%s,%s,%s,0,%s,%s) on conflict do nothing""",
+                        (uid, source_id, kind, document,
+                         json.dumps({"unclaimedByAtom": True, "locator": locator},
+                                    ensure_ascii=False)))
+            if add_span(key, 0, len(text), uid, kind):
+                unclaimed += 1
+        report["counts"]["unclaimedBlocksAttributed"] = unclaimed
         report["counts"]["spans"] = spans
         report["counts"]["imageOnlyOptionsSkipped"] = image_only
         report["characterAttribution"] = {
             "attributed": chars_attributed, "totalChars": total_chars,
             "ratio": round(chars_attributed / total_chars, 4) if total_chars else None,
-            "_honest": ("这一版只把**选项**的字符区间落了库(引擎已经给了 range),"
-                        "题干/小问/答案解析尚未逐字符定位,故比例很低。"
-                        "★这不是「差不多了」——判准是每个字符都有归属,"
-                        "低就是低,写在这里让它看得见。"),
-            "_alsoUnattributed": ("选项标签(「A．」「B．」)不在任何 span 里——引擎的 range 指选项正文,不含标签。"
-                                  "要做到「每个字符都有归属」,标签得单独归给选项。"),
+            "_denominator": "整份源 w:t 的字符总数,含表格单元内的段落。",
+            "charsInsideTables": in_tables,
+            "_tablesNote": ("表格单元里的段落目前不在归属遍历内(只遍历 body 的直接 p 子节点),"
+                            "所以这部分字符一个都没有归属。缺口写在这里,不靠缩小分母掩盖。"),
+            "_honest": ("判准是**每个字符都有归属**,不是「差不多了」。"
+                        "没归属的字符=不知道该怎么处理的字符:编制成册时不知道排进哪里,"
+                        "导入题库时不知道进哪个字段。差多少就写多少。"),
         }
 
         cur.execute("""insert into atomize.runs(run_id,source_id,template_id,schema_hash,package_version,
@@ -273,6 +352,41 @@ def main() -> int:
     if args.report:
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return 0
+
+
+def _source_char_total(work: Path, lessons: dict) -> int:
+    """整份源的 w:t 字符总数 —— 含表格单元内的段落。归属率的分母只能是它。"""
+    import zipfile
+    from xml.etree import ElementTree as ET
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    total = 0
+    for path in lessons:
+        root = ET.fromstring(zipfile.ZipFile(path).read("word/document.xml"))
+        total += sum(len(x.text or "") for x in root.iter(ns + "t"))
+    return total
+
+
+def _source_blocks(work: Path, lessons: dict) -> list:
+    """分档 docx 的每个段落:(document, locator, text)。
+
+    分母与「哪些块没人认领」都从这里来 —— 一次读取,两处共用同一份事实。
+    两处各读一遍必然漂,而且漂了没人知道。
+    """
+    import zipfile
+    from xml.etree import ElementTree as ET
+    ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    out = []
+    for path, document in lessons.items():
+        root = ET.fromstring(zipfile.ZipFile(path).read("word/document.xml"))
+        body = root.find(ns + "body")
+        para = 0
+        for child in body:
+            if child.tag != ns + "p":
+                continue
+            para += 1
+            out.append((document, f"body/p[{para}]",
+                        "".join(x.text or "" for x in child.iter(ns + "t"))))
+    return out
 
 
 def _i(v):

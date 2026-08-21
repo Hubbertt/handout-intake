@@ -58,6 +58,12 @@
    "importName": "fontTools",
    "why": "GATE_GLYPH_COVERAGE 逐 face 实测字形覆盖。**必须逐 face**:fitz.Font(fontfile=…) 对 .ttc 只加载第 0 个 face,而 Songti.ttc 的 face0(Songti SC Black)恰是整个集合里唯一没有 U+2081/U+2082 的那一个——门因此把两个能正常渲染的字符报成未覆盖。反过来同样危险:face0 有而实际使用的 face 没有时,门会放行。",
    "install": "pip install fontTools"
+  },
+  {
+   "name": "psycopg",
+   "importName": "psycopg",
+   "why": "原子化写库(s4c7-persist-atomize)。PM 2026-08-22 定:原子化的真源是数据表不是文件——文件从此是中间产物,库里那份才是真源。**只跑到文件层的册不触发它**,但装上才不会在要落库那天才发现(与 openpyxl 同类:条件依赖也要声明)。",
+   "install": "pip install 'psycopg[binary]'"
   }
  ],
  "applications": [
