@@ -63,7 +63,20 @@ PROFILE_NAME = "将字体转换为空心"
 TEXT_OP_RE = re.compile(rb"(?<![A-Za-z])(?:BT|ET|Tf|Tj|TJ)(?![A-Za-z])")
 DATA_VOLUME = Path("/System/Volumes/Data")
 BYTES_PER_GIB = 1024**3
-DEFAULT_MIN_FREE_GB = 120.0
+# 转曲前要求的内置盘空闲下限。
+#
+# ★2026-08-20 由 120.0 降为 50.0,使用方裁定。
+#
+# 120 是个**没有来源记录**的常量——没有注释说它从哪来、按什么算出来。
+# 查旧册 physics-a10a14 那次**成功**转曲的资源快照:
+#     转曲前 121.86 GB → 转曲后 121.87 GB,净消耗 −0.01 GB,14.32 秒 / 114 页
+# 即它与实际消耗没有可证的关系;而那一次只比它多 1.86 GB,差一点自己也过不去。
+#
+# 50 不是量出来的,是使用方在知情下设的**安全边际**:
+# 比实测净消耗高出三个数量级,同时保留足够余量给 Acrobat 的临时文件与系统。
+# ★仍未量到的是**峰值**(净消耗为零不等于过程中没占过);
+#   要把这个数变成有依据的,需要在转曲过程中采样空闲空间。记为欠账。
+DEFAULT_MIN_FREE_GB = 50.0
 DEFAULT_MAX_ACROBAT_RSS_GB = 12.0
 DEFAULT_RESTART_EVERY_PAGES = 0
 ACROBAT_APP_PATTERN = "/Applications/Adobe Acrobat DC/Adobe Acrobat.app"

@@ -195,10 +195,17 @@ def main() -> int:
     #   导出成功、包也能装,只是「安装向导」这个入口消失了;这种缺法最难发现。
     if (PRODUCT / "runtime").exists():
         (staging / "runtime").mkdir(exist_ok=True)
-        for f in ("requirements.json", "install_wizard.py"):
-            if (PRODUCT / "runtime" / f).exists():
-                shutil.copy2(PRODUCT / "runtime" / f, staging / "runtime" / f)
-        carried.append("runtime/(声明+向导,不含本机探测报告与 paths.json)")
+        # ★白名单改成黑名单:runtime/ 里除「本机事实」之外**全部进包**。
+        # 2026-08-21 又栽一次:vendor-consumers.json(vendoring 漂移门的登记册)放在 runtime/,
+        # 而这里写死了两个文件名,于是它没进包——安装树上那道门直接 FileNotFoundError。
+        # 与上面记的 styles 段那次同形:**白名单漏一个,导出照样成功**,缺法最难发现。
+        # 黑名单只列本机事实,新加的包内文件默认进包,不必再记得来改这里。
+        LOCAL_FACTS = {"probe-report.json", "paths.json"}
+        for f in sorted(p.name for p in (PRODUCT / "runtime").iterdir() if p.is_file()):
+            if f in LOCAL_FACTS or f.startswith("."):
+                continue
+            shutil.copy2(PRODUCT / "runtime" / f, staging / "runtime" / f)
+        carried.append("runtime/(除本机探测报告与 paths.json 外全部)")
     grown = []
     if args.include_grown:
         for sub in ("volumes", "experience"):

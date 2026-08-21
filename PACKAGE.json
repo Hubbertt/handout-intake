@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.10.1",
+ "version": "2.21.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -54,7 +54,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.10.0:样式词表回归数据;字形实测口径修正。",
+ "versionWhy": "2.21.0:新增 GATE_TEMPLATE_PUSHED(check_templates_pushed.py)——册里的模板表与题库里注册的那份必须逐字一致。2026-08-21 实测:讲义那张表加了 linkQuestionsToConcepts=false 却没推,于是「题不挂概念」对 20 讲根本没生效,而当场一切正常(边刚清过是 0),要到下一次重导才翻车。改了没推=裁决只写在纸上,且失败方式是延迟的。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",

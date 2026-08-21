@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""GATE_JPEG_DENSITY_VALID:修 JFIF 密度元数据,不重编码。
+"""s4h-repair-media:让 media 目录里的每张图都**放得进 Word**。
+
+两件事,同一个目的:
+
+  GATE_JPEG_DENSITY_VALID —— 修 JFIF 密度元数据(下面详述)
+  GATE_WMF_RENDERED       —— WMF/EMF 渲染成同名 PNG(见 render_wmf.py)
+
+★合在一步里,是因为代次约定只有两代:media 与 media'。
+  这一步的 id 本来就是 repair-media,产出的就是 media',
+  「让图放得进去」是同一件事的两个方面。
+
+--- GATE_JPEG_DENSITY_VALID:修 JFIF 密度元数据,不重编码。
 
 两种不合规,都会让 python-docx 放不下这张图:
   A. 有 APP0 但 Xdensity/Ydensity = 0 —— JFIF 规定密度必须非零。
@@ -19,6 +30,7 @@ import struct
 from pathlib import Path
 
 from _bootstrap import chain_from_argv  # noqa: E402
+import render_wmf  # noqa: E402
 
 CHAIN = chain_from_argv(__doc__)
 MEDIA = CHAIN.dir_for('media')
@@ -123,5 +135,23 @@ def main():
         raise SystemExit(1)
 
 
+
+
+def _render_metafiles() -> int:
+    """WMF/EMF → PNG。放在密度修复之后:两者都写 media,报告分开落盘。"""
+    report = render_wmf.run(MEDIA)
+    out = REPORT.parent / "gate_wmf_rendered.json"
+    out.write_text(json.dumps({"gate": "GATE_WMF_RENDERED", **report},
+                              ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    print(json.dumps({"gate": "GATE_WMF_RENDERED",
+                      **{k: v for k, v in report.items() if k != "samples"}},
+                     ensure_ascii=False))
+    return 0 if report["status"] == "pass" else 1
+
+
 if __name__ == '__main__':
-    main()
+    # 两件事都要做完:密度修复先跑(它可能改写 JPEG 头),再渲染 metafile。
+    # 任一失败即非零退出——渲染失败而静默留着 WMF,
+    # 等于把炸点推到 Word 构建,那时报的是「认不出的图片」而不是「这张渲染失败」。
+    _code = main() or 0
+    raise SystemExit(_code or _render_metafiles())

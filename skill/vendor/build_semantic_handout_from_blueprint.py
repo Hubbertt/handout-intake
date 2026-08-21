@@ -1430,6 +1430,25 @@ def place_picture(run: Any, image_path: Path, spec: dict[str, Any],
     come from the source extent too, because the natural aspect ratio no longer
     applies.
     """
+    # metafile 换成同名 PNG —— **在放图这一刻换,不在蓝图里换**。
+    #
+    # 编译器认不了 WMF/EMF(python-docx 直接 UnrecognizedImageError),
+    # 要放的是 s4h-repair-media 渲染出的 <hash>.png。
+    # ★这件事原本写在蓝图构建器里,而蓝图在 s4d/s4f 构建、渲染在 s4h 才发生——
+    #   构建时 PNG 还不存在,于是那次替换永远落空,蓝图里存下 .wmf,
+    #   一路带到 Word 构建才炸。代次约定只有两代,靠调顺序解不开。
+    #   放在这里,蓝图如实记录源文件是 .wmf(provenance 不失真),
+    #   而实际放进去的是渲染件——各归各位,且只有一处。
+    if str(image_path).lower().endswith((".wmf", ".emf")):
+        rendered = Path(image_path).with_suffix(".png")
+        if rendered.is_file():
+            image_path = rendered
+        else:
+            raise BlueprintError(
+                f"{Path(image_path).name} 是 metafile,python-docx 放不了,"
+                f"而同名渲染件 {rendered.name} 不存在。"
+                "应由 s4h-repair-media 的 GATE_WMF_RENDERED 产出——"
+                "那一步若报 pass 而这里还缺,说明两边对「哪些要渲染」的判断不一致。")
     crop = spec.get("crop") or {}
     width_mm = float(spec.get("width_mm") or default_width_mm)
     height_mm = spec.get("height_mm")

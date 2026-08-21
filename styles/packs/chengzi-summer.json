@@ -3056,6 +3056,28 @@
    "studentVersionAllowed": false,
    "usedInThisEdition": false,
    "provenance": "unrecorded"
+  },
+  "CZ_MarkOk": {
+   "name": "橙子正确标记",
+   "inheritsParagraphFont": true,
+   "inheritsSize": true,
+   "bold": true,
+   "color": "CC7A00",
+   "semanticName": "mark_ok",
+   "studentVersionAllowed": true,
+   "usedInThisEdition": true,
+   "why": "教学标记「对」。源文用 ✅(U+2705)。四个声明字体都画不出它,Word 会回退到彩色 emoji;而苹果彩色 emoji 的矢量层是所有字形共用的 (0,0)-(800,800) 占位框,画面只在 sbix 位图里——转曲那一步没有可转的东西,上一轮的 ❌ 就是这么混进 PDF 的。故换字符 √(U+221A,四体皆有)并上色。深琥珀 #CC7A00 由使用方 2026-08-20 选定:转灰后黑度 48%,复印仍可辨。"
+  },
+  "CZ_MarkWarn": {
+   "name": "橙子警示标记",
+   "inheritsParagraphFont": true,
+   "inheritsSize": true,
+   "bold": true,
+   "color": "E6A700",
+   "semanticName": "mark_warn",
+   "studentVersionAllowed": true,
+   "usedInThisEdition": true,
+   "why": "教学标记「注意」。源文用 ⚠️(U+26A0 + U+FE0F)。同上不可转曲,换 ！(U+FF01,宋体黑体有)并上色。亮琥珀 #E6A700 由使用方 2026-08-20 选定,与 CZ_MarkOk 同色系而更亮,形成层次。★已如实告知代价:转灰后黑度 35%,处于复印发虚的临界;使用方接受,理由是原件为准、且 √ 与 ！ 是不同字形,灰度下靠形状仍分得清——颜色是加成不是唯一线索。"
   }
  },
  "release": {
@@ -3084,31 +3106,5 @@
   "discovery": "全量清查发现 41 个段落样式中 36 个缺必填键,而完整的 5 个恰好就是 preflight 固定值钉住的那 5 个——完整性只存在于治理够得着的地方。H4 不特殊,它只是第一个被检查到的。",
   "scope": "使用方 2026-08-16 定:以物理的样式为基准,一套样式适用于化学与物理两册。样式与学科无关——版式是「橙子暑假班」这套书的,不是某一科的;学科差异全在各册的切分规则(schema 偏离)里。化学多用一层(heading5→CZ_Heading5 第 6 级),包里已有定义(12pt 黑粗);化学的 answer_line/callout_subpoint 也在。原 chemistry-g08-summer 包(2026-08-08 化学成品的样子)已删——它记录的是旧成品,不是要复用的设计。"
  },
- "wordStyleRegistry": {
-  "characterStyles": {
-   "CZ_MarkOk": {
-    "name": "橙子正确标记",
-    "inheritsParagraphFont": true,
-    "inheritsSize": true,
-    "bold": true,
-    "color": "CC7A00",
-    "semanticName": "mark_ok",
-    "studentVersionAllowed": true,
-    "usedInThisEdition": true,
-    "why": "教学标记「对」。源文用 ✅(U+2705)。四个声明字体都画不出它,Word 会回退到彩色 emoji;而苹果彩色 emoji 的矢量层是所有字形共用的 (0,0)-(800,800) 占位框,画面只在 sbix 位图里——转曲那一步没有可转的东西,上一轮的 ❌ 就是这么混进 PDF 的。故换字符 √(U+221A,四体皆有)并上色。深琥珀 #CC7A00 由使用方 2026-08-20 选定:转灰后黑度 48%,复印仍可辨。"
-   },
-   "CZ_MarkWarn": {
-    "name": "橙子警示标记",
-    "inheritsParagraphFont": true,
-    "inheritsSize": true,
-    "bold": true,
-    "color": "E6A700",
-    "semanticName": "mark_warn",
-    "studentVersionAllowed": true,
-    "usedInThisEdition": true,
-    "why": "教学标记「注意」。源文用 ⚠️(U+26A0 + U+FE0F)。同上不可转曲,换 ！(U+FF01,宋体黑体有)并上色。亮琥珀 #E6A700 由使用方 2026-08-20 选定,与 CZ_MarkOk 同色系而更亮,形成层次。★已如实告知代价:转灰后黑度 35%,处于复印发虚的临界;使用方接受,理由是原件为准、且 √ 与 ！ 是不同字形,灰度下靠形状仍分得清——颜色是加成不是唯一线索。"
-   }
-  },
-  "_markStylesNote": "这两个样式的语义名(mark_ok / mark_warn)由样式包自己声明,编译器 run_style_ids() 读 semanticName 合并进语义表。★2.10.0 之前语义名硬编码在编译器的 RUN_STYLE_IDS 里,加一个样式要改一次代码——而样式本来是数据。那个字典自己的注释就记着这个病:斜体样式一直在 registry 里、只是没有语义名指向它,于是蓝图无从表达,物理量符号源里 254 个、成品里 0 个,没有任何门报警。"
- }
+ "_markStylesNote": "这两个样式的语义名(mark_ok / mark_warn)由样式包自己声明,编译器 run_style_ids() 读 semanticName 合并进语义表。★2.10.0 之前语义名硬编码在编译器的 RUN_STYLE_IDS 里,加一个样式要改一次代码——而样式本来是数据。那个字典自己的注释就记着这个病:斜体样式一直在 registry 里、只是没有语义名指向它,于是蓝图无从表达,物理量符号源里 254 个、成品里 0 个,没有任何门报警。 ★我第一版把这两个样式写进了 wordStyleRegistry.characterStyles——那是**合成的产物**(投影),不是源。包里的源在顶层 characterStyles,compose 每次都会用源覆盖投影,于是我写的两条每合成一次就消失一次,而编译器报的是「Unknown run_type」——**症状在最下游,原因在最上游**。"
 }

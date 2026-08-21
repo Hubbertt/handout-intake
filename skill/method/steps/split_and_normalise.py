@@ -25,13 +25,20 @@ W = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 MC = '{http://schemas.openxmlformats.org/markup-compatibility/2006}'
 
 from _bootstrap import chain_from_argv  # noqa: E402
-from _lessons import check_monotonic, pick_headings  # noqa: E402
+from _lessons import check_monotonic, pick_headings, spans  # noqa: E402
 
 CHAIN = chain_from_argv(__doc__)
-SRC = CHAIN.path_for('source.stripped')
+# 源可以是一档也可以是多档,见 prepare_input 同处注释。
+SOURCES = CHAIN.resolve('source.stripped')
+SRC = CHAIN.path_for('source.stripped') if len(SOURCES) <= 1 else None
 OUTDIR = CHAIN.dir_for('lessons')
 REGISTRY = CHAIN.path_for('registry')
 VOLUME_THEME = str(CHAIN.bindings.get('theme') or '').strip()
+# 有的册里 theme 是**逐档不同**的:单元卷一卷就是一章,顶层只能记一个值,
+# 于是第2-5卷全都挂着第1卷的章名——错得很安静(theme 只在编制成册时才被读)。
+# 声明了 themeTemplate 就按每档的边界匹配结果套出来;没声明仍用顶层常量(讲义册即如此:
+# 一章跨好几讲,章名不可能从讲标题推出)。
+THEME_TEMPLATE = str(CHAIN.bindings.get('themeTemplate') or '').strip()
 # theme 的来由与 theme 本身同等重要:量出来的值必须带着它的量法一起走,
 # 否则下一个人只看到一个凭空的字符串。P6 对账时它正是 registry 唯一的残余差异。
 VOLUME_THEME_EVIDENCE = str(CHAIN.bindings.get('themeEvidence') or '').strip()
@@ -50,10 +57,38 @@ WANT = CHAIN.scope_lessons()
 # (实测教师版与学生版各 40 处 = 20 讲 × 2 份副本;旧母本 0 处),模板表可以改,
 # 代码里那份不改就永远拦着。现在只留模板表一处。
 _SCHEMA = json.loads(Path(str(CHAIN.only('schema'))).read_text(encoding='utf-8'))
-EXPECTED_BANNERS = list(_SCHEMA.get('subModules') or [])
-if not EXPECTED_BANNERS:
+if 'subModules' not in _SCHEMA:
     raise SystemExit('模板表没有声明 subModules(栏目横幅)。'
                      '拒绝用一个空清单去判——那会把每一个横幅都判成未知。')
+EXPECTED_BANNERS = list(_SCHEMA.get('subModules') or [])
+# ★「键不在」与「键在但为空」是两件事。前者是写表的人漏了,后者是裁决:
+# 单元卷这一类文档**本来就没有栏目横幅**(实测 5 份各 0 处)。
+# 首版把两者一起拒,于是「这一册没有横幅」在模板表里不可表达,
+# 只能靠去掉那道门——而去掉门,讲义册的横幅缺失也会跟着静默。
+if not EXPECTED_BANNERS:
+    print('模板表显式声明本册无栏目横幅(subModules: [])——按 0 横幅校验,不是跳过校验。')
+
+# 文档边界判据的真源是模板表。首版写死在 _lessons.py 的 `^第(\d{1,2})讲`,
+# 于是「一份源里既有讲也有单元卷」这件事不可表达。
+_BOUNDARY = _SCHEMA.get('documentBoundary') or {}
+BOUNDARY_SPECS = _BOUNDARY.get('specs')
+BOUNDARY_SELECT = _BOUNDARY.get('select')
+LESSON_LABEL = _BOUNDARY.get('lessonLabel', '第A{number:02d}讲')
+FILE_LABEL = _BOUNDARY.get('fileLabel', 'A{number:02d}-{title}')
+# 一份源切出多类文档时,两类不能共用一套命名——否则第01讲与第1章都叫 A01,
+# 后写的把先写的覆盖掉,而且覆盖是静默的。按类各给一套。
+LABELS_BY_CLASS = _BOUNDARY.get('labelsByClass') or {}
+
+
+def _labels_for(cls):
+    entry = LABELS_BY_CLASS.get(cls)
+    if entry:
+        return entry.get('lessonLabel', LESSON_LABEL), entry.get('fileLabel', FILE_LABEL)
+    if LABELS_BY_CLASS:
+        raise SystemExit(f'documentBoundary.labelsByClass 没有为文档类 {cls!r} 声明命名。'
+                         '声明了一部分就必须声明全部——漏一类会让它退回缺省命名,'
+                         '与另一类撞名后静默互相覆盖。')
+    return LESSON_LABEL, FILE_LABEL
 
 
 def banner_text(paragraph):
@@ -144,25 +179,39 @@ def split_one(SRC, outdir, label):
                         for node in child.iter())
             yield index, text, field
 
-    bounds = pick_headings(_rows())
-    for problem in check_monotonic(bounds):
+    bounds = pick_headings(_rows(), BOUNDARY_SPECS)
+    picked = spans(bounds, len(children), BOUNDARY_SELECT)
+    for problem in check_monotonic([(s0, n0, t0, c0) for n0, t0, c0, s0, _e in picked]):
         print(f'  [讲号存疑] {problem}')
     if not bounds:
-        raise SystemExit('源里没找到任何讲标题,拒绝切分。')
+        raise SystemExit('源里没找到任何文档标题,拒绝切分。'
+                         f'判据来自模板表 documentBoundary.specs={BOUNDARY_SPECS!r}')
+    if not picked:
+        raise SystemExit(f'源里认出了 {len(bounds)} 个文档边界,但没有一个属于本册要的类 '
+                         f'{BOUNDARY_SELECT!r}。拒绝切出 0 档——'
+                         '「认得出」与「要得到」不一致时要报出来,不是产出一个空目录。')
 
-    spans = {}
-    for position, (start, number, title) in enumerate(bounds):
-        end = bounds[position + 1][0] if position + 1 < len(bounds) else len(children)
-        spans[number] = (start, end, title)
+    # 键必须带**文档类**。首版只按号做键——两类文档的号会撞(第01讲 与 第1章 都是 1),
+    # 后写的静默覆盖先写的。同一个坑我刚在 labelsByClass 的注释里写过,却在这里踩了:
+    # 「命名要按类分」与「索引要按类分」是同一件事的两面,只做一半等于没做。
+    spans_by_key = {(cls, number): (start, end, title)
+                    for number, title, cls, start, end in picked}
+    if len(spans_by_key) != len(picked):
+        raise SystemExit(f'跨度键重复:picked {len(picked)} 条,去重后 {len(spans_by_key)} 条。'
+                         '同类同号出现两次,拒绝继续——继续就是静默丢档。')
 
-    wanted = [n for _, n, _ in bounds] if WANT is None else list(WANT)
+    if WANT is None:
+        wanted = [(cls, number) for number, _t, cls, _s, _e in picked]
+    else:
+        want = set(WANT)
+        wanted = [(cls, number) for number, _t, cls, _s, _e in picked if number in want]
     results = []
     failures = []
-    for number in wanted:
-        if number not in spans:
-            failures.append({'lesson': number, 'why': '未找到该讲的正文标题'})
+    for cls, number in wanted:
+        if (cls, number) not in spans_by_key:
+            failures.append({'lesson': number, 'class': cls, 'why': '未找到该文档的正文标题'})
             continue
-        start, end, title = spans[number]
+        start, end, title = spans_by_key[(cls, number)]
         slice_ = children[start:end]
 
         seen = []
@@ -196,7 +245,9 @@ def split_one(SRC, outdir, label):
 
         # 讲号补零:册只做 10-14 时看不出问题,做满 20 讲时 A1/A2 会排到 A10 后面。
         # 「只在小范围里试过」的默认值,扩大范围时才露馅。
-        target = outdir / f'A{number:02d}-{title.replace(" ", "")}.docx'
+        _lesson_label, _file_label = _labels_for(cls)
+        target = outdir / (_file_label.format(number=number,
+                                             title=title.replace(' ', '')) + '.docx')
         # 每档新开一个读句柄:复用同一个 ZipFile 跨多次全量重读会撞 CRC 校验状态。
         # 且不复用源的 ZipInfo——它带着原条目的 CRC 与长度。
         with zipfile.ZipFile(SRC) as source, \
@@ -208,20 +259,59 @@ def split_one(SRC, outdir, label):
             out.writestr('word/document.xml',
                          etree.tostring(newroot, xml_declaration=True,
                                         encoding='UTF-8', standalone=True))
-        results.append({'lesson': f'第A{number:02d}讲', 'title': title,
+        item_theme = (THEME_TEMPLATE.format(number=number, title=title.strip())
+                      if THEME_TEMPLATE else VOLUME_THEME)
+        results.append({'lesson': _lesson_label.format(number=number), 'title': title,
+                        'documentClass': cls,
                         'path': str(target), 'bodyChildren': len(rebuilt),
-                        'bannersNormalised': replaced})
-        print(f'  第A{number:02d}讲 {title}: {len(rebuilt)} 个 body 子元素, 横幅正规化 {replaced} 个')
+                        'bannersNormalised': replaced, 'theme': item_theme})
+        print(f'  {_lesson_label.format(number=number)} {title}: '
+              f'{len(rebuilt)} 个 body 子元素, 横幅正规化 {replaced} 个')
 
     return results, failures
 
 
+def _split_sources():
+    """原卷侧:一档走原路径,多档逐档切(单元卷:一卷一档,每档里恰好一个边界)。"""
+    if len(SOURCES) <= 1:
+        return split_one(Path(str(SRC)), OUTDIR, '原卷')
+    results, failures = [], []
+    for one in SOURCES:
+        r, f = split_one(Path(str(one)), OUTDIR, f'原卷·{one.stem}')
+        results.extend(r)
+        failures.extend(f)
+    return results, failures
+
+
+def _sweep(outdir, keep, label):
+    """本轮没产出的旧档必须清掉,并报出来。
+
+    ★lessons / lessons.annotated 是**通配符产物**:下一步按 glob 取,取到几个算几个。
+    换一份源、改一次命名,旧档就成了不属于本轮的"多余文档"——而它长得和真档一模一样,
+    carve 会照单全收。2026-08-20 实测:源由学生版改成教师版后,
+    A17/A18 因标题里的全角空格产生了新档名,旧档留在原地,目录里 22 个而本轮只产 20 个。
+    静默多两讲,没有任何提示。
+
+    不静默删:删了几个、删的是谁,都记进门报告。
+    """
+    stale = [p for p in sorted(outdir.glob('*.docx')) if p.name not in keep]
+    for path in stale:
+        path.unlink()
+    if stale:
+        print(f'  [{label}] 清掉上一轮遗留 {len(stale)} 档: '
+              f'{", ".join(p.name for p in stale)}')
+    return [p.name for p in stale]
+
+
 def main():
-    results, failures = split_one(Path(str(SRC)), OUTDIR, '原卷')
+    results, failures = _split_sources()
+    swept = _sweep(OUTDIR, {Path(r['path']).name for r in results}, '原卷')
     annotated_results, annotated_failures = [], []
     if ANNOTATED_SRC is not None:
         annotated_results, annotated_failures = split_one(
             Path(str(ANNOTATED_SRC)), Path(str(ANNOTATED_OUTDIR)), '解析版')
+        swept += _sweep(Path(str(ANNOTATED_OUTDIR)),
+                        {Path(r['path']).name for r in annotated_results}, '解析版')
         # 配对判据:两侧讲号集合必须相同。差一个就不许静默——
         # 少配到的那一讲会整讲没有答案,而链照样能跑完。
         left = {r['lesson'] for r in results}
@@ -241,6 +331,9 @@ def main():
         'rule': ('每讲的栏目横幅集合必须与模板表 subModules 声明的一致(是「就是」不是「至少」),'
                  '且必须能拆出全部目标讲;册若有解析版,两侧讲号必须一一对应。'),
         'expectedBanners': EXPECTED_BANNERS,
+        'sweptStaleDocuments': swept,
+        'sweptWhy': ('本轮没产出的旧档已清除。lessons 是通配符产物,留着会被下一步当成真档吃进去——'
+                     '而它长得和真档一模一样,不会有任何提示。'),
         'status': status,
         'lessons': results,
         'annotatedLessons': annotated_results,
@@ -266,11 +359,11 @@ def main():
         #         而不是写一个看着合理的值让它悄悄进成品。
         'documents': [{'role': 'original_word', 'lesson': item['lesson'], 'period': None,
                        'physicalPath': item['path'], 'path': item['path'],
-                       **({'theme': VOLUME_THEME} if VOLUME_THEME else {})}
+                       **({'theme': item['theme']} if item.get('theme') else {})}
                       for item in results]
                      + [{'role': 'annotated_word', 'lesson': item['lesson'], 'period': None,
                          'physicalPath': item['path'], 'path': item['path'],
-                         **({'theme': VOLUME_THEME} if VOLUME_THEME else {})}
+                         **({'theme': item['theme']} if item.get('theme') else {})}
                         for item in annotated_results],
     }
     if annotated_results:

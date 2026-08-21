@@ -309,6 +309,26 @@
    "glob": true,
    "optional": true,
    "what": "解析版按讲切出的每讲一档,与 lessons 按讲号配对写进 registry 的 annotated_word。"
+  },
+  "gate.volume-metadata": {
+   "defaultPath": "work/gate_volume_metadata.json",
+   "what": "GATE_VOLUME_METADATA 的报告:册级元数据(时长/满分/节分值)是否自洽。"
+  },
+  "gate.shape-predicates": {
+   "defaultPath": "work/gate_shape_predicates.json",
+   "what": "GATE_SHAPE_PREDICATE_HAS_EVIDENCE 的报告:每条形状判据是否带证据、是否恒假。"
+  },
+  "noncontent-survey": {
+   "defaultPath": "quality/noncontent-facts.survey.json",
+   "what": "源里实际出现过的版式事实,及原子化记了哪几样。还原性的第一半。"
+  },
+  "layout": {
+   "defaultPath": "work/layout.json",
+   "what": "非内容层:源的版式事实按 locator 归位。与 atoms(内容层)分开存。"
+  },
+  "gate.reconstructible": {
+   "defaultPath": "work/gate_reconstructible.json",
+   "what": "GATE_RECONSTRUCTIBLE 的报告:能不能据内容层+非内容层还原出源文件。原子化的最终判准。"
   }
  },
  "steps": [
@@ -384,6 +404,50 @@
     "{volume}"
    ],
    "note": "这批源像不像已知模板?像 → 用那张表;不像 → 走建表流程,**绝不强行套最像的那个**。SKILL.md 里一直有这一步,首版工序表漏了它。"
+  },
+  {
+   "id": "s1c-shape-predicates",
+   "phase": "方法",
+   "runner": "command",
+   "consumes": [
+    "schema",
+    "source.stripped"
+   ],
+   "produces": [
+    "gate.shape-predicates"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/check_shape_predicates.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "why": "2026-08-20 一天内同一类事故 7 次:判据只写「长什么样」,而那个位置长得一样的东西不止一种;命中之后没有任何报错,产物看起来完整而错误藏在内容里。「能认出来」与「认对了」是两件事,中间没有报错——本门就是那个报错。",
+   "note": "分工:命中数由门自己扫(顺带自动抓判据恒假);「同形态还可能是什么」「靠什么分辨」必须在 evidence 里声明——那是机器判不了的。改过判据的必须留 redGreen。"
+  },
+  {
+   "id": "s1d-noncontent-survey",
+   "phase": "方法",
+   "runner": "command",
+   "consumes": [
+    "lessons",
+    "layout"
+   ],
+   "produces": [
+    "noncontent-survey"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/survey_noncontent_facts.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "why": "PM 2026-08-20:「具体的非内容信息有很多,我没办法直接全部告诉你,但你可以做的时候不断汇总整理,完善规范,并且记录到包内,做到原子化后能根据两类信息完整地还原出源文件。」判准是**还原性**——不必猜还有哪些非内容信息,让还原去告诉你:往返一圈丢了什么,什么就是没记。",
+   "note": "只登记这一份源里**真实出现过**的事实并带次数;登记一个从未出现的字段,就是给自己造一条恒假的待办。 ★「记了没有」由本步**读非内容层的实际产物自动核**,不手维护清单——手维护的表必然与实现漂移,而且漂了没人知道。"
   },
   {
    "id": "s2-matrix",
@@ -508,6 +572,53 @@
    ]
   },
   {
+   "id": "s4c5-capture-layout",
+   "phase": "施工",
+   "runner": "command",
+   "consumes": [
+    "lessons",
+    "registry"
+   ],
+   "produces": [
+    "layout"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/capture_layout.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "why": "原子化要产出**两类**信息:内容模块 + 排版布局。判准是还原性——能据两类信息重建源文件。上一轮普查:源里 47 类版式事实,原子化只记住 11 类。",
+   "note": "逐字捕获,不枚举字段:照着清单逐个补,下一份源换一批事实又得重来,枚举永远不全。与内容层分开存:同一块内容可以进讲义、进单元卷、进错题本,版式各不相同而内容只有一份。"
+  },
+  {
+   "id": "s4c6-reconstructible",
+   "phase": "施工",
+   "runner": "command",
+   "consumes": [
+    "lessons",
+    "layout",
+    "atoms.normalised",
+    "structure",
+    "registry"
+   ],
+   "produces": [
+    "gate.reconstructible"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/check_reconstructible.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "why": "原子化的最终判准(PM 2026-08-20):做到能根据两类信息完整还原出源文件。★「类别覆盖全」不等于「能还原」——记住「源里有 spacing 这一类」与「第137段的 spacing 是多少」是两回事。",
+   "note": "不给百分比:还原是全有或全无,少一项重建出来的就不是原来那份。对不上的逐条列出。"
+  },
+  {
    "id": "s4c3-figure-sheets",
    "phase": "方法",
    "consumes": [
@@ -531,7 +642,8 @@
    "id": "s4c2-normalise-atoms",
    "phase": "施工",
    "consumes": [
-    "atoms"
+    "atoms",
+    "schema"
    ],
    "produces": [
     "atoms.normalised",
@@ -545,7 +657,30 @@
     "--volume",
     "{volume}"
    ],
-   "gate": "GATE_EXERCISE_ITEMS_ARE_QUESTIONS"
+   "gate": "GATE_EXERCISE_ITEMS_ARE_QUESTIONS",
+   "why": "「哪些原子是题」的判据由模板表 questionScope 给,故也消费 schema——此前写死 section==过关检测,单元卷这类没有该栏目的文档在此选中 0 条。"
+  },
+  {
+   "id": "s4c4-volume-metadata",
+   "phase": "雕刻",
+   "runner": "command",
+   "consumes": [
+    "structure",
+    "schema"
+   ],
+   "produces": [
+    "gate.volume-metadata"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/check_volume_metadata.py",
+    "--workspace",
+    "{workspace}",
+    "--volume",
+    "{volume}"
+   ],
+   "why": "册级元数据是内容的一部分,而且自带恒等式(各节分值之和==满分)。源把这两个数写了两遍,两遍就有对不上的可能。2026-08-20 建单元卷册时是**人**逐份核的 5/5,没留判据——人核过一次的东西,下一批换个人就没了。",
+   "note": "判据由模板表 volumeMetadata 给。讲义册没有这一层,本步报 not-applicable 而**不是** pass——一道门长期报 pass 却从未判过东西,那是判据恒假。"
   },
   {
    "id": "s4d-blueprint-pass1",

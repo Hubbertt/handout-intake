@@ -150,6 +150,12 @@ class Schema:
         self.option_separators = tuple(markers["separators"])
         self.boundary_chars = tuple(markers["boundaryChars"])
         self.tags = {t["id"]: re.compile(t["pattern"]) for t in data["tags"]}
+        # 角色也可以携带标签。有的源不用【答案】/【详解】,而用教科书体例
+        # 「分析：…」「解：…」「答：…」——这类**必须按角色认**(角色是逐段匹配,天然锚行首),
+        # 不能写进 tags:tags 作用在 joined(段落直接拼接、无分隔符)上,锚不了行首,
+        # 而「分析：」在段中另有出现(小问里的「（1）分析：反射光线…」),
+        # 「答：」段中还出现在**填空**里(「答：______；原因是______」)。非锚定判据会把它们全吃掉。
+        self.role_tags = {r["id"]: r["tag"] for r in data["roles"] if r.get("tag")}
         self.diagnostics = data["diagnostics"]
         arrows = data.get("shapeArrows", {})
         self.arrow_geometries = tuple(arrows.get("geometries", ()))
@@ -162,6 +168,19 @@ class Schema:
         self.field_renderings = {k: v["text"]
                                  for k, v in data.get("fieldRenderings", {}).items()}
         self.question_number = re.compile(data["questionNumberRegex"])
+        # 合并答案的判据。源里偶有把好几道题的答案写在一个【答案】下的写法
+        # (「1．A  2．B  3．C」),引擎据此按题号拆开。
+        # ★首版的判据是 `(?:^|\s)(\d{1,2})[．.]\s*`,它**同时**命中小数与量值:
+        # 「0.1」「2.3」「5.5」「10.0cm」「3.1」都被读成题号。
+        # 2026-08-20 全量实测(讲义册 20 讲 + 单元卷 5 卷,共 519 条【答案】):
+        # 走进这条分支的 8 条**全部是误判**,真正的合并答案 0 条。
+        # 一条 100% 错的判据不能靠删掉了事(别的册可能真有合并答案),
+        # 所以收紧而不是移除:分隔符后面紧跟数字的,不是题号,是小数。
+        splitting = data.get("answerSplitting") or {}
+        self.answer_split = re.compile(
+            splitting.get("pattern", r"(?:^|\s)(\d{1,2})[．.]\s*"))
+        self.answer_split_reject_digit = bool(
+            splitting.get("rejectWhenFollowedByDigit", True))
 
     def role_of(self, text: str) -> str | None:
         for role in self.roles:
@@ -562,6 +581,46 @@ def picture_refs(paragraph, resolve, schema: "Schema") -> list[dict[str, Any]]:
     refs: list[dict[str, Any]] = []
     cursor = 0
 
+    def relations_all(node) -> list[str]:
+        """节点下**全部**位图引用,按文档顺序。
+
+        ★relation() 只返回第一个。一个 w:drawing 里装两张图(组合图形)时,
+          第二张连 work/media/ 都进不去——它在 carve 阶段就没了,而后面每一道
+          门看到的都是「已经只有一张」的世界,谁也不会报。
+          2026-08-20 A16「力」实测:p[56] 一个 drawing 里两个 blip,
+          分别是 F₂(书受支持力,向上)与 F₁(桌面受压力,向下)——**讲力的相互性的一对**。
+          留下一张单独看会误导。由 s5b 覆盖率门抓出(1 个未归属源对象)。
+          旧册 A10-A14 实测 0 个多图 drawing,已定稿成品不受影响。
+        """
+        out: list[str] = []
+        for blip in node.iter(f"{{{A_NS}}}blip"):
+            found = blip.get(f"{{{R_NS}}}embed")
+            if found and found not in out:
+                out.append(found)
+        for data in node.iter(f"{{{V_NS}}}imagedata"):
+            found = data.get(f"{{{R_NS}}}id")
+            if found and found not in out:
+                out.append(found)
+        return out
+
+    def picture_geometry(node, rid: str) -> dict[str, Any]:
+        """这一张图自己的尺寸。组合图形里每张各有各的 extent。
+
+        取不到就退回整个 drawing 的几何——与单图时代的行为一致,不改既有输出。
+        """
+        for blip in node.iter(f"{{{A_NS}}}blip"):
+            if blip.get(f"{{{R_NS}}}embed") != rid:
+                continue
+            holder = blip
+            while holder is not None and not holder.tag.endswith("}pic"):
+                holder = holder.getparent()
+            if holder is not None:
+                own = geometry_of(holder)
+                if own.get("widthEmu"):
+                    return own
+            break
+        return geometry_of(node)
+
     def describe(node) -> dict[str, Any]:
         """A w:drawing is not necessarily a picture: 74 of them are wsp/wgp
         shapes — text boxes and grouped vectors — which have no bitmap to
@@ -599,6 +658,13 @@ def picture_refs(paragraph, resolve, schema: "Schema") -> list[dict[str, Any]]:
                 for node in child:
                     if node.tag in (W + "drawing", W + "pict", W + "object"):
                         refs.append({"offset": cursor, **describe(node)})
+                        # 第一张沿用 describe(与单图时代逐字节相同,不动既有输出);
+                        # 同一 drawing 里余下的图各补一条,否则它们在此静默消失。
+                        for extra in relations_all(node)[1:]:
+                            refs.append({"offset": cursor, "kind": "picture",
+                                         **(resolve(extra) or {}),
+                                         **picture_geometry(node, extra),
+                                         "sharesDrawingWith": relations_all(node)[0]})
                     elif node.tag == f"{{{MC_NS}}}AlternateContent":
                         # Word wraps 71 of the figures in a Choice/Fallback
                         # pair. Only direct children of the run were inspected,
@@ -608,6 +674,11 @@ def picture_refs(paragraph, resolve, schema: "Schema") -> list[dict[str, Any]]:
                         for inner in (choice.iter() if choice is not None else ()):
                             if inner.tag in (W + "drawing", W + "pict"):
                                 refs.append({"offset": cursor, **describe(inner)})
+                                for extra in relations_all(inner)[1:]:
+                                    refs.append({"offset": cursor, "kind": "picture",
+                                                 **(resolve(extra) or {}),
+                                                 **picture_geometry(inner, extra),
+                                                 "sharesDrawingWith": relations_all(inner)[0]})
                     elif node.tag == W + "t":
                         cursor += len(node.text or "")
                 continue
@@ -1518,20 +1589,49 @@ def main() -> int:
 
         answers: dict[str, dict[str, Any]] = {}
         partner = annotated.get((document["lesson"], document["period"]))
-        if partner:
-            diagnostics.document += "（解析版）"
-            other = carve(read_blocks(partner["physicalPath"], schema, diagnostics),
-                          schema, diagnostics)
-            diagnostics.document = diagnostics.document[:-len("（解析版）")]
+        # 答案可以在**同一份文档里**。2026 物理教师版就是这样:一份里既有题也有【答案】,
+        # 而且它是学生版的严格超集(实测 1792/1792 段,作答线仍留空)。
+        # 此前只支持「原卷 + 解析版伙伴档」两份配对,而那套配对按
+        # section|subsection|node|题干前18字 做键——**两侧差一个句号或一个下划线就配不上**
+        # (实测 A04即练2、C02第4题 皆因此丢了答案,而源里其实都有)。
+        # 同源时不存在这个问题:题和它的答案本来就在一起。
+        # 由模板表 tags.answersInSameDocument 声明,不猜:某些册确实是两份分开的。
+        self_annotated = bool((schema.raw.get("tags_meta") or {}).get("answersInSameDocument")
+                              or schema.raw.get("answersInSameDocument"))
+        if partner or self_annotated:
+            if partner:
+                diagnostics.document += "（解析版）"
+                other = carve(read_blocks(partner["physicalPath"], schema, diagnostics),
+                              schema, diagnostics)
+                diagnostics.document = diagnostics.document[:-len("（解析版）")]
+            else:
+                other = carved     # 答案就在本文档里,不必再读一份
+            def _by_role_tag(item, want):
+                """题内是否有携带该标签的角色块;有就返回它的正文。"""
+                for blk in item.get("body") or []:
+                    if schema.role_tags.get(blk.get("role")) == want:
+                        text = (blk.get("text") or "").strip()
+                        # 剥掉「分析：」「解：」这类自身前缀,只留内容
+                        return re.sub(r"^\s*[^：:]{0,12}[：:]\s*", "", text, count=1)
+                return None
+
             for item in other["questions"]:
                 found = schema.tags["answer"].search(item["joined"])
-                if not found:
-                    continue
                 explained = schema.tags["explanation"].search(item["joined"])
                 explanation = explained.group(1).strip() if explained else None
-                body = found.group(1).strip()
+                if found:
+                    body = found.group(1).strip()
+                else:
+                    # 教科书体例:没有【答案】,但有 role 携带 answer 标签
+                    body = _by_role_tag(item, "answer")
+                    if not body:
+                        continue
+                if explanation is None:
+                    explanation = _by_role_tag(item, "explanation")
                 group = f'{item["section"]}|{item["subsection"]}|{item["node"]}'
-                parts = list(re.finditer(r"(?:^|\s)(\d{1,2})[．.]\s*", body))
+                parts = [m for m in schema.answer_split.finditer(body)
+                         if not (schema.answer_split_reject_digit
+                                 and m.end() < len(body) and body[m.end()].isdigit())]
                 if len(parts) >= 2:
                     for index, match in enumerate(parts):
                         end = (parts[index + 1].start()
@@ -1699,7 +1799,18 @@ def main() -> int:
             encoding="utf-8")
 
     if args.atoms:
-        atoms = [{k: v for k, v in q.items() if k not in ("body", "joined")}
+        # body 曾与 joined 一起被丢弃。joined 该丢(它是 stem+body 的拼接,纯冗余),
+        # body 不该:题里凡不是题干/选项/小问的块都在里面——圈号项(①②③)首当其冲。
+        # 实测(2026-08-20 两册全量):落在题内的圈号项 42 条,其中 23 条
+        # (讲义 6 / 单元卷 17)在原子里一个字都找不到。**题面残缺而无人报错。**
+        # 只留结构与文本,不留 imageRefs(那是对象引用,图的归属另有 figureOwners)。
+        def _slim_body(blocks):
+            return [{"role": b.get("role"), "text": b.get("text"),
+                     "locator": b.get("locator"), "images": b.get("images", 0)}
+                    for b in blocks]
+
+        atoms = [{**{k: v for k, v in q.items() if k not in ("body", "joined")},
+                  "bodyBlocks": _slim_body(q.get("body") or [])}
                  for q in all_questions]
         args.atoms.parent.mkdir(parents=True, exist_ok=True)
         args.atoms.write_text(json.dumps(atoms, ensure_ascii=False, indent=1),

@@ -62,11 +62,11 @@ def main():
     chosen, missing = select_scope(heads, WANT)
     if missing:
         raise SystemExit(f'册范围要第 {missing} 讲,源里没有。'
-                         f'源里有的是 {[n for _, n, _ in heads]}。'
+                         f'源里有的是 {[h[1] for h in heads]}。'
                          '改 bindings.scope.lessons,或换源——不静默少做几讲。')
     index_of = {h[0]: k for k, h in enumerate(heads)}
     scope = []
-    for st, num, name in chosen:
+    for st, num, name, _cls in chosen:
         k = index_of[st]
         end = heads[k + 1][0] if k + 1 < len(heads) else len(paras)
         scope.extend(range(st, end))

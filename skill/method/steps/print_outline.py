@@ -53,7 +53,30 @@ def main() -> int:
     # vendor 的 main() 自己 parse sys.argv,会撞上本步的 --workspace/--volume。
     # 只留它认识的参数:--keys 本册。**不给它 --force**——强制会跳过它自己的
     # 「源报告是否当前」校验,那正是这一步存在的意义。
-    sys.argv = [sys.argv[0], "--keys", cfg["key"]]
+    # 资源守卫的阈值可由册级绑定覆盖,**不手敲命令绕过链**。
+    #
+    # vendor 里 DEFAULT_MIN_FREE_GB = 120.0 是个光秃秃的常量,没有任何理由记录。
+    # 2026-08-20 查旧册那次**成功**转曲的资源快照:转曲前空闲 121.86 GB、
+    # 转曲后 121.87 GB —— **净消耗 −0.01 GB**,14.32 秒 / 114 页。
+    # 也就是说这个门槛与实际消耗没有可证的关系;而那一次只比它多 1.86 GB,
+    # 差一点它自己也过不去。
+    #
+    # 但一个数据点不足以改默认值,所以:默认仍是 120,册可显式覆盖并留下理由。
+    # 覆盖是**记录在册里的决定**,不是命令行里一次性的绕过。
+    guard = (CHAIN.bindings.get("outlineResourceGuard") or {})
+    extra: list[str] = []
+    if guard.get("minFreeGB") is not None:
+        if not guard.get("why"):
+            print(json.dumps({"step": "s6d-outline", "status": "failed",
+                              "reason": "outlineResourceGuard.minFreeGB 覆盖了默认阈值,"
+                                        "但没有写 why。降安全阈值必须留下理由与依据,"
+                                        "否则下一个人只看到一个更小的数字。"},
+                             ensure_ascii=False, indent=1))
+            return 1
+        extra += ["--min-free-gb", str(float(guard["minFreeGB"]))]
+    if guard.get("maxAcrobatRssGB") is not None:
+        extra += ["--max-acrobat-rss-gb", str(float(guard["maxAcrobatRssGB"]))]
+    sys.argv = [sys.argv[0], "--keys", cfg["key"], *extra]
     try:
         m.main()
     except SystemExit as exc:

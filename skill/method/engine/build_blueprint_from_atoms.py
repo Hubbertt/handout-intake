@@ -737,6 +737,16 @@ class Builder:
         # does not, so a block's figures are matched positionally against the
         # manifest objects that live under it.
         self.children: dict[tuple[str, str], dict[str, list[Any]]] = {}
+        # ★按 objectId 去重。object_index 把同一个对象**按 canonical locator 与
+        #   serializedLocators 各建一个键**(Choice/Fallback 两种拼法都要能查到),
+        #   于是遍历 objects.items() 时同一个对象会被收进来不止一次。
+        #   位置匹配读的是这个列表的第 N 项,重复项一进来,序号就错位:
+        #     [第一张, 第一张, 第二张, 第二张] —— order=2 拿到的还是第一张。
+        #   **这个重复一直都在**,只是一个段落里只有一张图时永远只取 order 1
+        #   (索引 0 正好对),所以从来没有露过头。2026-08-20 A16「力」的 p[56]
+        #   一个 drawing 里装了两张图(F₂ 与 F₁,讲力的相互性的一对),它才第一次可见:
+        #   两个图块认领了同一个源对象 → 1 处重复归属 + 1 处未归属。
+        seen: dict[tuple[str, str, str], set[str]] = {}
         for (digest, locator), item in objects.items():
             body = locator.partition("word/document.xml:")[2]
             for marker, kind in (("/drawing[", "image"),
@@ -748,6 +758,10 @@ class Builder:
                 if kind == "shape" and "/shape[" not in body:
                     continue
                 head = body.split(marker)[0]
+                key = (digest, head, kind)
+                if item["objectId"] in seen.setdefault(key, set()):
+                    break
+                seen[key].add(item["objectId"])
                 self.children.setdefault((digest, head), {}).setdefault(
                     kind, []).append(item)
                 break

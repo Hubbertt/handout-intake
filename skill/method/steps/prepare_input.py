@@ -14,8 +14,16 @@ from pathlib import Path
 from _bootstrap import chain_from_argv  # noqa: E402
 
 CHAIN = chain_from_argv(__doc__)
-SRC = CHAIN.only('source')
-WORK = CHAIN.path_for('source.stripped')
+# 源可以是一档(讲义合并本),也可以是多档(单元卷:一卷一档,源里本来就是分开的)。
+# resolve() 对两种都成立;only() 只对前者成立,而它曾是这里唯一的写法——
+# 于是「源天然就是多档」这件事在本步是不可表达的。
+SOURCES = CHAIN.resolve('source')
+if not SOURCES:
+    raise SystemExit('source 一个都没解析到。拒绝在 0 个源上跑——'
+                     '模式写错与源真的不存在,报出来的都该是这一句,不是往下走。')
+SRC = SOURCES[0] if len(SOURCES) == 1 else None
+WORK = CHAIN.path_for('source.stripped') if len(SOURCES) == 1 else None
+WORK_DIR = CHAIN.dir_for('source.stripped')
 # 解析版(教师版)。册里没有就是 None——有的册天然没有。
 _ANN = CHAIN.resolve('source.annotated')
 ANNOTATED_SRC = _ANN[0] if _ANN else None
@@ -105,8 +113,26 @@ def clean_one(SRC, WORK, label):
     }
 
 
+def _clean_sources():
+    """原卷侧:一档走原路径(产物路径逐字不变),多档走目录。
+
+    多档时目标名 = 源名 + '-已清零宽',与单档时的命名习惯同形。
+    """
+    if len(SOURCES) == 1:
+        return {'原卷': clean_one(SRC, WORK, '原卷')}, [{'src': str(SRC), 'work': str(WORK)}]
+    WORK_DIR.mkdir(parents=True, exist_ok=True)
+    parts = {}
+    pairs = []
+    for one in SOURCES:
+        target = WORK_DIR / f'{one.stem}-已清零宽{one.suffix}'
+        label = f'原卷·{one.stem}'
+        parts[label] = clean_one(one, target, label)
+        pairs.append({'src': str(one), 'work': str(target)})
+    return parts, pairs
+
+
 def main():
-    parts = {'原卷': clean_one(SRC, WORK, '原卷')}
+    parts,原卷档 = _clean_sources()
     if ANNOTATED_SRC is not None:
         parts['解析版'] = clean_one(Path(str(ANNOTATED_SRC)),
                                    Path(str(ANNOTATED_WORK)), '解析版')
@@ -128,11 +154,12 @@ def main():
             'role': 'original_word',
             'lesson': '整册',
             'period': None,
-            'physicalPath': str(WORK),
-            'sha256': parts['原卷']['workingCopySha256'],
-            'derivedFrom': {'path': str(SRC), 'sha256': parts['原卷']['sourceSha256'],
+            'physicalPath': one['work'],
+            'sha256': parts[label]['workingCopySha256'],
+            'derivedFrom': {'path': one['src'], 'sha256': parts[label]['sourceSha256'],
                             'transform': 'GATE_NO_ZERO_WIDTH 清除 Cf 类字符'},
-        }] + ([{
+        } for label, one in zip([k for k in parts if k.startswith('原卷')], 原卷档)]
+        + ([{
             'role': 'annotated_word',
             'lesson': '整册',
             'period': None,

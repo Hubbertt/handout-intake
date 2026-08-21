@@ -27,6 +27,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -122,6 +123,45 @@ def substitute(token: str, chain: Chain) -> str:
             .replace("{volume}", chain.volume or ""))
 
 
+CODE_KEY = "__code__"
+"""状态里记「这一步的产物是被哪个版本的代码做出来的」。
+
+**这不是重跑判据,是失效判据。** 执行器每次被调用都真跑那一步(实测:同一步连跑两次,
+产物 mtime 都会更新),所以「代码变了要不要重跑本步」不是问题——你调它它就跑。
+
+问题在**下游**:改了引擎却只重跑了本步,上游产物的 sha256 一个字没变,
+于是 HOLD_INPUT_DRIFT 不响,下游看起来仍然是新鲜的。2026-08-20 实测撞上过一次:
+carve_engine 补了 bodyBlocks,而蓝图那几步的输入哈希没变——链无从知道
+它们的产物是旧代码的产物。当时是靠人删产物强制重跑的,「靠人记得」正是要消灭的东西。
+
+记下来之后,--dry-run 就能回答「现在有哪些产物是旧代码做的」。
+不阻断:阻断会把一次无害的注释改动变成全链重跑;报出来,由人决定重跑到哪一层。
+"""
+
+
+def code_digest(step: dict, chain: Chain) -> str | None:
+    """这一步命令里引用的**包内脚本**的内容摘要。
+
+    只认 {package}/ 开头的:那是随版本走的方法体。{python} 是解释器、
+    {workspace} 是数据,都不算「这一步的代码」。
+    """
+    files = []
+    for key in ("command", "command2", "command3", "command4"):
+        for token in step.get(key) or []:
+            if isinstance(token, str) and token.startswith("{package}/"):
+                files.append(PACKAGE_ROOT / token[len("{package}/"):])
+    if not files:
+        return None
+    h = hashlib.sha256()
+    for path in sorted(set(files)):
+        h.update(str(path).encode("utf-8"))
+        try:
+            h.update(path.read_bytes())
+        except OSError:
+            h.update(b"<missing>")
+    return h.hexdigest()[:16]
+
+
 def run_one(step: dict, chain: Chain, state: dict, dry: bool) -> dict:
     sid = step["id"]
     result = {"step": sid, "phase": step.get("phase")}
@@ -161,6 +201,17 @@ def run_one(step: dict, chain: Chain, state: dict, dry: bool) -> dict:
                       why="上游产物已变,本步的既有产物已失效,须重跑上游后再来",
                       drift=drift)
         return result
+
+    # 2.5) 代码漂移:本步的产物已经在,但做出它们的代码已经不是现在这份。
+    # 只报不拦,理由见 CODE_KEY 的说明。
+    now_code = code_digest(step, chain)
+    was_code = (state.get(CODE_KEY) or {}).get(sid)
+    if now_code and was_code and now_code != was_code:
+        produced = [t.split("@", 1)[0].rstrip("'") for t in step["produces"]]
+        if any(chain.resolve(aid) for aid in produced):
+            result["codeDrift"] = {"was": was_code, "now": now_code,
+                                   "why": "既有产物由另一版本的方法体做出,"
+                                          "其下游的输入哈希不会因此变化"}
 
     # 3) 人做的步骤:只等,不假装
     if step.get("runner") == "human":
@@ -312,18 +363,28 @@ def main() -> int:
                 d = chain.digest(aid)
                 if d:
                     state[aid] = d
+            cd = code_digest(by_id[sid], chain)
+            if cd:
+                state.setdefault(CODE_KEY, {})[sid] = cd
     if not args.dry_run:
         chain.save_state(state)
 
     summary = {}
     for r in results:
         summary[r["status"]] = summary.get(r["status"], 0) + 1
+    code_stale = [r["step"] for r in results if r.get("codeDrift")]
+    if code_stale:
+        summary["codeDrift"] = len(code_stale)
     report = {
         "schemaVersion": "handout-intake.chain-run.v1",
         "ranAt": datetime.now().astimezone().isoformat(timespec="seconds"),
         "workspace": str(chain.workspace), "volume": chain.volume,
         "dryRun": args.dry_run, "planned": len(order),
         "summary": summary, "stoppedAt": stopped, "results": results,
+        "codeDriftSteps": code_stale,
+        "codeDriftNote": ("这些步骤的既有产物由另一版本的方法体做出。不阻断——"
+                          "重跑到哪一层由人定。**不重跑的话,下游不会因此失效**:"
+                          "产物的 sha256 没变,HOLD_INPUT_DRIFT 看不见代码。"),
         # ★ok 必须意味着「这条链跑完了」,不能只意味着「没有步骤崩溃」。
         # P6 空手复现里,一条只跑完 6/25、其余 16 步 blocked 的链报了 ok:true——
         # 因为 blocked 不是 failed。**报 ok 的空转链,比报错的链更难发现。**

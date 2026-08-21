@@ -1,0 +1,16 @@
+{
+ "schemaVersion": "handout-intake.vendor-consumers.v1",
+ "_what": "谁把本包的文件拷了一份到自己那里(vendoring)。**只记去哪找,不记拷了什么**——拷了什么由消费方自己的 PROVENANCE.md 记,那是它的真源;在这里再抄一份就是第二真源。",
+ "_why": "生产环境读不到本包所在的外置卷,所以引擎与种子必须拷进内置盘。拷贝一旦发生,上游再改就与它无关了——而 PROVENANCE.md 把上游哈希写得很清楚,却没有任何东西去核它。2026-08-20 实测:题库那份 vendored 自 2.1.0,其声明的上游 carve_engine sha256 与当前上游已经不同;它声明「identical」的 physics 种子,上游也已另一个哈希。两处都没有任何提示。",
+ "consumers": [
+  {
+   "id": "quiz-QuizLocalServer",
+   "displayName": "橙子题库后端(FastAPI)",
+   "provenance": "/Users/Shared/ChengziClass/quiz/source/QuizLocalServer/app/services/carve/PROVENANCE.md",
+   "root": "/Users/Shared/ChengziClass/quiz/source/QuizLocalServer/app/services/carve",
+   "why": "生产 launchd 读不到外置卷(macOS TCC 拦可移除卷),引擎与种子拷进内置盘并以模块方式 import,不按路径调用。",
+   "localPatches": "carve_engine.py 有 [quiz-omml] 标记的增量改动(OMML→LaTeX),PROVENANCE 里已声明为 patched。核对的是**上游是否移动**,不是消费方是否逐字相同。",
+   "ownedBy": "QuizDev 线(claude-e 另一会话持 /Users/Shared/ChengziClass/quiz/source 租约)。本包只负责报出漂移,不代它重新 vendor。"
+  }
+ ]
+}
