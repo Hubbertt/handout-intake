@@ -601,5 +601,32 @@
   "_noConceptLinksWhy": "PM 2026-08-21「删」:题不挂任何概念,包括讲/卷这一层。「这道题属于哪一讲」在 question_dimensions.document 里已有真源,再挂一条 question→topic 边就是同一事实的第二处记录,两处必漂(一事一真源)。★概念注册表本身不动:讲/卷仍作为**大纲登记**存在(PM 2026-08-20 已定「大纲登记相同」),只是题不挂上去。"
  },
  "answersInSameDocument": true,
- "_answersInSameDocumentWhy": "答案就在本文档里,不需要解析版伙伴档。此前的「原卷 ↔ 解析版」配对按 section|subsection|node|题干前18字 做键,**两侧差一个句号或一个下划线就配不上**:实测 A04即练2(下划线数量不同)、C02第4题(「旅游」vs「旅游。」)都因此丢了答案,而源里其实都有。同源不存在这个问题。"
+ "_answersInSameDocumentWhy": "答案就在本文档里,不需要解析版伙伴档。此前的「原卷 ↔ 解析版」配对按 section|subsection|node|题干前18字 做键,**两侧差一个句号或一个下划线就配不上**:实测 A04即练2(下划线数量不同)、C02第4题(「旅游」vs「旅游。」)都因此丢了答案,而源里其实都有。同源不存在这个问题。",
+ "unitKindMapping": {
+  "_what": "引擎的角色名 → atomize.unit_kinds 的模块类型。持久化到 atomize.* 时用。",
+  "_why": "角色名是**这张表**的词(讲义体例:讲解条目/即练题干/圈号项…),模块类型是**跨学科通用**的词(题/题干/选项/空/答案/解析)。两套词必须显式对起来,不能在代码里 if-else ——换一份源换一套角色名,写死的映射就漂了。persist 步骤遇到没映射的角色**直接拒绝**,不猜。",
+  "atomKinds": {
+   "例题题干": "question",
+   "即练题干": "question",
+   "编号项": "question",
+   "讲解条目": "prose"
+  },
+  "blockRoles": {
+   "正文": "prose",
+   "选项行": "option",
+   "小问": "sub_question",
+   "圈号项": "sub_question",
+   "图片块": "figure",
+   "表格": "table",
+   "探究归纳": "prose",
+   "空段落": "prose",
+   "教科书体例·分析": "analysis",
+   "教科书体例·答解": "answer"
+  },
+  "_derivedFields": {
+   "answer": "answer",
+   "explanation": "analysis",
+   "stem": "stem"
+  }
+ }
 }

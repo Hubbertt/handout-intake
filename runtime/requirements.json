@@ -8,8 +8,11 @@
    "why": "check_chain/run_chain/init/export 只读表算 hash,3.9 即可。"
   },
   "engine": {
-   "minVersion": "3.12",
-   "why": "carve/blueprint 用了 `X | None` 注解。"
+   "minVersion": "3.10",
+   "why": "carve/blueprint 用了 `X | None` 注解 —— 该写法在**运行期**自 3.10 起可用,不是 3.12 起。★2026-08-22 更正:此前声明 ≥3.12,是照着「写这段代码时手边的版本」写的,不是照着代码真正需要的版本。后果是把能用的解释器挡在门外:本机只有 3.11.15,向导据此判「未找到」,整条链跑不起来,而实测 carve_engine 与全部原子化步骤在 3.11.15 上导入与运行均正常。过度声明与漏声明一样有害——漏了装机时才炸,多了装机时就跑不了。",
+   "verifiedOn": [
+    "3.11.15 (2026-08-22 实测:全链跑通,见 PACKAGE.json 验收证据)"
+   ]
   },
   "probe": "python3 --version / python3.12 --version"
  },
