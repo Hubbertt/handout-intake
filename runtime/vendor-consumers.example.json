@@ -6,11 +6,13 @@
   {
    "id": "quiz-QuizLocalServer",
    "displayName": "橙子题库后端(FastAPI)",
-   "provenance": "/Users/Shared/ChengziClass/quiz/source/QuizLocalServer/app/services/carve/PROVENANCE.md",
-   "root": "/Users/Shared/ChengziClass/quiz/source/QuizLocalServer/app/services/carve",
+   "provenance": "<消费方根目录>/PROVENANCE.md",
+   "root": "<消费方根目录>",
    "why": "生产 launchd 读不到外置卷(macOS TCC 拦可移除卷),引擎与种子拷进内置盘并以模块方式 import,不按路径调用。",
    "localPatches": "carve_engine.py 有 [quiz-omml] 标记的增量改动(OMML→LaTeX),PROVENANCE 里已声明为 patched。核对的是**上游是否移动**,不是消费方是否逐字相同。",
-   "ownedBy": "QuizDev 线(claude-e 另一会话持 /Users/Shared/ChengziClass/quiz/source 租约)。本包只负责报出漂移,不代它重新 vendor。"
+   "ownedBy": "QuizDev 线(claude-e 另一会话持 /Users/Shared/ChengziClass/quiz/source 租约)。本包只负责报出漂移,不代它重新 vendor。",
+   "_pathsAreLocalFacts": "上面两条是本机绝对路径,故本样例里写成占位符。"
   }
- ]
+ ],
+ "_thisFileIsAnExample": "这是样例。真表是 runtime/vendor-consumers.json —— **本机事实,不进仓**(消费方装在哪台机器的哪个目录,是这台机器的事,不是包的事;与 runtime/paths.json 同类)。拷贝本文件去掉 .example 后缀,把 <…> 换成你这台机器上的真实路径。"
 }

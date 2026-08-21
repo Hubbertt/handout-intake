@@ -3,6 +3,7 @@ styles/compositions/
 styles/renders/
 runtime/probe-report.json
 runtime/paths.json
+runtime/vendor-consumers.json
 volumes/
 experience/*.json
 .retired/

@@ -121,6 +121,12 @@ def main() -> int:
     ap.add_argument("--report", type=Path)
     args = ap.parse_args()
 
+    if not args.registry.exists():
+        print(f"登记表不存在:{args.registry}\n"
+              "它是**本机事实**(消费方装在哪),按 .gitignore 不随包分发。\n"
+              "拷 runtime/vendor-consumers.example.json 去掉 .example,填上本机路径。\n"
+              "不退回空表——空分母判什么都是绿的。", file=sys.stderr)
+        return 1
     registry = json.loads(args.registry.read_text(encoding="utf-8"))
     consumers = registry.get("consumers") or []
     if not consumers:
