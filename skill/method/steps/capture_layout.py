@@ -187,6 +187,33 @@ def font_resolver(zf):
     return resolve
 
 
+def paragraph_entry(node, document, locator, resolve_font):
+    """一个段落 → 非内容层的一条。表内表外共用同一套记法与同一套 locator 约定。
+
+    ★两层各用各的键,对账时必然全对不上 —— 这条踩过一次(曾拿分档文件名去查内容层,
+    误报「3990 段无归属」,真实值 0)。所以表内段落的 locator 也由这里统一给。
+    """
+    runs = []
+    for run in node.iter(W + 'r'):
+        rpr = props(run.find(W + 'rPr'))
+        text = ''.join(x.text or '' for x in run.iter(W + 't'))
+        breaks = [short(b.tag) for b in run if short(b.tag) in ('br', 'tab', 'sym')]
+        if rpr or breaks:
+            runs.append({'chars': len(text), 'rPr': rpr,
+                         **({'marks': breaks} if breaks else {})})
+    entry = {'document': document, 'locator': locator, 'node': 'p',
+             'pPr': props(node.find(W + 'pPr'))}
+    if runs:
+        entry['runs'] = runs
+    figs = drawing_facts(node)
+    if figs:
+        entry['drawings'] = figs
+        font = resolve_font(node)
+        if font:
+            entry['bodyFont'] = font
+    return entry
+
+
 def capture(path, document):
     zf = zipfile.ZipFile(path)
     resolve_font = font_resolver(zf)
@@ -204,31 +231,21 @@ def capture(path, document):
                              for c in child.iter(W + 'gridCol')],
                 'cellProps': [props(c) for c in child.iter(W + 'tcPr')],
             })
+            # ★单元格里的段落也是段落。此前只记了表级属性(tblPr/gridCol/tcPr),
+            #   单元格内的 pPr/rPr/图形一概没记,里面的字也就无从归属——
+            #   2026-08-22 实测:6,399 个字符**一个都没有归属**,169 张图找不到所属块。
+            #   「记了这张表」不等于「记了表里的东西」。
+            for tr, row in enumerate(child.findall(W + 'tr'), 1):
+                for tc, cell in enumerate(row.findall(W + 'tc'), 1):
+                    for cp, para_node in enumerate(cell.findall(W + 'p'), 1):
+                        rows.append(paragraph_entry(
+                            para_node, document,
+                            f'body/tbl[{table}]/tr[{tr}]/tc[{tc}]/p[{cp}]', resolve_font))
             continue
         if child.tag != W + 'p':
             continue
         para += 1
-        runs = []
-        for run in child.iter(W + 'r'):
-            rpr = props(run.find(W + 'rPr'))
-            text = ''.join(t.text or '' for t in run.iter(W + 't'))
-            breaks = [short(b.tag) for b in run if short(b.tag) in ('br', 'tab', 'sym')]
-            if rpr or breaks:
-                runs.append({'chars': len(text), 'rPr': rpr,
-                             **({'marks': breaks} if breaks else {})})
-        entry = {'document': document, 'locator': f'body/p[{para}]', 'node': 'p',
-                 'pPr': props(child.find(W + 'pPr'))}
-        if runs:
-            entry['runs'] = runs
-        figs = drawing_facts(child)
-        if figs:
-            entry['drawings'] = figs
-            # 只在有图的段落上解:相对比例是**图**的属性,别的段落不需要,
-            # 全量解会让非内容层凭空多出 5351 条没人用的事实。
-            font = resolve_font(child)
-            if font:
-                entry['bodyFont'] = font
-        rows.append(entry)
+        rows.append(paragraph_entry(child, document, f'body/p[{para}]', resolve_font))
     sect = body.find(W + 'sectPr')
     section = props(sect) if sect is not None else {}
     return rows, section

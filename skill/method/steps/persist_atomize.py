@@ -303,13 +303,30 @@ def main() -> int:
         #   拿它当分母,归属率会从 96% 虚涨到 99% —— 那不是归属做多了,是分母做小了。
         #   把分母做小是最容易骗过自己的一种量法错:数字变好看,而缺口原封不动。
         total_chars = _source_char_total(args.work, lessons)
-        in_tables = total_chars - sum(len(x[2]) for x in src_blocks)
+        in_tables = sum(len(x[2]) for x in src_blocks if "/tbl[" in x[1])
         claimed = set(block_text) | {f'{a.get("document")}/{a.get("locator")}' for a in atoms}
         unclaimed = 0
+        # 表内段落归给**拥有那张表**的原子:原子认领的是 body/tbl[n] 这一整块,
+        # 单元格里的段落属于它,不该沦为「无人认领」。
+        table_owner = {}
+        for a in atoms:
+            uid = f'{source_id}:{a.get("document")}/{a.get("locator")}'
+            for b in a.get("bodyBlocks") or []:
+                loc = b.get("locator") or ""
+                if loc.startswith("body/tbl["):
+                    table_owner[f'{a.get("document")}/{loc}'] = uid
+        in_table_attributed = 0
         for document, locator, text in src_blocks:
             key = f"{document}/{locator}"
             if key in claimed or not text.strip():
                 continue
+            if "/tbl[" in locator:
+                root = f'{document}/{locator.split("/tr[")[0]}'
+                owner = table_owner.get(root)
+                if owner:
+                    if add_span(key, 0, len(text), owner, "table"):
+                        in_table_attributed += 1
+                    continue
             # 是标题还是正文,由它在层级里出现过没有决定,不靠形状猜
             kind = "heading" if any(h and h in text for h in headings) else "prose"
             uid = f"{source_id}:{key}#unclaimed"
@@ -321,6 +338,7 @@ def main() -> int:
             if add_span(key, 0, len(text), uid, kind):
                 unclaimed += 1
         report["counts"]["unclaimedBlocksAttributed"] = unclaimed
+        report["counts"]["inTableAttributed"] = in_table_attributed
         report["counts"]["spans"] = spans
         report["counts"]["imageOnlyOptionsSkipped"] = image_only
         report["characterAttribution"] = {
@@ -328,8 +346,7 @@ def main() -> int:
             "ratio": round(chars_attributed / total_chars, 4) if total_chars else None,
             "_denominator": "整份源 w:t 的字符总数,含表格单元内的段落。",
             "charsInsideTables": in_tables,
-            "_tablesNote": ("表格单元里的段落目前不在归属遍历内(只遍历 body 的直接 p 子节点),"
-                            "所以这部分字符一个都没有归属。缺口写在这里,不靠缩小分母掩盖。"),
+            "_tablesNote": "表格单元里的段落已纳入遍历(locator 约定 body/tbl[n]/tr[r]/tc[c]/p[i])。",
             "_honest": ("判准是**每个字符都有归属**,不是「差不多了」。"
                         "没归属的字符=不知道该怎么处理的字符:编制成册时不知道排进哪里,"
                         "导入题库时不知道进哪个字段。差多少就写多少。"),
@@ -379,8 +396,19 @@ def _source_blocks(work: Path, lessons: dict) -> list:
     for path, document in lessons.items():
         root = ET.fromstring(zipfile.ZipFile(path).read("word/document.xml"))
         body = root.find(ns + "body")
-        para = 0
+        para = table = 0
         for child in body:
+            if child.tag == ns + "tbl":
+                # ★表内的段落也要遍历,locator 与 capture_layout 用**同一套约定**:
+                #   body/tbl[n]/tr[r]/tc[c]/p[i]。两层各写一套键,对账时必然全对不上。
+                table += 1
+                for tr, row in enumerate(child.findall(ns + "tr"), 1):
+                    for tc, cell in enumerate(row.findall(ns + "tc"), 1):
+                        for cp, node in enumerate(cell.findall(ns + "p"), 1):
+                            out.append((document,
+                                        f"body/tbl[{table}]/tr[{tr}]/tc[{tc}]/p[{cp}]",
+                                        "".join(x.text or "" for x in node.iter(ns + "t"))))
+                continue
             if child.tag != ns + "p":
                 continue
             para += 1
@@ -394,12 +422,19 @@ def _i(v):
 
 
 def _owner_unit(atoms, blk, source_id):
+    """这一块归哪个原子。
+
+    表内段落(body/tbl[n]/tr[r]/tc[c]/p[i])归给认领了 body/tbl[n] 的那个原子——
+    原子认领的是整张表,单元格里的东西属于它。此前只按整串 locator 精确匹配,
+    表内的图因此一张都找不到主人(2026-08-22 实测 196 张)。
+    """
     loc = blk["locator"]
+    table_root = loc.split("/tr[")[0] if "/tbl[" in loc else None
     for a in atoms:
         if a.get("document") != blk["document"]:
             continue
         for b in a.get("bodyBlocks") or []:
-            if b.get("locator") == loc:
+            if b.get("locator") == loc or (table_root and b.get("locator") == table_root):
                 return f'{source_id}:{a.get("document")}/{a.get("locator")}'
     return None
 
