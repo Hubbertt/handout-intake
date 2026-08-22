@@ -1428,6 +1428,31 @@ def read_blocks(path: str, schema: Schema, diagnostics: Diagnostics,
     return blocks
 
 
+def _tag_opens(block, schema):
+    """这一块是不是把答案/解析的标签打开了(如「【答案】」「【详解】」)。
+
+    判据取自模板表的 tags,不在代码里写死标记文本——换一份源换一套标记,写死的就漂了。
+    """
+    text = block.get("text") or ""
+    if not text.strip():
+        return False
+    for pattern in _tag_patterns(schema):
+        if pattern.search(text):
+            return True
+    return False
+
+
+def _tag_patterns(schema):
+    """模板表 tags 的判据,编译一次缓存在 schema 上 —— 每块重编一次太贵。"""
+    cached = getattr(schema, "_tagPatterns", None)
+    if cached is None:
+        cached = [re.compile(tag["pattern"])
+                  for tag in (schema.raw.get("tags") or [])
+                  if isinstance(tag, dict) and tag.get("pattern")]
+        schema._tagPatterns = cached
+    return cached
+
+
 def carve(blocks: list[dict[str, Any]], schema: Schema,
           diagnostics: Diagnostics) -> dict[str, Any]:
     section = subsection = node = None
@@ -1500,6 +1525,16 @@ def carve(blocks: list[dict[str, Any]], schema: Schema,
         if current is not None:
             current["images"] += block["images"]
             current["body"].append(block)
+            # ★标签一旦出现,后面的「选项行」不再是选项。
+            #   教师版的解析里逐选项讲解——「A．…故A不符合题意；」——与选项行**形状完全相同**,
+            #   而引擎按形状认。于是【详解】之后的讲解行被当成选项:
+            #   2026-08-22 实测 209 个带选项的原子里 87 个 optionGroups 多于一组
+            #   (optionLabels 形如 ABCDBCD = 真选项 ABCD + 解析里讲的 BCD),其中 85 个的
+            #   多余选项落在【详解】之后。后果是真选项被判「多组」退回题干,选项为空。
+            #   题库那份 vendored 副本 2026-08-20 已修过同一个病(标记在 PROVENANCE 里),
+            #   上游一直没修——同一个引擎两份行为,这是其中一处。
+            if schema.role_tags.get(block["role"]) or _tag_opens(block, schema):
+                current["afterTag"] = True
             if block.get("table"):
                 current.setdefault("tables", []).append(block["table"])
             if block.get("listItems"):
@@ -1510,7 +1545,7 @@ def carve(blocks: list[dict[str, Any]], schema: Schema,
                 current.setdefault("figureOwners", []).append(
                     {"owner": owner, "locator": block["locator"],
                      "count": block["images"], "figures": block["imageRefs"]})
-            if role == "选项行":
+            if role == "选项行" and not current.get("afterTag"):
                 placed = 0
                 # Split on the stream's own text so an option's range indexes
                 # the same string the runs concatenate to.
