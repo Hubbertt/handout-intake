@@ -22,8 +22,16 @@ from pathlib import Path
 
 try:
     import psycopg
-except ModuleNotFoundError:          # 缺依赖不在导入期退出——见 _fail 的说明
+except ImportError as _exc:
+    # ★捕 ImportError 而不只是 ModuleNotFoundError。
+    #   2026-08-22 实测:向导装了**裸** psycopg(不带二进制实现),
+    #   包在,import 时却在 psycopg/pq 里炸——那是 ImportError 不是 ModuleNotFoundError。
+    #   只捕后者,这一步就裸崩:链里只看到一个 traceback 尾巴,
+    #   而旁边还留着上一次的 pass 报告,两处说法互相矛盾。
     psycopg = None
+    _psycopg_error = _exc
+else:
+    _psycopg_error = None
 
 
 def sha256_file(path: Path) -> str:
@@ -65,12 +73,26 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
     if psycopg is None:
-        return _fail("缺 psycopg。原子化写库这一步依赖它;只跑到文件层的册不需要。"
-                     "装:pip install 'psycopg[binary]'", args.report)
+        return _fail(f"psycopg 不可用({_psycopg_error})。原子化写库这一步依赖它;"
+                     f"只跑到文件层的册不需要。装:pip install 'psycopg[binary]' —— "
+                     f"★裸 psycopg 不带二进制实现,包在也 import 不了。", args.report)
     if not args.dsn:
         return _fail("缺连接串。用 --dsn 或环境变量 ATOMIZE_DSN 给。"
                      "★凭据不进工序表也不进册的 bindings——那两处是要随包分发/进仓的。",
                      args.report)
+
+    # ★一进来就把旧报告作废。
+    #   2026-08-22 实测:这一步崩了(裸 traceback),旁边却留着上一次的 pass 报告——
+    #   链说 failed、报告说 pass,两处说法互相矛盾,而看报告的人会信报告。
+    #   报告是**这一次**的回执,不是「最近一次成功」的纪念品。
+    if args.report:
+        try:
+            Path(args.report).write_text(json.dumps(
+                {"gate": "GATE_ATOMIZE_PERSISTED", "status": "running",
+                 "_note": "这一步开始了但还没写出结论。若你看到的是这一行,说明它中途崩了。"},
+                ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        except Exception:
+            pass
 
     schema = json.loads(args.schema.read_text(encoding="utf-8"))
     mapping = schema.get("unitKindMapping")
@@ -140,7 +162,7 @@ def main() -> int:
         # 先取源里每块的真实文本 —— blocks.text 要存它,否则没人能验 span 是否越界
         _gate = json.loads(args.split_gate.read_text(encoding="utf-8"))
         _lessons = {x["path"]: x["lesson"] for x in _gate["lessons"]}
-        _src_text = {f"{d}/{l}": x for d, l, x in _source_blocks(args.work, _lessons)}
+        _src_text = {f"{d}/{l}": x for d, l, x in _source_blocks(_lessons)}
         block_id_of, facts = {}, 0
         for ordinal, blk in enumerate(blocks_detail, 1):
             loc = f"{blk['document']}/{blk['locator']}"

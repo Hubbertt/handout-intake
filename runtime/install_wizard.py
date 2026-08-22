@@ -191,6 +191,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--probe-only", action="store_true")
+    ap.add_argument("--no-venv", action="store_true",
+                    help="不建本包自己的 venv,直接往探到的解释器里装。"
+                         "★默认建自己的:借别人的运行时,缺什么都轮不到自己说了算。")
     ap.add_argument("--yes", action="store_true", help="全部同意(自动化)")
     ap.add_argument("--skip-render", action="store_true")
     args = ap.parse_args()
@@ -252,6 +255,29 @@ def main() -> int:
 
     installed, declined = [], []
     if not args.probe_only and missing:
+        # ★往哪个解释器里装 —— 默认**本包自己的 venv**,不往探到的那个里装。
+        #   2026-08-22 实测踩到:本机唯一有 lxml 的是 document-intake 这个能力的 venv,
+        #   于是链只能借它跑;而它没有 psycopg,落库那一步就永远跑不通。
+        #   往别人的 venv 里装东西不该是本包的权力(那是别的能力的运行时);
+        #   借别人的运行时也不该是本包的常态——**依赖是自己的事,环境就该是自己的**。
+        #   --no-venv 保留:确有共用解释器的场合,但那要是明确选的,不是默认掉进去的。
+        if not args.no_venv and any(m["kind"] == "package" for m in missing):
+            venv_dir = ROOT / "runtime" / "venv"
+            base = engine_exe.get("exe") or sys.executable
+            if not (venv_dir / "bin" / "python").exists():
+                if ask(f"给本包建一个自己的 venv?({base} -m venv {venv_dir})", args.yes):
+                    print(f"    → 正在建 {venv_dir} …", flush=True)
+                    r = subprocess.run([base, "-m", "venv", str(venv_dir)],
+                                       capture_output=True, text=True, timeout=180)
+                    if r.returncode != 0:
+                        print(f"  ✗ 建 venv 失败:{r.stderr[-200:].strip()}")
+            if (venv_dir / "bin" / "python").exists():
+                engine_exe = {"exe": str(venv_dir / "bin" / "python"), "hasPip": True,
+                              "ownedByPackage": True}
+                print(f"  ✓ 用本包自己的 venv:{engine_exe['exe']}")
+                PACKAGE_VENV_ENGINE = engine_exe   # 末尾写盘时改指它
+                globals()["_PACKAGE_VENV_ENGINE"] = engine_exe
+
         print(f"\n共 {len(missing)} 项缺失。逐项询问:")
         # ★沙盒实测:网络不通时 pip 无限期挂着,capture_output 又吞掉进度——用户面对一个不动的光标。
         # 装包前先探一次 PyPI(5 秒);探不到就明说并跳过 pip,不让人猜是慢还是死。
@@ -268,7 +294,12 @@ def main() -> int:
                       f" {engine_exe.get('exe','python3')} -m pip install <文件.whl>")
         for m in missing:
             if m["kind"] == "package" and engine_exe.get("exe"):
-                cmd = [engine_exe["exe"], "-m", "pip", "install", m["name"]]
+                # ★按声明里的 pipName 装,不按 name。
+                #   装的名字与 import 的名字常常不同(python-docx→docx、psycopg[binary]→psycopg)。
+                #   2026-08-22 实测:按 name 装了裸 psycopg,import 时在 psycopg/pq 里炸,
+                #   而 requirements 的 install 字段明明写着 pip install 'psycopg[binary]'——
+                #   声明写一套、向导跑另一套,声明就白写了。
+                cmd = [engine_exe["exe"], "-m", "pip", "install", m.get("pipName") or m["name"]]
                 if not engine_exe.get("hasPip"):
                     fix = (f"该解释器没有 pip。先执行 {engine_exe['exe']} -m ensurepip --upgrade,"
                            f"或改用带 pip 的 ≥3.12(设 HANDOUT_INTAKE_PYTHON)。")
@@ -332,6 +363,17 @@ def main() -> int:
               "usableTemplates": templates_ok, "unusableTemplates": templates_bad,
               "installed": installed, "declined": declined, "stillMissing": still,
               "blocking": blocking, "advisory": advisory, "ready": ready}
+    # ★若这次建了本包自己的 venv,报告里的 engine 必须改指它 —— 而且必须在**写盘这里**改。
+    #   2026-08-22 踩到:先在中途改文件,末尾这一行又用内存里的 report 覆盖回去,
+    #   于是 venv 建好了、包也装齐了,而 run_chain 仍去用那个借来的解释器。
+    #   环境看着「就绪」,链照旧跑不通——两处都说自己没问题,而它们说的不是同一个解释器。
+    _venv_engine = globals().get("_PACKAGE_VENV_ENGINE")
+    if _venv_engine:
+        eng = report.setdefault("python", {}).setdefault("engine", {})
+        eng["found"] = {"exe": _venv_engine["exe"], "hasPip": True, "ownedByPackage": True}
+        eng["ok"] = True
+        eng["_note"] = ("本包自己的 venv(runtime/venv)。借别人的运行时不该是常态:"
+                        "缺什么都轮不到自己说了算。")
     REPORT.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
     if advisory:

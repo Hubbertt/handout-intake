@@ -100,6 +100,23 @@ exportDoc("{docx}", "{pdf}")
 '''
 
 
+def _redact(text):
+    """把 stderr 里的本机绝对路径换成占位符。
+
+    ★catalog.json 是**随包分发也进仓**的文件(2026-08-16 曾因把它豁免出扫描,
+      让一条本机解释器路径发到了线上,而本地自检全绿)。
+      渲染失败时把原始 traceback 原样存进来,等于每次失败都往里灌本机事实——
+      诊断价值在「哪个模块导不进来」,不在「它在这台机器的哪个目录」。
+      留前者,去后者。
+    """
+    import re as _re
+    out = str(text or "")
+    out = out.replace(str(HERE.parent), "<pkg>")
+    out = _re.sub(r"/(?:var|private)/folders/[^\s\"']*", "<tmp>", out)
+    out = _re.sub(r"/(?:Users|Volumes|home)/[^\s\"']*", "<path>", out)
+    return out
+
+
 def sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
@@ -121,7 +138,8 @@ def render_scene(engine: str, template_dir: Path, template: dict, scene: dict, o
                             str(ROOT / "skill" / "vendor"), scene["id"]],
                            capture_output=True, text=True, timeout=300)
         if r.returncode != 0:
-            return {"scene": scene["id"], "status": "build-failed", "stderr": r.stderr[-600:]}
+            return {"scene": scene["id"], "status": "build-failed",
+                    "stderr": _redact(r.stderr[-600:])}
         if pdf_p.exists():
             pdf_p.unlink()
         r2 = subprocess.run(["osascript", "-"], input=EXPORT_PDF.format(docx=docx_p, pdf=pdf_p),

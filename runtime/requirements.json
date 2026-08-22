@@ -28,7 +28,8 @@
    "name": "python-docx",
    "importName": "docx",
    "why": "编译器 build_semantic_handout 依赖。",
-   "install": "pip install python-docx"
+   "install": "pip install python-docx",
+   "pipName": "python-docx"
   },
   {
    "name": "PyMuPDF",
@@ -64,7 +65,9 @@
    "name": "psycopg",
    "importName": "psycopg",
    "why": "原子化写库(s4c7-persist-atomize)。PM 2026-08-22 定:原子化的真源是数据表不是文件——文件从此是中间产物,库里那份才是真源。**只跑到文件层的册不触发它**,但装上才不会在要落库那天才发现(与 openpyxl 同类:条件依赖也要声明)。",
-   "install": "pip install 'psycopg[binary]'"
+   "install": "pip install 'psycopg[binary]'",
+   "pipName": "psycopg[binary]",
+   "_pipNameWhy": "★装的名字与 import 的名字不是一回事。裸 psycopg 不带二进制实现,要系统有 libpq 才能用;psycopg[binary] 自带。2026-08-22 实测:向导按 name 装了裸 psycopg,import 时在 psycopg/pq 里炸——**声明里写着 install: pip install 'psycopg[binary]',而向导跑的是 pip install psycopg**。声明与行为不一致,声明就白写了。"
   }
  ],
  "applications": [

@@ -16,8 +16,8 @@
    "name": "橙子暑假班版式(物理化学共用)",
    "title": "橙子暑假班统一版式:黑体标题;三级整行底纹(exact 20pt 文字居中);四级蓝字不换页(380/110);五级黑粗;六级备化学用;名字里的数字=大纲级别",
    "version": "1",
-   "styles": 107,
-   "sha256": "f8c4815de67edd1868c1c8a3e0dd89d07f5ea6a2b0cf5ac932e7d3f0f343c412"
+   "styles": 109,
+   "sha256": "7d3f924c71febabc24a1e3553ba6078bd274d0a7af33c59bed3d129dcb2cba41"
   }
  },
  "howToChoose": "册级绑定 params 指向 compositions/<root>+<pack>/params.json;没有的组合先 compose.py --root X --pack Y。",
@@ -30,34 +30,28 @@
    "description": null,
    "kind": "base",
    "derivedFrom": null,
-   "paramsSha256": "60e15814a08706e22a1f1b7914793fa8ade96b99781789afe57161bd5193bfe0",
-   "renderedAt": "2026-08-16T02:55:06+08:00",
+   "paramsSha256": "d9641949a25d8a86a6d82fe812d2d9849e78b9418e5cdb737a294675547d67f0",
+   "renderedAt": "2026-08-22T15:25:21+08:00",
    "renderedOn": "CZClass-Mac-mini.local",
-   "engine": "python3",
+   "engine": "python",
    "scenes": [
     {
      "scene": "headings",
-     "title": "六级标题梯队",
-     "status": "ok",
-     "png": "renders/docDefaults1+chengzi-summer/headings.png",
-     "blocks": 9
+     "status": "build-failed",
+     "stderr": " call last):\n  File \"<tmp>\", line 7, in <module>\n    sys.path.insert(0, vendor); spec.loader.exec_module(b)\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<pkg>/skill/vendor/build_semantic_handout_from_blueprint.py\", line 27, in <module>\n    from docx import Document\nModuleNotFoundError: No module named 'docx'\n"
     },
     {
      "scene": "body-and-lists",
-     "title": "正文与题目",
-     "status": "ok",
-     "png": "renders/docDefaults1+chengzi-summer/body-and-lists.png",
-     "blocks": 5
+     "status": "build-failed",
+     "stderr": " call last):\n  File \"<tmp>\", line 7, in <module>\n    sys.path.insert(0, vendor); spec.loader.exec_module(b)\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<pkg>/skill/vendor/build_semantic_handout_from_blueprint.py\", line 27, in <module>\n    from docx import Document\nModuleNotFoundError: No module named 'docx'\n"
     },
     {
      "scene": "mid-page-flow",
-     "title": "四级标题在页中(不换页)时的上下间距",
-     "status": "ok",
-     "png": "renders/docDefaults1+chengzi-summer/mid-page-flow.png",
-     "blocks": 11
+     "status": "build-failed",
+     "stderr": " call last):\n  File \"<tmp>\", line 7, in <module>\n    sys.path.insert(0, vendor); spec.loader.exec_module(b)\n                                ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<frozen importlib._bootstrap_external>\", line 940, in exec_module\n  File \"<frozen importlib._bootstrap>\", line 241, in _call_with_frames_removed\n  File \"<pkg>/skill/vendor/build_semantic_handout_from_blueprint.py\", line 27, in <module>\n    from docx import Document\nModuleNotFoundError: No module named 'docx'\n"
     }
    ],
-   "status": "ok"
+   "status": "failed"
   }
  }
 }
