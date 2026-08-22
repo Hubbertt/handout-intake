@@ -1534,7 +1534,7 @@ def carve(blocks: list[dict[str, Any]], schema: Schema,
             #   题库那份 vendored 副本 2026-08-20 已修过同一个病(标记在 PROVENANCE 里),
             #   上游一直没修——同一个引擎两份行为,这是其中一处。
             if schema.role_tags.get(block["role"]) or _tag_opens(block, schema):
-                current["afterTag"] = True
+                current["_afterTag"] = True   # 内部记账,不进产物(见收尾处的 pop)
             if block.get("table"):
                 current.setdefault("tables", []).append(block["table"])
             if block.get("listItems"):
@@ -1545,7 +1545,7 @@ def carve(blocks: list[dict[str, Any]], schema: Schema,
                 current.setdefault("figureOwners", []).append(
                     {"owner": owner, "locator": block["locator"],
                      "count": block["images"], "figures": block["imageRefs"]})
-            if role == "选项行" and not current.get("afterTag"):
+            if role == "选项行" and not current.get("_afterTag"):
                 placed = 0
                 # Split on the stream's own text so an option's range indexes
                 # the same string the runs concatenate to.
@@ -1608,6 +1608,10 @@ def carve(blocks: list[dict[str, Any]], schema: Schema,
                 diagnostics.add("OPTION_GAP", question["locator"], f"标号组 {group}")
         question["blockCount"] = 1 + len(question["body"])
         question["id"] = hashlib.sha256(question["joined"].encode()).hexdigest()[:16]
+    # 内部记账不进产物:atoms.json 是对外的形状,
+    # 多一个只有引擎自己懂的键,下游会有人当它是事实。
+    for _q in questions:
+        _q.pop("_afterTag", None)
     return {"tree": tree, "questions": questions}
 
 
