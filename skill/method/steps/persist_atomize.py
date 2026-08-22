@@ -446,6 +446,53 @@ def main() -> int:
                     (run_id, source_id, schema.get("id"), sha256_file(args.schema),
                      _pkg_version(), json.dumps(report, ensure_ascii=False),
                      "reconstructible 留 null:本步不跑还原判准,由 s4c6 单独判。null 不是通过。"))
+        # ── 填空的空 ────────────────────────────────────────────────
+        # 「填空的空」是 PM 定义里明写的一项。此前表建了、README 也写了它对应
+        # QTI 的 textEntryInteraction —— 而写入器一行都没有。**建了表不等于做了事。**
+        #
+        # 定位不另起坐标系:直接在已经落好的 span 上找。span 说了「这段字符属于谁」,
+        # 空就在那段字符里,偏移天然对得上。另写一套扫描必然与归属漂。
+        cur.execute("""select s.unit_id, b.locator, b.block_id, s.char_start, s.char_end
+                       from atomize.spans s join atomize.blocks b on b.block_id=s.block_id
+                       where b.source_id=%s order by s.unit_id, b.ordinal, s.char_start""",
+                    (source_id,))
+        blanks = 0
+        per_unit = {}
+        for unit_id, locator, block_id, cs, ce in cur.fetchall():
+            text = _src_text.get(f"{locator}", "") or _src_text.get(locator, "")
+            if not text:
+                continue
+            for m in BLANK_RE.finditer(text[cs:ce]):
+                per_unit[unit_id] = per_unit.get(unit_id, 0) + 1
+                cur.execute("""insert into atomize.blanks(unit_id,index_in_unit,block_id,
+                                 char_offset,char_length,answer_unit_id)
+                               values(%s,%s,%s,%s,%s,null) on conflict do nothing""",
+                            (unit_id, per_unit[unit_id], block_id,
+                             cs + m.start(), m.end() - m.start()))
+                blanks += 1
+        report["counts"]["blanks"] = blanks
+        report["counts"]["unitsWithBlanks"] = len(per_unit)
+        # answer_unit_id 留 NULL:把答案按顿号/逗号切开逐个配空,是**推断**不是事实。
+        # 先量一量这件事到底成不成立——空数与答案段数对得上的比例,是它可行与否的证据。
+        cur.execute("""select u.unit_id, a.meta->>'text'
+                       from atomize.units u join atomize.units a
+                         on a.parent_unit_id=u.unit_id and a.kind='answer'
+                       where u.source_id=%s""", (source_id,))
+        pairable = checked = 0
+        for uid, ans in cur.fetchall():
+            n = per_unit.get(uid)
+            if not n or not ans:
+                continue
+            checked += 1
+            segs = [x for x in re.split(r"[、，,；;]", ans.strip().rstrip("。.")) if x.strip()]
+            if len(segs) == n:
+                pairable += 1
+        report["counts"]["blankAnswerPairable"] = {
+            "checked": checked, "segmentCountMatches": pairable,
+            "_why": "答案按顿号/逗号切开逐个配空是推断不是事实,故 answer_unit_id 留 NULL。"
+                    "这里只报「段数对不对得上」——它是这件事可行与否的证据,不是结论。",
+        }
+
         # ── 判据 ────────────────────────────────────────────────────
         # ★2026-08-22 自查:此前这一步只把数字打印出来,**没有一条判据会让它红**——
         #   归属 10.38% 它绿,99.19% 它也绿。「写在规范里、没人验证,等于没有」,
@@ -478,9 +525,14 @@ def main() -> int:
 
         # 判据三:不许倒退。不给绝对阈值(阈值是拍出来的),但同一份源、同一版判据,
         #        这次的归属率不能比上次低——低了就是改坏了,而改坏很容易看不出来。
-        ratio = (chars_attributed / total_chars) if total_chars else 0
+        # ★比较必须在**同一精度**上做。
+        #   报告里存的 ratio 是 round(...,4),而这里算出来的是全精度:
+        #   0.99190(存)对 0.991897…(算)——算的比存的小,判成「倒退」。
+        #   2026-08-22 验红时抓到这条假红:同一次数据、同一版代码,跑两遍第二遍就红。
+        #   1e-9 的容差挡不住 1e-4 的舍入。判据比的是「有没有退」,不是「浮点相不相等」。
+        ratio = round((chars_attributed / total_chars) if total_chars else 0, 4)
         report["characterAttribution"]["previousRatio"] = previous_ratio
-        if previous_ratio is not None and ratio < previous_ratio - 1e-9:
+        if previous_ratio is not None and ratio < round(previous_ratio, 4):
             failures.append(f"字符归属从 {previous_ratio:.4f} 退到 {ratio:.4f}:"
                             f"同一份源、同一版判据,只许涨不许退")
 
