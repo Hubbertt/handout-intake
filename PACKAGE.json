@@ -1,7 +1,7 @@
 {
  "schemaVersion": "handout-intake.package.v2",
  "name": "handout-intake",
- "version": "2.21.0",
+ "version": "2.22.0",
  "what": "把 Word 讲义原稿按册级私有规范切分、重排、编制成 Word 与付印 PDF 的整套工序,做成可安装、可配置、可分享的产品。",
  "layout": {
   "skill/": "技能包本体:工序表 + 引擎 + 门 + vendor 化脚本 + 种子。只读、整体升级。",
@@ -23,7 +23,10 @@
   "wizard": "探测 Python(含 pip 有无)/5 个包/2 个应用/6 个字体;pip 一键装 PyMuPDF、fontTools 实测成功;缺 pip 的解释器如实报出并给 ensurepip 建议。",
   "render": "chengzi-summer-v1 两个场景在本机 Word 渲出;参数改一字即判过期重渲,未改则沿用。",
   "loop": "运行记录自动落地(本轮 9 次);debrief 填一次 → 收割出候选 1 条 → 写成规律 → 准入门 pass;未填的 8 次被点名。",
-  "decoupling": "styles/chengzi-summer-v1 独立于生产线;skill/vendor 19 脚本零本机绝对路径(export 自检 no-machine-paths=0);参数表/规范/资料根由执行器从册级绑定注入。"
+  "decoupling": "styles/chengzi-summer-v1 独立于生产线;skill/vendor 19 脚本零本机绝对路径(export 自检 no-machine-paths=0);参数表/规范/资料根由执行器从册级绑定注入。",
+  "atomiseCapability": "★原子化独立成能力并落库(2026-08-22)。三册实测,全部 pass:教师版 blocks 6382 / units 4621 / figures 1046 / blanks 708;单元卷 1039 / 733 / 238 / 222;旧册 a10a14 4194 / 3255 / 645 / 707。**字符归属 100%**(库里独立核实:三册「未铺满的块 0、超出的块 0」);GATE_RECONSTRUCTIBLE 三册 pass、losses{}。残余 196 处全为版式空白,实文本 0 —— 桶是空的说明现在没有,桶里出现字就是有事。",
+  "ownRuntime": "包不再借别的能力的 venv:向导默认建 runtime/venv 并往里装,探针报告的 engine 跟着改指它。实测 s4c7-persist-atomize 在链里 ok:true,不用再手敲绕过链。",
+  "capabilityExport": "export_package --capability atomise:100 文件 506KB(整包 877KB),不带 styles/ 与 vendor/;空手解压后探针只要 lxml / Pillow / psycopg,不要 Microsoft Word、不要 Adobe Acrobat;GATE_CAPABILITY_CUT pass,反向边 0。"
  },
  "boundaries": {
   "pdfStage": "s6-pdf 为已声明的外部交接:vendor 内四脚本(export/assemble/qa/outline)共 31 处模块级路径常量按生产线固定布局拼出,需 runtime/paths.json 指向本机既有生产线目录才能跑;成品经 collect_print_master 校验 PDF↔Word 哈希后入 output/(实测能拒收旧成品)。**产品化下一步:改造为显式 I/O 的 4 个独立工步。**",
@@ -54,7 +57,7 @@
    "PACKAGE.json 可解析"
   ]
  },
- "versionWhy": "2.21.0:新增 GATE_TEMPLATE_PUSHED(check_templates_pushed.py)——册里的模板表与题库里注册的那份必须逐字一致。2026-08-21 实测:讲义那张表加了 linkQuestionsToConcepts=false 却没推,于是「题不挂概念」对 20 讲根本没生效,而当场一切正常(边刚清过是 0),要到下一次重导才翻车。改了没推=裁决只写在纸上,且失败方式是延迟的。",
+ "versionWhy": "2.22.0:原子化成为可独立分发、可独立运行的能力,且其真源从文件改为数据表。\n· atomize schema(11 张表)+ s4c7-persist-atomize 入工序表;四条判据由数据库自己守。\n· 两个能力在表里显式声明(atomise 14 / compose 28)+ GATE_CAPABILITY_CUT 守反向边;export/run_chain/requirements 全部支持 --capability。\n· 包有了自己的 venv。\n· 引擎:并回题库副本的 [quiz-omml];修「标签打开后不再认选项行」(教师版 optionGroups 多组 87→3)。\n· 字符归属做到 100%,不设阈值——PM 2026-08-22:「覆盖率必须是 100%,即便有些地方是源文件错了…这样才知道有地方错了,而不是漏了。」\n★ 本版最贵的教训不是某个缺陷,是**门在判准没满足时放行**:GATE_ATOMIZE_PERSISTED 一度在 99.19% 时是绿的,三条判据里只有「不许倒退」与归属率有关,而那是棘轮不是那条线。门不守判准,与没有门无异。",
  "freshInstallVerification": {
   "at": "2026-08-15",
   "workspace": "reviews/2026-08-15-fresh-install",
