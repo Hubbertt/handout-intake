@@ -22,8 +22,8 @@ from pathlib import Path
 
 try:
     import psycopg
-except ModuleNotFoundError:
-    sys.exit("需要 psycopg。原子化写库这一步依赖它;只跑到文件层不需要。")
+except ModuleNotFoundError:          # 缺依赖不在导入期退出——见 _fail 的说明
+    psycopg = None
 
 
 def sha256_file(path: Path) -> str:
@@ -58,14 +58,19 @@ def main() -> int:
     ap.add_argument("--report", type=Path)
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
+    if psycopg is None:
+        return _fail("缺 psycopg。原子化写库这一步依赖它;只跑到文件层的册不需要。"
+                     "装:pip install 'psycopg[binary]'", args.report)
     if not args.dsn:
-        return _fail("缺 --dsn / ATOMIZE_DSN")
+        return _fail("缺连接串。用 --dsn 或环境变量 ATOMIZE_DSN 给。"
+                     "★凭据不进工序表也不进册的 bindings——那两处是要随包分发/进仓的。",
+                     args.report)
 
     schema = json.loads(args.schema.read_text(encoding="utf-8"))
     mapping = schema.get("unitKindMapping")
     if not mapping:
         return _fail("模板表里没有 unitKindMapping —— 角色名到模块类型的映射必须由表给,"
-                     "不在代码里写死。补上再跑。")
+                     "不在代码里写死。补上再跑。", args.report)
     atom_kinds = mapping["atomKinds"]
     block_roles = mapping["blockRoles"]
 
@@ -80,7 +85,7 @@ def main() -> int:
                + [r for r in sorted(seen_block_roles) if r not in block_roles])
     if missing:
         return _fail(f"这些角色在模板表的 unitKindMapping 里没有对应的模块类型:{missing}。"
-                     f"补进表里再跑——代码不替它们猜。")
+                     f"补进表里再跑——代码不替它们猜。", args.report)
 
     src_hash = sha256_file(args.source_file)
     source_id = f"src-{src_hash[:16]}"
@@ -92,7 +97,7 @@ def main() -> int:
     with psycopg.connect(args.dsn) as conn, conn.cursor() as cur:
         cur.execute("select count(*) from information_schema.schemata where schema_name='atomize'")
         if not cur.fetchone()[0]:
-            return _fail("目标库里没有 atomize schema。先跑 skill/schema/atomize/001_init.sql。")
+            return _fail("目标库里没有 atomize schema。先跑 skill/schema/atomize/001_init.sql。", args.report)
         if args.dry_run:
             conn.rollback()
 
@@ -628,8 +633,22 @@ def _pkg_version():
     return p.read_text(encoding="utf-8").strip() if p.exists() else None
 
 
-def _fail(msg):
-    print(f"GATE_ATOMIZE_PERSISTED: {msg}", file=sys.stderr)
+def _fail(msg, report_path=None):
+    """失败要**留在盘上**,不只写 stderr。
+
+    2026-08-22 实测:单元卷那册这一步在链里失败,而 run.json 里的 stderrTail 是空的——
+    操作的人只看到「failed」,看不到为什么。失败了不说话,是这个包最反对的那种失败。
+    """
+    line = f"GATE_ATOMIZE_PERSISTED: {msg}"
+    print(line, file=sys.stderr)
+    if report_path:
+        try:
+            Path(report_path).write_text(
+                json.dumps({"gate": "GATE_ATOMIZE_PERSISTED", "status": "fail",
+                            "failures": [msg]}, ensure_ascii=False, indent=1) + "\n",
+                encoding="utf-8")
+        except Exception:
+            pass
     return 1
 
 
