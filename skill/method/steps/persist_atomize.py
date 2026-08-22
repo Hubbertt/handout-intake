@@ -50,7 +50,13 @@ BLANK_RE = re.compile(r"[_＿]{2,}")
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--work", type=Path, required=True, help="册的 work/ 目录")
+    # ★吃具名产物,不吃目录。链的模型是「消费哪几个产物」——
+    #   给它一个目录,等于说「这一步要用里面的东西,具体哪些不说」,
+    #   consumes 就形同虚设,上游改了哪个也没人知道该不该失效。
+    ap.add_argument("--atoms", type=Path, required=True, help="atoms.normalised")
+    ap.add_argument("--layout", type=Path, required=True, help="layout")
+    ap.add_argument("--split-gate", dest="split_gate", type=Path, required=True,
+                    help="gate.split-banner(分档清单从这里取)")
     ap.add_argument("--schema", type=Path, required=True, help="模板表(判据真源)")
     ap.add_argument("--dsn", default=os.environ.get("ATOMIZE_DSN"), help="或用环境变量 ATOMIZE_DSN")
     ap.add_argument("--source-file", type=Path, required=True, help="源 docx(算 sha256)")
@@ -74,8 +80,8 @@ def main() -> int:
     atom_kinds = mapping["atomKinds"]
     block_roles = mapping["blockRoles"]
 
-    atoms = json.loads((args.work / "atoms.normalised.json").read_text(encoding="utf-8"))
-    layout = json.loads((args.work / "layout.json").read_text(encoding="utf-8"))
+    atoms = json.loads(args.atoms.read_text(encoding="utf-8"))
+    layout = json.loads(args.layout.read_text(encoding="utf-8"))
     blocks_detail = layout["blocksDetail"]
 
     # ── 先验:所有出现过的角色都必须有映射。缺一个就停,不猜 ──────────────
@@ -132,7 +138,7 @@ def main() -> int:
 
         # ── 物理块 + 非内容层 ──────────────────────────────────────────
         # 先取源里每块的真实文本 —— blocks.text 要存它,否则没人能验 span 是否越界
-        _gate = json.loads((args.work / "gate_split_and_banner.json").read_text(encoding="utf-8"))
+        _gate = json.loads(args.split_gate.read_text(encoding="utf-8"))
         _lessons = {x["path"]: x["lesson"] for x in _gate["lessons"]}
         _src_text = {f"{d}/{l}": x for d, l, x in _source_blocks(args.work, _lessons)}
         block_id_of, facts = {}, 0
@@ -223,12 +229,12 @@ def main() -> int:
         #    知识点标题这些块不属于任何一道题——单元还没建,图就找不到主人。
         #    2026-08-22 实测:先建图后建这些单元,169 张图因此没有归属。
         #    「不属于任何一道题」不等于「不用记」:编制成册要排它们。
-        gate = json.loads((args.work / "gate_split_and_banner.json").read_text(encoding="utf-8"))
+        gate = json.loads(args.split_gate.read_text(encoding="utf-8"))
         lessons = {x["path"]: x["lesson"] for x in gate["lessons"]}
         headings = {x for a in atoms for x in (a.get("section"), a.get("subsection"), a.get("node"))
                     if x} | {x["title"] for x in gate["lessons"]}
-        src_blocks = _source_blocks(args.work, lessons)
-        total_chars = _source_char_total(args.work, lessons)
+        src_blocks = _source_blocks(lessons)
+        total_chars = _source_char_total(lessons)
         in_tables = sum(len(x[2]) for x in src_blocks if "/tbl[" in x[1])
         claimed = set(block_text) | {f'{a.get("document")}/{a.get("locator")}' for a in atoms}
         table_owner = {}
@@ -560,7 +566,7 @@ def main() -> int:
     return 0
 
 
-def _source_char_total(work: Path, lessons: dict) -> int:
+def _source_char_total(lessons: dict) -> int:
     """整份源的 w:t 字符总数 —— 含表格单元内的段落。归属率的分母只能是它。"""
     import zipfile
     from xml.etree import ElementTree as ET
@@ -572,7 +578,7 @@ def _source_char_total(work: Path, lessons: dict) -> int:
     return total
 
 
-def _source_blocks(work: Path, lessons: dict) -> list:
+def _source_blocks(lessons: dict) -> list:
     """分档 docx 的每个段落:(document, locator, text)。
 
     分母与「哪些块没人认领」都从这里来 —— 一次读取,两处共用同一份事实。

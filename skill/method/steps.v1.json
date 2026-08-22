@@ -355,7 +355,8 @@
    ],
    "assert": "interpreter.pythonpath 下已有绑定声明的全部包",
    "note": "★P6 空手复现在新工作区第一次跑就死在 ModuleNotFoundError: lxml。原工作区一直好好的,因为 work/pylib 是当初**手工**解包出来的——而「手工做过一次」在工序表里没有任何痕迹,下一个人会在同一个地方以同样的方式失败。工序表的意义就是不给机会;一件必须先做的事若不在表里,它就只活在做过的人的记忆里,而记忆不随包分发。",
-   "provenance": "incident:p6-barehand-repro-missing-runtime"
+   "provenance": "incident:p6-barehand-repro-missing-runtime",
+   "capability": "atomise"
   },
   {
    "id": "s0-truth-map",
@@ -366,7 +367,8 @@
     "truth-map"
    ],
    "note": "第 0 步:画事实住在哪。人做,但产物必须存在——下游第一步就 consumes 它,不画就开不了工。",
-   "humanProduct": true
+   "humanProduct": true,
+   "capability": "atomise"
   },
   {
    "id": "s1-block-census",
@@ -386,7 +388,8 @@
     "--volume",
     "{volume}"
    ],
-   "note": "第 1 步:块型普查 → 对象类全集。"
+   "note": "第 1 步:块型普查 → 对象类全集。",
+   "capability": "compose"
   },
   {
    "id": "s1b-fingerprint",
@@ -407,7 +410,8 @@
     "--volume",
     "{volume}"
    ],
-   "note": "这批源像不像已知模板?像 → 用那张表;不像 → 走建表流程,**绝不强行套最像的那个**。SKILL.md 里一直有这一步,首版工序表漏了它。"
+   "note": "这批源像不像已知模板?像 → 用那张表;不像 → 走建表流程,**绝不强行套最像的那个**。SKILL.md 里一直有这一步,首版工序表漏了它。",
+   "capability": "atomise"
   },
   {
    "id": "s1c-shape-predicates",
@@ -429,7 +433,8 @@
     "{volume}"
    ],
    "why": "2026-08-20 一天内同一类事故 7 次:判据只写「长什么样」,而那个位置长得一样的东西不止一种;命中之后没有任何报错,产物看起来完整而错误藏在内容里。「能认出来」与「认对了」是两件事,中间没有报错——本门就是那个报错。",
-   "note": "分工:命中数由门自己扫(顺带自动抓判据恒假);「同形态还可能是什么」「靠什么分辨」必须在 evidence 里声明——那是机器判不了的。改过判据的必须留 redGreen。"
+   "note": "分工:命中数由门自己扫(顺带自动抓判据恒假);「同形态还可能是什么」「靠什么分辨」必须在 evidence 里声明——那是机器判不了的。改过判据的必须留 redGreen。",
+   "capability": "atomise"
   },
   {
    "id": "s1d-noncontent-survey",
@@ -451,7 +456,8 @@
     "{volume}"
    ],
    "why": "PM 2026-08-20:「具体的非内容信息有很多,我没办法直接全部告诉你,但你可以做的时候不断汇总整理,完善规范,并且记录到包内,做到原子化后能根据两类信息完整地还原出源文件。」判准是**还原性**——不必猜还有哪些非内容信息,让还原去告诉你:往返一圈丢了什么,什么就是没记。",
-   "note": "只登记这一份源里**真实出现过**的事实并带次数;登记一个从未出现的字段,就是给自己造一条恒假的待办。 ★「记了没有」由本步**读非内容层的实际产物自动核**,不手维护清单——手维护的表必然与实现漂移,而且漂了没人知道。"
+   "note": "只登记这一份源里**真实出现过**的事实并带次数;登记一个从未出现的字段,就是给自己造一条恒假的待办。 ★「记了没有」由本步**读非内容层的实际产物自动核**,不手维护清单——手维护的表必然与实现漂移,而且漂了没人知道。",
+   "capability": "atomise"
   },
   {
    "id": "s2-matrix",
@@ -472,7 +478,8 @@
     "--volume",
     "{volume}"
    ],
-   "note": "第 2 步:对象类 × 视角。空白格是工作清单,必须显式列出。 ★P6 空手复现抓出:本步实际读 blueprint.substituted(build_matrix.py:19),而 consumes 里没声明它。拓扑因此把它排在第 4 位,那时该文件还不存在。原工作区从没暴露——文件一直躺着。**声明的输入与实际读的不一致时,拓扑排出来的顺序是错的,而每一步自己都报成功。**补声明后它自动落到 s4g 之后。"
+   "note": "第 2 步:对象类 × 视角。空白格是工作清单,必须显式列出。 ★P6 空手复现抓出:本步实际读 blueprint.substituted(build_matrix.py:19),而 consumes 里没声明它。拓扑因此把它排在第 4 位,那时该文件还不存在。原工作区从没暴露——文件一直躺着。**声明的输入与实际读的不一致时,拓扑排出来的顺序是错的,而每一步自己都报成功。**补声明后它自动落到 s4g 之后。",
+   "capability": "compose"
   },
   {
    "id": "s4-merge-mapping",
@@ -492,7 +499,8 @@
     "--volume",
     "{volume}"
    ],
-   "note": "共享真源整节取用 + 本册覆盖。合并是机械的,裁决在 mapping.own 里——智能体的活与机器的活在这一步分开。"
+   "note": "共享真源整节取用 + 本册覆盖。合并是机械的,裁决在 mapping.own 里——智能体的活与机器的活在这一步分开。",
+   "capability": "compose"
   },
   {
    "id": "s4a-strip-zero-width",
@@ -516,7 +524,8 @@
     "{volume}"
    ],
    "gate": "GATE_NO_ZERO_WIDTH",
-   "selfProof": "清洗前后同一判据命中数必须变化"
+   "selfProof": "清洗前后同一判据命中数必须变化",
+   "capability": "atomise"
   },
   {
    "id": "s4b-split-lessons",
@@ -540,7 +549,8 @@
     "{volume}"
    ],
    "gate": "GATE_LESSON_SPLIT_AND_BANNER_COUNT",
-   "note": "拆讲并正规化栏目横幅。册若绑定了 source.annotated(解析版),同样拆一遍并按讲号配对,registry 里同时写 original_word 与 annotated_word——**这是「带答案解析」的唯一接线处**,carve_engine 只在 partner 存在时才读答案。"
+   "note": "拆讲并正规化栏目横幅。册若绑定了 source.annotated(解析版),同样拆一遍并按讲号配对,registry 里同时写 original_word 与 annotated_word——**这是「带答案解析」的唯一接线处**,carve_engine 只在 partner 存在时才读答案。",
+   "capability": "atomise"
   },
   {
    "id": "s4c-carve",
@@ -573,7 +583,8 @@
     "{artifact:media}",
     "--report",
     "{artifact:carve-report}"
-   ]
+   ],
+   "capability": "atomise"
   },
   {
    "id": "s4c5-capture-layout",
@@ -595,7 +606,8 @@
     "{volume}"
    ],
    "why": "原子化要产出**两类**信息:内容模块 + 排版布局。判准是还原性——能据两类信息重建源文件。上一轮普查:源里 47 类版式事实,原子化只记住 11 类。",
-   "note": "逐字捕获,不枚举字段:照着清单逐个补,下一份源换一批事实又得重来,枚举永远不全。与内容层分开存:同一块内容可以进讲义、进单元卷、进错题本,版式各不相同而内容只有一份。"
+   "note": "逐字捕获,不枚举字段:照着清单逐个补,下一份源换一批事实又得重来,枚举永远不全。与内容层分开存:同一块内容可以进讲义、进单元卷、进错题本,版式各不相同而内容只有一份。",
+   "capability": "atomise"
   },
   {
    "id": "s4c6-reconstructible",
@@ -620,7 +632,8 @@
     "{volume}"
    ],
    "why": "原子化的最终判准(PM 2026-08-20):做到能根据两类信息完整还原出源文件。★「类别覆盖全」不等于「能还原」——记住「源里有 spacing 这一类」与「第137段的 spacing 是多少」是两回事。",
-   "note": "不给百分比:还原是全有或全无,少一项重建出来的就不是原来那份。对不上的逐条列出。"
+   "note": "不给百分比:还原是全有或全无,少一项重建出来的就不是原来那份。对不上的逐条列出。",
+   "capability": "atomise"
   },
   {
    "id": "s4c7-persist-atomize",
@@ -629,10 +642,8 @@
    "consumes": [
     "atoms.normalised",
     "layout",
-    "registry",
-    "schema",
     "gate.split-banner",
-    "lessons"
+    "schema"
    ],
    "produces": [
     "gate.atomize-persisted"
@@ -640,8 +651,12 @@
    "command": [
     "{python}",
     "{package}/method/steps/persist_atomize.py",
-    "--work",
-    "{dir:work}",
+    "--atoms",
+    "{path:atoms.normalised}",
+    "--layout",
+    "{path:layout}",
+    "--split-gate",
+    "{path:gate.split-banner}",
     "--schema",
     "{path:schema}",
     "--source-file",
@@ -652,7 +667,8 @@
     "{path:gate.atomize-persisted}"
    ],
    "why": "PM 2026-08-22 定:原子化的真源是数据表,不是文件。文件从此是中间产物,库里那份才是真源;题库导入与编制成册都从库里取,各取各要的那一层。",
-   "note": "★2026-08-22 补记:这一步写出来之后有几轮是**手敲命令跑的**——没进本表,于是不受 consumes/produces 与 sha256 失效的约束,「跳步在结构上不可能」对它不成立。这个包的三条纪律之一就是「不手敲绕过链」,而我正是绕过它的那个。补进表里,它才受管。连接串由 ATOMIZE_DSN 给(凭据不进工序表,也不进册的 bindings)。"
+   "note": "★2026-08-22 补记:这一步写出来之后有几轮是**手敲命令跑的**——没进本表,于是不受 consumes/produces 与 sha256 失效的约束,「跳步在结构上不可能」对它不成立。这个包的三条纪律之一就是「不手敲绕过链」,而我正是绕过它的那个。补进表里,它才受管。连接串由 ATOMIZE_DSN 给(凭据不进工序表,也不进册的 bindings)。",
+   "capability": "atomise"
   },
   {
    "id": "s4c3-figure-sheets",
@@ -672,7 +688,8 @@
     "--volume",
     "{volume}"
    ],
-   "note": "把全册图排成接触表,供人逐张裁决。这是 SKILL.md 说「只能靠看」那四类里最大的一类的入口——裁决结果回填 mapping.own,不回填这里。"
+   "note": "把全册图排成接触表,供人逐张裁决。这是 SKILL.md 说「只能靠看」那四类里最大的一类的入口——裁决结果回填 mapping.own,不回填这里。",
+   "capability": "atomise"
   },
   {
    "id": "s4c2-normalise-atoms",
@@ -694,7 +711,8 @@
     "{volume}"
    ],
    "gate": "GATE_EXERCISE_ITEMS_ARE_QUESTIONS",
-   "why": "「哪些原子是题」的判据由模板表 questionScope 给,故也消费 schema——此前写死 section==过关检测,单元卷这类没有该栏目的文档在此选中 0 条。"
+   "why": "「哪些原子是题」的判据由模板表 questionScope 给,故也消费 schema——此前写死 section==过关检测,单元卷这类没有该栏目的文档在此选中 0 条。",
+   "capability": "atomise"
   },
   {
    "id": "s4c4-volume-metadata",
@@ -716,7 +734,8 @@
     "{volume}"
    ],
    "why": "册级元数据是内容的一部分,而且自带恒等式(各节分值之和==满分)。源把这两个数写了两遍,两遍就有对不上的可能。2026-08-20 建单元卷册时是**人**逐份核的 5/5,没留判据——人核过一次的东西,下一批换个人就没了。",
-   "note": "判据由模板表 volumeMetadata 给。讲义册没有这一层,本步报 not-applicable 而**不是** pass——一道门长期报 pass 却从未判过东西,那是判据恒假。"
+   "note": "判据由模板表 volumeMetadata 给。讲义册没有这一层,本步报 not-applicable 而**不是** pass——一道门长期报 pass 却从未判过东西,那是判据恒假。",
+   "capability": "atomise"
   },
   {
    "id": "s4d-blueprint-pass1",
@@ -745,7 +764,8 @@
     "--out",
     "{path:blueprint.pass1}"
    ],
-   "note": "第一遍无对象清单,unbound 必然不为 0。它的唯一用途是喂给下一步。"
+   "note": "第一遍无对象清单,unbound 必然不为 0。它的唯一用途是喂给下一步。",
+   "capability": "compose"
   },
   {
    "id": "s4e-object-manifest",
@@ -767,7 +787,8 @@
     "--output",
     "{path:object-manifest}"
    ],
-   "note": "使用方 2026-08-15 定:每一步都应独立产出、独立可跑,这样才利于维护和使用。本步原先只能由 9 步整体工作流带出——为拿一个产物要跑完九步,与该原则相反。★守卫说明(不藏着):build_word_source_object_manifest 用环境变量 CHENGZI_SUMMER_FORMAL_WORKFLOW_INTERNAL 标记「由注册流程调用」。它标记的是调用者身份,不是密钥——既有工作流自己也是用 /usr/bin/env VAR=VAL 设的。本链是本册的注册流程(工序表 + 输入存在性 + hash 漂移强制),故按同一约定声明为对等调用者。**这是显式登记,不是绕过**:绕过是不告诉任何人地设上它。"
+   "note": "使用方 2026-08-15 定:每一步都应独立产出、独立可跑,这样才利于维护和使用。本步原先只能由 9 步整体工作流带出——为拿一个产物要跑完九步,与该原则相反。★守卫说明(不藏着):build_word_source_object_manifest 用环境变量 CHENGZI_SUMMER_FORMAL_WORKFLOW_INTERNAL 标记「由注册流程调用」。它标记的是调用者身份,不是密钥——既有工作流自己也是用 /usr/bin/env VAR=VAL 设的。本链是本册的注册流程(工序表 + 输入存在性 + hash 漂移强制),故按同一约定声明为对等调用者。**这是显式登记,不是绕过**:绕过是不告诉任何人地设上它。",
+   "capability": "compose"
   },
   {
    "id": "s4f-blueprint-pass2",
@@ -800,7 +821,8 @@
     "{path:blueprint.pristine}"
    ],
    "assert": "unbound == 0",
-   "note": "两遍不是冗余:清单要从蓝图知道扫哪些源文件,蓝图要从清单绑定源对象。循环由两遍打开。"
+   "note": "两遍不是冗余:清单要从蓝图知道扫哪些源文件,蓝图要从清单绑定源对象。循环由两遍打开。",
+   "capability": "compose"
   },
   {
    "id": "s4f-relevel-headings",
@@ -822,7 +844,8 @@
    ],
    "assert": "命中数 == 私有规范登记的 expectedCounts(自源文逐份数出)",
    "note": "按结构位置重定标题级,不按文字模式。同一形态「一、X」在物理册承担两种角色:概念构建之下是栏目下的顶层主题,知识点之下是子项——第11讲「一、平面镜成像特点」两处都出现、一字不差,文字形态定不了级。★判据用源文自己的信号:整段加粗 → 全部 segment 的 run_type 为 emphasis。位置相同的三种块(标题/【例1】题干/整句描述)只有这一项能分开;靠「【例」前缀」或句子长度去分,是拿我们的印象替换源文的标记。★命中数必须等于源文数出来的数;对不上即判据错,本步报错不静默按新数字走。 ★代次链接:本册对 blueprint.substituted 有两个就地变换(重定级、上标字面量),而撇号约定只表达一代。首版让两者都『消费不带撇、产出带撇』,结果 s4i 消费的是不带撇的,与本步之间没有边,拓扑把本步排到了 s5 之后——**排在 Word 构建之后的重定级,等于没有重定级**,而它照样报 ok。改为串成一条:relevel 消费不带撇产出带撇,literal-supersub 与 s4i 都消费带撇的。",
-   "provenance": "incident:heading-level-assigned-by-text-pattern"
+   "provenance": "incident:heading-level-assigned-by-text-pattern",
+   "capability": "compose"
   },
   {
    "id": "s4g-substitute-formulas",
@@ -845,7 +868,8 @@
    ],
    "gate": "GATE_INLINE_FORMULA_SUBSTITUTED",
    "assert": "残留矢量行内图 == 0 且 登记对象全部替换到(按对象去重断言,不按出现次数)",
-   "provenance": "incident:substitution-gate-asserted-on-occurrences"
+   "provenance": "incident:substitution-gate-asserted-on-occurrences",
+   "capability": "compose"
   },
   {
    "id": "s4h-repair-media",
@@ -866,7 +890,8 @@
     "{volume}"
    ],
    "gate": "GATE_JPEG_DENSITY_VALID",
-   "note": "**依赖 media 的当前 hash。s4c 重跑后 hash 变化,本步自动失效并要求重跑——这正是那个坑的结构性修复。**"
+   "note": "**依赖 media 的当前 hash。s4c 重跑后 hash 变化,本步自动失效并要求重跑——这正是那个坑的结构性修复。**",
+   "capability": "compose"
   },
   {
    "id": "s3-verify-source",
@@ -900,7 +925,8 @@
     "{path:object-manifest}",
     "--report",
     "{path:verify-report}"
-   ]
+   ],
+   "capability": "compose"
   },
   {
    "id": "s3b-citation-gate",
@@ -922,7 +948,8 @@
     "--report",
     "{path:gate.citations}"
    ],
-   "note": " 使用方 2026-08-15 定「每一步都应独立产出、独立可跑」;本步入口一直明确,只是没接进表。"
+   "note": " 使用方 2026-08-15 定「每一步都应独立产出、独立可跑」;本步入口一直明确,只是没接进表。",
+   "capability": "compose"
   },
   {
    "id": "s4h-literal-supersub",
@@ -944,7 +971,8 @@
    ],
    "assert": "登记的上下标字面量 == 0 且 每处产出带 run_type 的独立段",
    "note": "**为什么不并进 s4i 的字符替换表。** 那张表是字符换字符(❌→×);上标是把一个段拆成三段并给中间那段加 run_type。硬塞进去只会把 ⁸ 换成 8——丢掉上标,那不是修,是把缺陷改小到门看不见。首版把规则写进 native-text-substitutions 却去读合并件 mapping,规则数报 0 而一切「正常」:**放对了地方,读错了地方**,又一次静默失效。原写成产出未加撇的同名 id,是自造形状——表里早有约定:撇号表示同一 id 的下一代次(见 _chain.py 对 media@sha256' 的说明)。",
-   "provenance": "incident:u2078-accepted-on-falsified-evidence"
+   "provenance": "incident:u2078-accepted-on-falsified-evidence",
+   "capability": "compose"
   },
   {
    "id": "s4i-glyph-coverage",
@@ -969,7 +997,8 @@
    ],
    "assert": "声明字体画不出的字符 == 0(登记替换后)",
    "note": "**这道门是硬依赖,不是可跳过的报告。** s5-word 消费它的产物 blueprint.glyph-safe,所以门不过就没有输入,Word 在结构上建不出来。首轮的 ❌(U+274C)是导出完 106 页 PDF 之后才由 undeclared-font 报出来的——判据挂在链子末端,前面全部工序白跑。这一步把它前移到蓝图阶段,并且把检出对象从「没声明的字体名」(症状)改成「声明的字体画不出的字符」(根因)。",
-   "provenance": "incident:emoji-found-after-pdf-export"
+   "provenance": "incident:emoji-found-after-pdf-export",
+   "capability": "compose"
   },
   {
    "id": "s5a-object-manifest",
@@ -988,7 +1017,8 @@
     "--output",
     "{artifact:word.object-manifest}"
    ],
-   "note": "★原由生产线 run_summer_word_prepress_workflow(89 脚本注册表+内部守卫)整体承担。使用方 2026-08-15 定「技能包与样式模板解耦」「每一步独立可跑」,故拆成 9 步显式写进表,脚本 vendor 化,守卫由执行器满足。"
+   "note": "★原由生产线 run_summer_word_prepress_workflow(89 脚本注册表+内部守卫)整体承担。使用方 2026-08-15 定「技能包与样式模板解耦」「每一步独立可跑」,故拆成 9 步显式写进表,脚本 vendor 化,守卫由执行器满足。",
+   "capability": "compose"
   },
   {
    "id": "s5b-coverage-gate",
@@ -1010,7 +1040,8 @@
     "--report",
     "{artifact:word.coverage}"
    ],
-   "note": ""
+   "note": "",
+   "capability": "compose"
   },
   {
    "id": "s5c-build-word",
@@ -1047,7 +1078,8 @@
     "--source-coverage-report",
     "{artifact:word.coverage}"
    ],
-   "note": ""
+   "note": "",
+   "capability": "compose"
   },
   {
    "id": "s5d-toc-update",
@@ -1075,7 +1107,8 @@
     "--params",
     "{artifact:params}"
    ],
-   "note": "Word 原生更新目录域并重分页保存——本步就地改写 word,产出下一代次。"
+   "note": "Word 原生更新目录域并重分页保存——本步就地改写 word,产出下一代次。",
+   "capability": "compose"
   },
   {
    "id": "s5e-clean-open",
@@ -1095,7 +1128,8 @@
     "--report",
     "{artifact:word.probe}"
    ],
-   "note": "--wait 20:与生产线一致。首版抄漏了值——参数名对了值没抄,argparse 当场报错;若它有默认值就静默过了。"
+   "note": "--wait 20:与生产线一致。首版抄漏了值——参数名对了值没抄,argparse 当场报错;若它有默认值就静默过了。",
+   "capability": "compose"
   },
   {
    "id": "s5f-page-audit",
@@ -1116,7 +1150,8 @@
     "--semantic-build-report",
     "{artifact:word.build-report}"
    ],
-   "note": ""
+   "note": "",
+   "capability": "compose"
   },
   {
    "id": "s5g-compliance",
@@ -1138,7 +1173,8 @@
     "--out",
     "{artifact:word.compliance}"
    ],
-   "note": ""
+   "note": "",
+   "capability": "compose"
   },
   {
    "id": "s5h-declaration-gate",
@@ -1163,7 +1199,8 @@
     "--report",
     "{artifact:word.declarations}"
    ],
-   "note": ""
+   "note": "",
+   "capability": "compose"
   },
   {
    "id": "s5b-style-gates",
@@ -1210,7 +1247,8 @@
     "{artifact:params}",
     "--report",
     "{artifact:gate.font-ownership}"
-   ]
+   ],
+   "capability": "compose"
   },
   {
    "id": "s5i-structure-manifest",
@@ -1231,7 +1269,8 @@
     "{volume}"
    ],
    "assert": "清单 status=reviewed 且 sourceDocx.sha256 == 当前 Word",
-   "note": "接受判据:目录条目全部匹配 + 必需块锚点齐全。不满足留 draft 并失败——不把 draft 改成 reviewed,那是伪造复核。这道门今天拦对了两次。"
+   "note": "接受判据:目录条目全部匹配 + 必需块锚点齐全。不满足留 draft 并失败——不把 draft 改成 reviewed,那是伪造复核。这道门今天拦对了两次。",
+   "capability": "compose"
   },
   {
    "id": "s6a-export-pdf",
@@ -1255,7 +1294,8 @@
     "{volume}"
    ],
    "assert": "Word 原生引擎导出;导出报告 status=ready",
-   "note": "用 Word 自己的 save as PDF,不用 LibreOffice(会误判字距,使用方定)。前置:净开探针与合规审计必须是**当前 Word** 的——由 consumes 的 hash 强制,过期即 HOLD。"
+   "note": "用 Word 自己的 save as PDF,不用 LibreOffice(会误判字距,使用方定)。前置:净开探针与合规审计必须是**当前 Word** 的——由 consumes 的 hash 强制,过期即 HOLD。",
+   "capability": "compose"
   },
   {
    "id": "s6b-assemble-binding",
@@ -1279,7 +1319,8 @@
     "{volume}"
    ],
    "assert": "封面/订口补白/内容/奇偶补白/封底;总页数偶数;内容页起始位置记录在报告",
-   "note": "封面封底是册级资产,放 inputs/,不是模板的一部分。内容页数为奇数时本步拒绝——补白必须在 Word 里做,PDF 侧不改内容。"
+   "note": "封面封底是册级资产,放 inputs/,不是模板的一部分。内容页数为奇数时本步拒绝——补白必须在 Word 里做,PDF 侧不改内容。",
+   "capability": "compose"
   },
   {
    "id": "s6c-binding-qa",
@@ -1300,7 +1341,8 @@
     "{volume}"
    ],
    "assert": "只读:页序/页数/页码起点/空白页位置与装订报告一致",
-   "note": "装订步骤不许改内容;本步证明它没改。"
+   "note": "装订步骤不许改内容;本步证明它没改。",
+   "capability": "compose"
   },
   {
    "id": "s6d-outline",
@@ -1325,7 +1367,8 @@
    "note": "Acrobat Preflight 转曲。★没有 Acrobat 时本步 refuse 并说明:可拿装订件(print.standard-pdf)自用,但它**含字体、不可付印**——不假装,也不拦着。",
    "requires": {
     "app": "Adobe Acrobat"
-   }
+   },
+   "capability": "compose"
   },
   {
    "id": "s7-render-review",
@@ -1338,7 +1381,8 @@
     "render-review"
    ],
    "humanProduct": true,
-   "note": "第 5 步「渲染成品人眼过一遍」。它 consumes 印刷件——所以在 s6 通过之前,这一步在结构上开不了工。"
+   "note": "第 5 步「渲染成品人眼过一遍」。它 consumes 印刷件——所以在 s6 通过之前,这一步在结构上开不了工。",
+   "capability": "compose"
   }
  ],
  "nonDeterministic": {
@@ -1371,5 +1415,48 @@
   "from": null,
   "why": "生产线的 orchestrator 绑 89 脚本注册表与 preflight,不可分发;包自己按 9 步逐条写进表,每步独立产出、独立可跑。"
  },
- "_pdfStageBoundary": "s6-pdf 为已声明的外部交接点(vendor 内四脚本,需 Acrobat)。产品化的下一步:把四脚本改造为显式 I/O 并拆成 4 个独立工步。"
+ "_pdfStageBoundary": "s6-pdf 为已声明的外部交接点(vendor 内四脚本,需 Acrobat)。产品化的下一步:把四脚本改造为显式 I/O 并拆成 4 个独立工步。",
+ "capabilities": {
+  "_what": "本表里的每一步属于哪个能力。PM 2026-08-22 定:要的是**两个技能**——原子化、编制成册。",
+  "_why": "切口是实测出来的,不是设计出来的:按 consumes/produces 算依赖闭包,接口面只有 atoms.normalised / media / truth-map 三个产物,**反向边 0 条**;全包 17 个碰 Word/Acrobat 的文件没有一个在原子化侧;题库 vendoring 时拷走的恰好也只有原子化那一半——这条割线已被真实使用验证过。",
+  "atomise": {
+   "title": "原子化",
+   "what": "把资料拆成内容模块 + 记下排版布局等非内容信息,写进 atomize.*。",
+   "needs": [
+    "python",
+    "lxml",
+    "Pillow",
+    "psycopg(仅落库那一步)"
+   ],
+   "doesNotNeed": [
+    "Microsoft Word",
+    "Adobe Acrobat",
+    "styles/"
+   ],
+   "note": "★不需要 macOS + Word。它可以在任何机器上跑——这正是拆开的实际收益之一。"
+  },
+  "compose": {
+   "title": "编制成册",
+   "what": "读原子 → 蓝图 → Word 成品 → 付印 PDF(装订 + 转曲)。",
+   "needs": [
+    "macOS",
+    "Microsoft Word",
+    "Adobe Acrobat",
+    "python-docx",
+    "PyMuPDF",
+    "pypdf",
+    "fontTools",
+    "styles/"
+   ],
+   "note": "★未经 PM 明确要求不要出 PDF(2026-08-20 有过一次未经要求就出 402 页付印件的教训)。"
+  },
+  "interface": {
+   "artifacts": [
+    "atoms.normalised",
+    "media",
+    "truth-map"
+   ],
+   "rule": "★compose 可以消费 atomise 的产物,atomise **不得**消费 compose 的产物。反向边一出现,两个能力就再也拆不开了——由 GATE_CAPABILITY_CUT 守。"
+  }
+ }
 }

@@ -323,6 +323,9 @@ def main() -> int:
     ap.add_argument("--volume")
     ap.add_argument("--table", type=Path)
     ap.add_argument("--only", help="只跑这一步")
+    ap.add_argument("--capability", choices=("atomise", "compose"),
+                    help="只跑这个能力的步骤(见工序表的 capabilities 一节)。"
+                         "原子化不需要 macOS + Word,可以在任何机器上跑。")
     ap.add_argument("--from", dest="from_step", help="从这一步开始")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--report", type=Path)
@@ -343,6 +346,12 @@ def main() -> int:
         return 1
 
     by_id = {s["id"]: s for s in chain.steps}
+    if args.capability:
+        # 只跑一个能力时,别的能力的步骤连「blocked」都不该报——
+        # 它们不是缺输入,是**不属于这次要做的事**。混在一起报,
+        # 使用者分不清「缺东西」和「不归我管」。
+        keep = {s["id"] for s in chain.steps if s.get("capability") == args.capability}
+        order = [i for i in order if i in keep]
     if args.only:
         order = [args.only] if args.only in by_id else []
     elif args.from_step and args.from_step in order:
