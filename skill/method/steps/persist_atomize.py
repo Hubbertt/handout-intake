@@ -164,6 +164,32 @@ def main() -> int:
                                      "contentHash": atom["id"], "complete": atom.get("complete")},
                                     ensure_ascii=False)))
             units += 1
+            # ★选项与小问各自成**单元**,不只是 span。
+            #   定义说的是「哪些东西组成了一道题:一个题干 + 若干选项 + 若干小问 + 若干图
+            #   + 一个答案 + 一份解析」——「组成」要成立,它们就得各自可寻址。
+            #   只当 span,题库导入时拿不到「第 3 个选项」这种东西,只能拿到一片字符。
+            for i, opt in enumerate(atom.get("options") or [], 1):
+                cur.execute("""insert into atomize.units(unit_id,source_id,parent_unit_id,kind,ordinal,meta)
+                               values(%s,%s,%s,'option',%s,%s) on conflict do nothing""",
+                            (f"{uid}#opt{i}", source_id, uid, i,
+                             json.dumps({"label": opt.get("label"), "text": opt.get("text"),
+                                         "locator": opt.get("locator"), "images": opt.get("images", 0)},
+                                        ensure_ascii=False)))
+                units += 1
+            for i, sub in enumerate(atom.get("subQuestions") or [], 1):
+                cur.execute("""insert into atomize.units(unit_id,source_id,parent_unit_id,kind,ordinal,meta)
+                               values(%s,%s,%s,'sub_question',%s,%s) on conflict do nothing""",
+                            (f"{uid}#sub{i}", source_id, uid, i,
+                             json.dumps({"label": sub.get("label"), "text": sub.get("text"),
+                                         "locator": sub.get("locator")}, ensure_ascii=False)))
+                units += 1
+            # ★单选/多选:optionGroups 只有一组时,一组几个就是几个候选;
+            #   多于一组说明这道题带多个小问、各有一套选项——那种情况下题级的 max_choices
+            #   没有意义(它属于各个小问),留 NULL,不猜。QTI 的 max-choices 是**声明**,
+            #   我们这里也只在能明确对应时才写。
+            groups = atom.get("optionGroups") or []
+            if len(groups) == 1:
+                cur.execute("update atomize.units set max_choices=1 where unit_id=%s", (uid,))
             for field, kind in mapping["_derivedFields"].items():
                 if atom.get(field):
                     cur.execute("""insert into atomize.units(unit_id,source_id,parent_unit_id,kind,ordinal,meta)

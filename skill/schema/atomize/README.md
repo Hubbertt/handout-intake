@@ -167,3 +167,26 @@ PGHOST=127.0.0.1 PGPORT=25432 PGUSER=czclass ./check_schema.sh
 
 另:29 个选项的 `range` 是零宽——那是**图片选项**(内容是图不是字),不是缺陷,
 故不造假区间填补,图的归属走 `figures`。
+
+## 「哪些组成了一道题」——组成要成立,就得各自可寻址(2026-08-22)
+
+定义说的是「一个题干 + 若干选项 + 若干小问 + 若干图 + 一个答案 + 一份解析」。
+此前选项和小问**只是 span**,不是单元 —— 题库导入时拿不到「第 3 个选项」这种东西,
+只能拿到一片字符。现在它们各自成单元、挂在题下面:
+
+```
+units 4,050
+  question 402 · option 823 · sub_question 831 · stem 796
+  answer 402 · analysis 402 · prose 626 · heading 238 · figure 101
+```
+
+一句 SQL 就能把题库要的全投出来:
+
+```
+unit_id                                    opts subs max_choices  options
+第A01讲/body/p[40]                          4    0    1           A.阳光下的树影 B.地热喷泉 C.钱江涌潮 D.在黑夜中…
+```
+
+`max_choices` 只在 `optionGroups` 恰好一组时写 1;多于一组说明这道题带多个小问、各有一套选项,
+题级的 `max_choices` **没有意义**(它属于各个小问),留 NULL —— **不猜**。
+QTI 的 `max-choices` 是声明,我们也只在能明确对应时才写。
