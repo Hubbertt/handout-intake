@@ -98,6 +98,20 @@ def main() -> int:
 
         # 同一份源重导:先清掉它的旧行(级联),不做增量合并——
         # 增量合并要判「哪些没变」,而判错了就是静默保留旧原子。
+        # ★上次的归属率要在**删之前**读。
+        #   这一步开头会清掉这份源的旧行(级联),runs 也跟着没了——
+        #   若在删之后再查「上一次是多少」,查到的永远是空,判据三就永远不会红。
+        #   2026-08-22 验红时抓到:那是一条恒假判据,而恒假判据比没有判据更坏,
+        #   因为它看起来一直在守。
+        cur.execute("""select (gates->'characterAttribution'->>'ratio')::numeric
+                       from atomize.runs
+                       where source_id=%s and schema_hash=%s
+                         and gates->'characterAttribution'->>'ratio' is not null
+                       order by started_at desc limit 1""",
+                    (source_id, sha256_file(args.schema)))
+        _prev = cur.fetchone()
+        previous_ratio = float(_prev[0]) if _prev and _prev[0] is not None else None
+
         cur.execute("delete from atomize.sources where source_id=%s", (source_id,))
 
         cur.execute("""insert into atomize.templates(template_id,display_name,subject,schema_json,schema_hash)
@@ -432,15 +446,60 @@ def main() -> int:
                     (run_id, source_id, schema.get("id"), sha256_file(args.schema),
                      _pkg_version(), json.dumps(report, ensure_ascii=False),
                      "reconstructible 留 null:本步不跑还原判准,由 s4c6 单独判。null 不是通过。"))
-        if args.dry_run:
+        # ── 判据 ────────────────────────────────────────────────────
+        # ★2026-08-22 自查:此前这一步只把数字打印出来,**没有一条判据会让它红**——
+        #   归属 10.38% 它绿,99.19% 它也绿。「写在规范里、没人验证,等于没有」,
+        #   我做了一个记了等于没记的门,还连着几轮拿它的输出当成绩汇报。
+        #   下面三条都不给百分比阈值:阈值是拍出来的,而这三条是硬事实。
+        failures = []
+
+        # 判据一:数出来的不能比源里还多。量法自证——多出来必然是重复计数或坐标系混用。
+        #        (实测抓过一次:44 个表容器块把表格的字数了第二遍,归属率算出 100.87%)
+        if chars_attributed > total_chars:
+            failures.append(f"归属字符 {chars_attributed} > 源字符 {total_chars}:"
+                            f"多出来的只能是重复计数或坐标系混用,不可能是真的")
+
+        # 判据二:源里有非空文本的块,不能一个 span 都没有。
+        #        「每个字符都有归属」的底线版:先保证每一块至少有人认领。
+        # ★「什么算空」只能有一处定义。
+        #   一开始这条判据写成 SQL 的 btrim(b.text) <> '' —— 而归属那侧用的是 Python 的
+        #   str.strip()。两者对全角空格(U+3000)、不换行空格(U+00A0)的看法不同:
+        #   Python 当空,btrim 不当。于是门报「12 个块有文字却没归属」,
+        #   查下去 12 个全是只含全角空格的块 —— **判据分歧造出来的假缺陷**。
+        #   这跟「两层各用各的键」是同一类错,只是这次分歧在「空」的定义上。
+        #   改法:候选由 SQL 找(它只管「有没有 span」),空不空由 Python 判(归属那侧的同一套规则)。
+        cur.execute("""select b.text from atomize.blocks b
+                       where b.source_id=%s
+                         and not exists (select 1 from atomize.spans s where s.block_id=b.block_id)""",
+                    (source_id,))
+        orphan_blocks = sum(1 for (txt,) in cur.fetchall() if (txt or "").strip())
+        if orphan_blocks:
+            failures.append(f"{orphan_blocks} 个块在源里有文字,却一个 span 都没有")
+
+        # 判据三:不许倒退。不给绝对阈值(阈值是拍出来的),但同一份源、同一版判据,
+        #        这次的归属率不能比上次低——低了就是改坏了,而改坏很容易看不出来。
+        ratio = (chars_attributed / total_chars) if total_chars else 0
+        report["characterAttribution"]["previousRatio"] = previous_ratio
+        if previous_ratio is not None and ratio < previous_ratio - 1e-9:
+            failures.append(f"字符归属从 {previous_ratio:.4f} 退到 {ratio:.4f}:"
+                            f"同一份源、同一版判据,只许涨不许退")
+
+        report["failures"] = failures
+        report["status"] = "fail" if failures else "pass"
+
+        if args.dry_run or failures:
             conn.rollback()
-            report["dryRun"] = True
+            report["dryRun"] = bool(args.dry_run)
         else:
             conn.commit()
 
     print(json.dumps(report, ensure_ascii=False, indent=1))
     if args.report:
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    if report.get("failures"):
+        for line in report["failures"]:
+            print(f"GATE_ATOMIZE_PERSISTED: {line}", file=sys.stderr)
+        return 1          # ★红的时候必须以非零退出,否则链会当它过了
     return 0
 
 

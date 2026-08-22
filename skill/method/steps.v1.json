@@ -329,6 +329,10 @@
   "gate.reconstructible": {
    "defaultPath": "work/gate_reconstructible.json",
    "what": "GATE_RECONSTRUCTIBLE 的报告:能不能据内容层+非内容层还原出源文件。原子化的最终判准。"
+  },
+  "gate.atomize-persisted": {
+   "defaultPath": "work/gate_atomize_persisted.json",
+   "what": "GATE_ATOMIZE_PERSISTED 的报告:原子化的两层写进 atomize.* 的结果与判据。★真源是库,这个文件是回执,不是真源。"
   }
  },
  "steps": [
@@ -617,6 +621,38 @@
    ],
    "why": "原子化的最终判准(PM 2026-08-20):做到能根据两类信息完整还原出源文件。★「类别覆盖全」不等于「能还原」——记住「源里有 spacing 这一类」与「第137段的 spacing 是多少」是两回事。",
    "note": "不给百分比:还原是全有或全无,少一项重建出来的就不是原来那份。对不上的逐条列出。"
+  },
+  {
+   "id": "s4c7-persist-atomize",
+   "phase": "施工",
+   "runner": "command",
+   "consumes": [
+    "atoms.normalised",
+    "layout",
+    "registry",
+    "schema",
+    "gate.split-banner",
+    "lessons"
+   ],
+   "produces": [
+    "gate.atomize-persisted"
+   ],
+   "command": [
+    "{python}",
+    "{package}/method/steps/persist_atomize.py",
+    "--work",
+    "{dir:work}",
+    "--schema",
+    "{path:schema}",
+    "--source-file",
+    "{path:source}",
+    "--volume-key",
+    "{volume}",
+    "--report",
+    "{path:gate.atomize-persisted}"
+   ],
+   "why": "PM 2026-08-22 定:原子化的真源是数据表,不是文件。文件从此是中间产物,库里那份才是真源;题库导入与编制成册都从库里取,各取各要的那一层。",
+   "note": "★2026-08-22 补记:这一步写出来之后有几轮是**手敲命令跑的**——没进本表,于是不受 consumes/produces 与 sha256 失效的约束,「跳步在结构上不可能」对它不成立。这个包的三条纪律之一就是「不手敲绕过链」,而我正是绕过它的那个。补进表里,它才受管。连接串由 ATOMIZE_DSN 给(凭据不进工序表,也不进册的 bindings)。"
   },
   {
    "id": "s4c3-figure-sheets",

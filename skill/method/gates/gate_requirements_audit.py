@@ -13,6 +13,7 @@
 退出码 0=一致 1=有漏或有多
 """
 from __future__ import annotations
+import ast
 import argparse, json, re, sys
 from pathlib import Path
 
@@ -35,15 +36,28 @@ def main() -> int:
     P = a.product
     roots = [P / "skill", P / "styles", P / "runtime"]
     local = {p.stem for r in roots for p in r.rglob("*.py")}
+    # ★用 AST 认 import,不按行正则扫。
+    #   2026-08-22 实测:正则把 SQL 字符串里的一行
+    #       from atomize.runs where source_id=%s
+    #   当成了 `import atomize`,报「代码 import 了它,requirements 没声明」。
+    #   这种误报比漏报更坏——它逼着人去声明一个根本不存在的包,
+    #   而那条假声明会长期留在清单里,和真依赖长得一模一样。
+    #   import 是语法结构,只有语法分析认得准;文本匹配永远会被字符串骗。
     imports = set()
     for r in roots:
         for p in r.rglob("*.py"):
-            for line in p.read_text(encoding="utf-8", errors="ignore").splitlines():
-                if line.strip().startswith("#"):
-                    continue
-                m = re.match(r"^\s*(?:from|import)\s+([A-Za-z_][\w]*)", line)
-                if m:
-                    imports.add(m.group(1))
+            src = p.read_text(encoding="utf-8", errors="ignore")
+            try:
+                tree = ast.parse(src)
+            except SyntaxError:
+                # 解析不了的文件不猜:报出来,由人看。静默跳过等于少扫一个文件。
+                imports.add(f"<unparsable:{p.name}>")
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    imports.update(a.name.split(".")[0] for a in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                    imports.add(node.module.split(".")[0])
     third = {i for i in imports if i not in STD and i not in local and i not in NOISE and not i.startswith("_")}
     req = json.loads((P / "runtime" / "requirements.json").read_text(encoding="utf-8"))
     declared = {x["importName"] for x in req["pythonPackages"]}
