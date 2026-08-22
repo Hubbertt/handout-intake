@@ -112,10 +112,14 @@ def main() -> int:
                      schema.get("id"), sha256_file(args.schema)))
 
         # ── 物理块 + 非内容层 ──────────────────────────────────────────
+        # 先取源里每块的真实文本 —— blocks.text 要存它,否则没人能验 span 是否越界
+        _gate = json.loads((args.work / "gate_split_and_banner.json").read_text(encoding="utf-8"))
+        _lessons = {x["path"]: x["lesson"] for x in _gate["lessons"]}
+        _src_text = {f"{d}/{l}": x for d, l, x in _source_blocks(args.work, _lessons)}
         block_id_of, facts = {}, 0
         for ordinal, blk in enumerate(blocks_detail, 1):
             loc = f"{blk['document']}/{blk['locator']}"
-            text = "".join("" for _ in ())  # 文本在内容层,这里只落位置与类型
+            text = _src_text.get(loc, "")
             cur.execute("""insert into atomize.blocks(source_id,locator,block_type,ordinal,text)
                            values(%s,%s,%s,%s,%s) returning block_id""",
                         (source_id, loc, blk.get("node") or "p", ordinal, text))
@@ -169,6 +173,56 @@ def main() -> int:
                     units += 1
         report["counts"]["units"] = units
 
+        # ── 先把没有任何原子认领的块建成单元 ─────────────────────────
+        #    顺序有讲究:这一步必须在「图」之前。图要找所属模块,而档标题、栏目横幅、
+        #    知识点标题这些块不属于任何一道题——单元还没建,图就找不到主人。
+        #    2026-08-22 实测:先建图后建这些单元,169 张图因此没有归属。
+        #    「不属于任何一道题」不等于「不用记」:编制成册要排它们。
+        gate = json.loads((args.work / "gate_split_and_banner.json").read_text(encoding="utf-8"))
+        lessons = {x["path"]: x["lesson"] for x in gate["lessons"]}
+        headings = {x for a in atoms for x in (a.get("section"), a.get("subsection"), a.get("node"))
+                    if x} | {x["title"] for x in gate["lessons"]}
+        src_blocks = _source_blocks(args.work, lessons)
+        total_chars = _source_char_total(args.work, lessons)
+        in_tables = sum(len(x[2]) for x in src_blocks if "/tbl[" in x[1])
+        claimed = set(block_text) | {f'{a.get("document")}/{a.get("locator")}' for a in atoms}
+        table_owner = {}
+        for a in atoms:
+            _uid = f'{source_id}:{a.get("document")}/{a.get("locator")}'
+            for b in a.get("bodyBlocks") or []:
+                _loc = b.get("locator") or ""
+                if _loc.startswith("body/tbl["):
+                    table_owner[f'{a.get("document")}/{_loc}'] = _uid
+        # 带图但**没有文字**的段落:纯图片段。它没有字,所以不进字符归属,
+        # 但它有图 —— 图也要有主人。2026-08-22 实测:漏掉它们,109 张图没有归属模块。
+        # 「这一段没有字」不等于「这一段没有内容」。
+        with_drawing = {f'{b["document"]}/{b["locator"]}' for b in blocks_detail if b.get("drawings")}
+        unclaimed_units = {}
+        for document, locator, text in src_blocks:
+            key = f"{document}/{locator}"
+            if key in claimed:
+                continue
+            if not text.strip():
+                if key in with_drawing:
+                    uid = f"{source_id}:{key}#figure-only"
+                    cur.execute("""insert into atomize.units(unit_id,source_id,kind,ordinal,hierarchy_path,meta)
+                                   values(%s,%s,'figure',0,%s,%s) on conflict do nothing""",
+                                (uid, source_id, document,
+                                 json.dumps({"unclaimedByAtom": True, "figureOnly": True,
+                                             "locator": locator}, ensure_ascii=False)))
+                    unclaimed_units[key] = (uid, "figure", "")
+                continue
+            if "/tbl[" in locator and table_owner.get(f'{document}/{locator.split("/tr[")[0]}'):
+                continue                      # 表内块归表的所有者,不算未认领
+            kind = "heading" if any(h and h in text for h in headings) else "prose"
+            uid = f"{source_id}:{key}#unclaimed"
+            cur.execute("""insert into atomize.units(unit_id,source_id,kind,ordinal,hierarchy_path,meta)
+                           values(%s,%s,%s,0,%s,%s) on conflict do nothing""",
+                        (uid, source_id, kind, document,
+                         json.dumps({"unclaimedByAtom": True, "locator": locator}, ensure_ascii=False)))
+            unclaimed_units[key] = (uid, kind, text)
+        report["counts"]["unclaimedUnits"] = len(unclaimed_units)
+
         # ── 图:相对比例现在算 ────────────────────────────────────────
         figs, no_font, font_sources, no_owner_block = 0, 0, {}, 0
         # ordinal 是「在**所属模块**里的第几张」,不是「在这一块里的第几张」——
@@ -188,6 +242,8 @@ def main() -> int:
                 no_font += len(drawings)     # 算不出比例就不写——库里那列是 NOT NULL
                 continue
             owner = _owner_unit(atoms, blk, source_id)
+            if not owner:
+                owner = (unclaimed_units.get(f'{blk["document"]}/{blk["locator"]}') or (None,))[0]
             if not owner:
                 # 静默跳过是最坏的处置:这些块没有归属到任何原子,与「字符归属」是同一个洞。
                 no_owner_block += len(drawings)
@@ -225,11 +281,27 @@ def main() -> int:
                                             "不是图的问题。静默跳过是最坏的处置,所以计在这里。"}
 
         # ── 字符归属:选项的 range 已有,其余按块登记;如实报覆盖 ──────────
-        spans, chars_attributed, image_only = 0, 0, 0
+        spans, chars_attributed, image_only, out_of_bounds = 0, 0, 0, 0
 
         def add_span(bkey, start, end, uid, role):
-            nonlocal spans, chars_attributed
+            nonlocal spans, chars_attributed, out_of_bounds
             if end <= start or bkey not in block_id_of:
+                return False
+            # ★引擎给的 range 是**引擎文本**的偏移,不是源 w:t 的偏移:
+            #   [quiz-omml] 会把公式转成 LaTeX 文本注入,引擎文本因此比源长。
+            #   两套坐标系混用,span 就会伸出块尾——2026-08-22 实测归属率算出 100.87%,
+            #   比 100% 还高,才发现。**越界不截断、不静默,直接拒绝并计数**:
+            #   截断会让一个错的偏移看起来像对的。
+            if bkey not in _src_text:
+                # 这一块在源里不是文字载体(如 body/tbl[n] 这种**容器**)。
+                # 表格的字属于它的单元格段落,不属于表格本身;在容器上再挂一份,
+                # 同一批字就被数了两遍——2026-08-22 实测 44 个表容器多算 3,426 字符,
+                # 归属率因此算出 100.87%。**比 100% 高,是量法错了,不是做得太好。**
+                out_of_bounds += 1
+                return False
+            limit = len(_src_text[bkey])
+            if end > limit:
+                out_of_bounds += 1
                 return False
             try:
                 cur.execute("""insert into atomize.spans(block_id,char_start,char_end,unit_id,role)
@@ -241,6 +313,11 @@ def main() -> int:
             chars_attributed += end - start
             return True
 
+        # ★整块归属用**源**里那一块的真实字符数,不用原子记录的 text 长度:
+        #   引擎记的 text 是规整过的(空白折叠等),比源里短。用它当跨度,
+        #   块尾会剩下一截永远盖不到——2026-08-22 实测 1,774 个字符就这么漏的,
+        #   而每个块都「有归属」,查块级一个都不缺。**块级看不出来的差距,只有字符级能看见。**
+        src_len = {f"{d}/{l}": len(x) for d, l, x in src_blocks}
         for atom in atoms:
             uid = f'{source_id}:{atom.get("document")}/{atom.get("locator")}'
             doc = atom.get("document")
@@ -279,68 +356,38 @@ def main() -> int:
                 text = b.get("text") or ""
                 if not text:
                     continue
-                add_span(bkey, 0, len(text), uid, block_roles[b["role"]])
+                add_span(bkey, 0, src_len.get(bkey, len(text)), uid, block_roles[b["role"]])
 
             # 题干所在的块
             stem = atom.get("stem")
             if stem:
-                add_span(f'{doc}/{atom.get("locator")}', 0, len(stem), uid, "stem")
+                skey = f'{doc}/{atom.get("locator")}'
+                add_span(skey, 0, src_len.get(skey, len(stem)), uid, "stem")
 
         # ★分母必须取真值,不能拿非内容层的 runs 去数:
         #   layout 只收**带属性**的 run(`if rpr or breaks`),没属性的 run 压根不在里面。
         #   2026-08-22 用它当分母,算出「归属率 112%」——比 100% 还高,一眼就知道分母错了。
         #   量法自己会骗人,而且骗得比缺陷更像真的:这次是数字太好看,所以露了馅。
-        # ── 没有任何原子认领的块:档标题、栏目横幅、知识点标题、横幅下的引导正文 ──
-        #    结构层知道它们,原子里没有。判准是**每个字符都有归属**——
-        #    「不属于任何一道题」不等于「不用记」:编制成册要排它们,少一个就还原不出原貌。
-        gate = json.loads((args.work / "gate_split_and_banner.json").read_text(encoding="utf-8"))
-        lessons = {x["path"]: x["lesson"] for x in gate["lessons"]}
-        headings = {x for a in atoms for x in (a.get("section"), a.get("subsection"), a.get("node"))
-                    if x} | {x["title"] for x in gate["lessons"]}
-        src_blocks = _source_blocks(args.work, lessons)
-        # ★分母取**整份源**的字符,不是「我数得着的那些块」的字符。
-        #   _source_blocks 只遍历 body 的直接 p 子节点,表格单元里的段落不在其中;
-        #   拿它当分母,归属率会从 96% 虚涨到 99% —— 那不是归属做多了,是分母做小了。
-        #   把分母做小是最容易骗过自己的一种量法错:数字变好看,而缺口原封不动。
-        total_chars = _source_char_total(args.work, lessons)
-        in_tables = sum(len(x[2]) for x in src_blocks if "/tbl[" in x[1])
-        claimed = set(block_text) | {f'{a.get("document")}/{a.get("locator")}' for a in atoms}
-        unclaimed = 0
-        # 表内段落归给**拥有那张表**的原子:原子认领的是 body/tbl[n] 这一整块,
-        # 单元格里的段落属于它,不该沦为「无人认领」。
-        table_owner = {}
-        for a in atoms:
-            uid = f'{source_id}:{a.get("document")}/{a.get("locator")}'
-            for b in a.get("bodyBlocks") or []:
-                loc = b.get("locator") or ""
-                if loc.startswith("body/tbl["):
-                    table_owner[f'{a.get("document")}/{loc}'] = uid
-        in_table_attributed = 0
+        # ── 把上面建好的单元逐块落 span ─────────────────────────────
+        in_table_attributed = unclaimed = 0
         for document, locator, text in src_blocks:
             key = f"{document}/{locator}"
             if key in claimed or not text.strip():
                 continue
             if "/tbl[" in locator:
-                root = f'{document}/{locator.split("/tr[")[0]}'
-                owner = table_owner.get(root)
+                owner = table_owner.get(f'{document}/{locator.split("/tr[")[0]}')
                 if owner:
                     if add_span(key, 0, len(text), owner, "table"):
                         in_table_attributed += 1
                     continue
-            # 是标题还是正文,由它在层级里出现过没有决定,不靠形状猜
-            kind = "heading" if any(h and h in text for h in headings) else "prose"
-            uid = f"{source_id}:{key}#unclaimed"
-            cur.execute("""insert into atomize.units(unit_id,source_id,kind,ordinal,hierarchy_path,meta)
-                           values(%s,%s,%s,0,%s,%s) on conflict do nothing""",
-                        (uid, source_id, kind, document,
-                         json.dumps({"unclaimedByAtom": True, "locator": locator},
-                                    ensure_ascii=False)))
-            if add_span(key, 0, len(text), uid, kind):
+            hit = unclaimed_units.get(key)
+            if hit and text.strip() and add_span(key, 0, len(text), hit[0], hit[1]):
                 unclaimed += 1
         report["counts"]["unclaimedBlocksAttributed"] = unclaimed
         report["counts"]["inTableAttributed"] = in_table_attributed
         report["counts"]["spans"] = spans
         report["counts"]["imageOnlyOptionsSkipped"] = image_only
+        report["counts"]["spansRejectedNotTextCarrier"] = out_of_bounds
         report["characterAttribution"] = {
             "attributed": chars_attributed, "totalChars": total_chars,
             "ratio": round(chars_attributed / total_chars, 4) if total_chars else None,
