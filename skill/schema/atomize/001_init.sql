@@ -48,6 +48,7 @@ INSERT INTO atomize.unit_kinds (kind, label, qti_equivalent, note) VALUES
   ('table',       '表',        NULL,                    NULL),
   ('heading',     '标题',      NULL,                    '★标题不是知识点。原子化只记结构:这道题落在哪个标题下、标题原文是什么'),
   ('caption',     '图注',      NULL,                    NULL),
+  ('residual',    '残余',      NULL,                    '兜底铺满:没被任何判据盖到的字符。★它不是垃圾桶——源里错的地方与判据漏的地方都会落在这里,逐条可看。漏掉它们,两者都不见。'),
   ('prose',       '正文',      NULL,                    '非题的讲解文字');
 
 -- ─────────────────────────────────────────────────────────────────────

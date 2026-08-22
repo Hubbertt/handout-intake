@@ -558,6 +558,89 @@ def main() -> int:
         if orphan_blocks:
             failures.append(f"{orphan_blocks} 个块在源里有文字,却一个 span 都没有")
 
+        # ── 兜底铺满:把每一块剩下的字符补齐归属 ─────────────────────
+        # ★PM 2026-08-22:「覆盖率必须是 100%,即便有些地方是源文件错了,
+        #   那也不影响覆盖率 100%,而且这样才知道有地方错了,而不是漏了。」
+        #
+        #   100% 不是「都对」,是「都算进来了」。源里错的、怪的、多余的,一样要有归属,
+        #   并且**标出来**——漏掉它,就分不清是源错了还是我漏了。
+        #   这两件事的处置完全不同:源错了要去改源或记缺陷;我漏了要去改判据。
+        #   而没有归属的字符,两种都像。
+        #
+        #   所以这里不挑不拣:逐块把没被 span 盖到的区间补上,归给这一块的主人,
+        #   role 记 'residual',meta 里带上那段字符本身——它是什么,看得见。
+        cur.execute("""select b.block_id, b.locator, b.text,
+                              (select s2.unit_id from atomize.spans s2
+                                where s2.block_id=b.block_id order by s2.char_start limit 1) owner
+                       from atomize.blocks b where b.source_id=%s""", (source_id,))
+        residual_spans = residual_chars = 0
+        for block_id, locator, text, owner in cur.fetchall():
+            if not text:
+                continue
+            cur.execute("""select char_start, char_end from atomize.spans
+                           where block_id=%s order by char_start""", (block_id,))
+            covered = cur.fetchall()
+            gaps, cursor = [], 0
+            for cs, ce in covered:
+                if cs > cursor:
+                    gaps.append((cursor, cs))
+                cursor = max(cursor, ce)
+            if cursor < len(text):
+                gaps.append((cursor, len(text)))
+            if not gaps:
+                continue
+            if not owner:
+                # 整块没人认领(纯空白块多属此类):给它一个自己的单元,不丢
+                owner = f"{source_id}:{locator}#residual"
+                cur.execute("""insert into atomize.units(unit_id,source_id,kind,ordinal,hierarchy_path,meta)
+                               values(%s,%s,'prose',0,%s,%s) on conflict do nothing""",
+                            (owner, source_id, locator.split("/")[0],
+                             json.dumps({"residualOnly": True, "locator": locator,
+                                         "_why": "这一块没有任何原子认领,但它的字符必须有归属。"},
+                                        ensure_ascii=False)))
+            for cs, ce in gaps:
+                cur.execute("""insert into atomize.spans(block_id,char_start,char_end,unit_id,role)
+                               values(%s,%s,%s,%s,'residual') on conflict do nothing""",
+                            (block_id, cs, ce, owner))
+                residual_spans += 1
+                residual_chars += ce - cs
+                chars_attributed += ce - cs
+        # ★报告里的比例必须在**铺满之后**重算。
+        #   2026-08-22 踩到:report["characterAttribution"] 在这一步之前就写好了,
+        #   铺满补了 1,650 个字符,而报告仍印着 99.19% —— 门过了,数字却是旧的。
+        #   门与报告说的不是同一件事,看报告的人就被骗了。
+        report["characterAttribution"]["attributed"] = chars_attributed
+        report["characterAttribution"]["ratio"] = round(
+            (chars_attributed / total_chars) if total_chars else 0, 6)
+        report["counts"]["residualSpans"] = residual_spans
+        report["counts"]["residualChars"] = residual_chars
+        report["_residualWhy"] = ("role='residual' 的 span 是**兜底铺满**的产物:"
+                                  "它们把没被任何判据盖到的字符也纳入归属。"
+                                  "★residual 多不等于没做完,但它是**一张可以逐条看的清单**——"
+                                  "源里错的地方会出现在这里,判据漏的地方也会。两者都看得见,"
+                                  "而不是像没有归属那样,两种都不见。")
+
+        # 判据零:**每一个字符都有归属**。这是定义里写死的判准,不是指标。
+        # ★2026-08-22 PM 追问「必须是 100% 才行吧?」——是。
+        #   在此之前这道门在 99.19% 时是绿的:三条判据里只有「不许倒退」与归属率有关,
+        #   而那是个**棘轮,不是那条线**。门在判准没满足时放行,与没有门无异。
+        #   不设阈值(99% / 99.9% 都是拍的),线就在 100%:
+        #   没归属的字符 = 不知道该怎么处理的字符,一个都不能有。
+        if chars_attributed < total_chars:
+            cur.execute("""select b.locator, length(b.text) - coalesce(
+                             (select sum(s.char_end-s.char_start) from atomize.spans s
+                              where s.block_id=b.block_id),0) gap
+                           from atomize.blocks b where b.source_id=%s
+                             and length(b.text) > coalesce(
+                               (select sum(s.char_end-s.char_start) from atomize.spans s
+                                where s.block_id=b.block_id),0)
+                           order by gap desc limit 5""", (source_id,))
+            worst = [{"locator": r[0], "missing": r[1]} for r in cur.fetchall()]
+            report["characterAttribution"]["worstBlocks"] = worst
+            failures.append(
+                f"字符归属 {chars_attributed}/{total_chars} —— 差 {total_chars - chars_attributed} 个字符。"
+                f"判准是**每一个字符都有归属**,不是「差不多」。缺得最多的几块:{worst}")
+
         # 判据三:不许倒退。不给绝对阈值(阈值是拍出来的),但同一份源、同一版判据,
         #        这次的归属率不能比上次低——低了就是改坏了,而改坏很容易看不出来。
         # ★比较必须在**同一精度**上做。
