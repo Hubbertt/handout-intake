@@ -33,6 +33,21 @@ from lxml import etree
 
 V_NS = "urn:schemas-microsoft-com:vml"
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+# 数学公式(OMML)→ LaTeX 文本。上游 2026-08-22 并入:
+# 题库那份 vendored 副本里带着它(标记 [quiz-omml]),上游没有——于是同一个引擎有两份行为。
+# 不并回来,那份副本就永远退不掉。
+#
+# ★为什么它不该是"可选的锦上添花":公式里的字符也是字符。
+#   引擎看不见公式,题干里的 v=s/t 就凭空少一截——角色识别、选项切分、图的定位
+#   都按偏移算,少一截就全错位。而「每个字符都有归属」这条判准,公式一样要算。
+#
+# ★但默认关:开着会改变既有册的原子与偏移,进而动 GATE_RECONSTRUCTIBLE。
+#   由模板表 `omathAsText` 选中(算法形状为代码,要不要用它是数据的事)。
+from omml import M_NS as _M_NS, omml_to_latex as _omml_to_latex
+
+M_ = f"{{{_M_NS}}}"
+OMATH_AS_TEXT = False   # 由 Schema(模板表 omathAsText)打开
+
 W = f"{{{W_NS}}}"
 A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
 WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
@@ -130,6 +145,9 @@ class Diagnostics:
 
 class Schema:
     def __init__(self, data: dict[str, Any]) -> None:
+        global OMATH_AS_TEXT
+        # 公式转文本要不要开,由模板表说了算——算法形状是代码,选不选是数据。
+        OMATH_AS_TEXT = bool(data.get("omathAsText"))
         self.raw = data
         markers = data["optionMarkers"]
         # The role patterns used to spell the marker set out again, as
@@ -353,6 +371,11 @@ def paragraph_runs(node, renderings: dict[str, str] | None = None
                 continue
             if child.tag == W + "p" and not root:
                 continue
+            if OMATH_AS_TEXT and child.tag in (M_ + "oMath", M_ + "oMathPara"):
+                latex = _omml_to_latex(child)
+                if latex:
+                    runs.append({"text": latex, "marks": {"math": True, "display": child.tag == M_ + "oMathPara"}})
+                continue
             if child.tag == W + "r":
                 marker = child.find(W + "fldChar")
                 if marker is not None:
@@ -406,6 +429,9 @@ def own_text(node, renderings: dict[str, str] | None = None,
             if child.tag == f"{{{MC_NS}}}Fallback":
                 continue
             if child.tag == W + "p" and not root:
+                continue
+            if OMATH_AS_TEXT and child.tag in (M_ + "oMath", M_ + "oMathPara"):
+                pieces.append(_omml_to_latex(child))
                 continue
             if child.tag == W + "r":
                 marker = child.find(W + "fldChar")
@@ -653,6 +679,9 @@ def picture_refs(paragraph, resolve, schema: "Schema") -> list[dict[str, Any]]:
             if child.tag == f"{{{MC_NS}}}Fallback":
                 continue
             if child.tag == W + "p" and not root:
+                continue
+            if OMATH_AS_TEXT and child.tag in (M_ + "oMath", M_ + "oMathPara"):
+                cursor += len(_omml_to_latex(child))
                 continue
             if child.tag == W + "r":
                 for node in child:
