@@ -100,6 +100,11 @@ def main() -> int:
         return _fail("模板表里没有 unitKindMapping —— 角色名到模块类型的映射必须由表给,"
                      "不在代码里写死。补上再跑。", args.report)
     atom_kinds = mapping["atomKinds"]
+    # 选项标记取自模板表(如 "ABCDEFGH"),不在代码里写死一个字母表:
+    # 换一门学科、换一套体例,标记可能是别的。
+    _marks = "".join(re.escape(c) for c in (schema.get("optionMarkers") or "ABCDEFGH"))
+    global OPTION_MARK_RE
+    OPTION_MARK_RE = re.compile(f"[{_marks}][．.]")
     block_roles = mapping["blockRoles"]
 
     atoms = json.loads(args.atoms.read_text(encoding="utf-8"))
@@ -404,24 +409,26 @@ def main() -> int:
                 oloc = (opt.get("locator") or "").split("#")[0]
                 by_block.setdefault(f"{doc}/{oloc}", []).append(opt)
             for bkey, opts in by_block.items():
-                ranges = []
-                for opt in opts:
-                    rng = opt.get("range")
-                    if not rng:
-                        continue
-                    if rng[1] <= rng[0]:
-                        image_only += 1     # 图片选项:内容是图不是字,确实占 0 个字符
-                    ranges.append((int(rng[0]), int(rng[1]), opt))
-                ranges.sort()
-                cursor = 0
-                for start, end, _opt in ranges:
-                    if start > cursor:
-                        add_span(bkey, cursor, start, uid, "option")   # ← 标签归给它后面的选项
-                    add_span(bkey, start, end, uid, "option")
-                    cursor = max(cursor, end)
-                blk_text = block_text.get(bkey)
-                if blk_text is not None and cursor < len(blk_text):
-                    add_span(bkey, cursor, len(blk_text), uid, "option")
+                # ★不用引擎给的 range —— 那是**引擎文本**的偏移,不是源 w:t 的偏移。
+                #   引擎把选项行规整过(空白折叠等),源里「A．海市蜃楼      B．孔明灯」
+                #   之间的填充空格在引擎串里没有,于是偏移越往后漂得越远:
+                #   2026-08-22 实测一行 57 字符,按 range 只盖到 26,后半截整段落进残余。
+                #   两套坐标系换算不了,也不该换算——**直接在源文本里按选项标记切片**,
+                #   坐标系就只剩一套。标记取自模板表的 optionMarkers,不写死。
+                src = _src_text.get(bkey)
+                if src is None:
+                    continue
+                marks = [(m.start(), m.group(0)) for m in OPTION_MARK_RE.finditer(src)]
+                if marks:
+                    if marks[0][0] > 0:
+                        add_span(bkey, 0, marks[0][0], uid, "option")   # 行首缩进
+                    for i, (pos, _lab) in enumerate(marks):
+                        end = marks[i + 1][0] if i + 1 < len(marks) else len(src)
+                        add_span(bkey, pos, end, uid, "option")
+                else:
+                    add_span(bkey, 0, len(src), uid, "option")
+                image_only += sum(1 for o in opts
+                                  if (o.get("range") or [0, 0])[1] <= (o.get("range") or [0, 0])[0])
 
             # 其余块整块归属:块的角色决定模块类型,由模板表给
             for b in atom.get("bodyBlocks") or []:
