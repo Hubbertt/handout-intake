@@ -22,44 +22,51 @@
    "name": "lxml",
    "importName": "lxml",
    "why": "读写 OOXML(切分/蓝图/对象清单/目录域)。",
-   "install": "pip install lxml"
+   "install": "pip install lxml",
+   "capability": "atomise"
   },
   {
    "name": "python-docx",
    "importName": "docx",
    "why": "编译器 build_semantic_handout 依赖。",
    "install": "pip install python-docx",
-   "pipName": "python-docx"
+   "pipName": "python-docx",
+   "capability": "compose"
   },
   {
    "name": "PyMuPDF",
    "importName": "fitz",
    "why": "字形覆盖门/PDF 分页审计读 PDF 字体与文本。",
-   "install": "pip install PyMuPDF"
+   "install": "pip install PyMuPDF",
+   "capability": "compose"
   },
   {
    "name": "pypdf",
    "importName": "pypdf",
    "why": "PDF 装订/QA 读页数与尺寸。",
-   "install": "pip install pypdf"
+   "install": "pip install pypdf",
+   "capability": "compose"
   },
   {
    "name": "Pillow",
    "importName": "PIL",
    "why": "图片接触表(s4c3-figure-sheets)拼图与标注。",
-   "install": "pip install Pillow"
+   "install": "pip install Pillow",
+   "capability": "atomise"
   },
   {
    "name": "openpyxl",
    "importName": "openpyxl",
    "why": "源文含图表对象时,编译器把图表数据写成可编辑工作簿(Word「编辑数据」打开)。无图表的册不触发,但装上才不会在有图表那天才发现。",
-   "install": "pip install openpyxl"
+   "install": "pip install openpyxl",
+   "capability": "compose"
   },
   {
    "name": "fontTools",
    "importName": "fontTools",
    "why": "GATE_GLYPH_COVERAGE 逐 face 实测字形覆盖。**必须逐 face**:fitz.Font(fontfile=…) 对 .ttc 只加载第 0 个 face,而 Songti.ttc 的 face0(Songti SC Black)恰是整个集合里唯一没有 U+2081/U+2082 的那一个——门因此把两个能正常渲染的字符报成未覆盖。反过来同样危险:face0 有而实际使用的 face 没有时,门会放行。",
-   "install": "pip install fontTools"
+   "install": "pip install fontTools",
+   "capability": "compose"
   },
   {
    "name": "psycopg",
@@ -67,7 +74,8 @@
    "why": "原子化写库(s4c7-persist-atomize)。PM 2026-08-22 定:原子化的真源是数据表不是文件——文件从此是中间产物,库里那份才是真源。**只跑到文件层的册不触发它**,但装上才不会在要落库那天才发现(与 openpyxl 同类:条件依赖也要声明)。",
    "install": "pip install 'psycopg[binary]'",
    "pipName": "psycopg[binary]",
-   "_pipNameWhy": "★装的名字与 import 的名字不是一回事。裸 psycopg 不带二进制实现,要系统有 libpq 才能用;psycopg[binary] 自带。2026-08-22 实测:向导按 name 装了裸 psycopg,import 时在 psycopg/pq 里炸——**声明里写着 install: pip install 'psycopg[binary]',而向导跑的是 pip install psycopg**。声明与行为不一致,声明就白写了。"
+   "_pipNameWhy": "★装的名字与 import 的名字不是一回事。裸 psycopg 不带二进制实现,要系统有 libpq 才能用;psycopg[binary] 自带。2026-08-22 实测:向导按 name 装了裸 psycopg,import 时在 psycopg/pq 里炸——**声明里写着 install: pip install 'psycopg[binary]',而向导跑的是 pip install psycopg**。声明与行为不一致,声明就白写了。",
+   "capability": "atomise"
   }
  ],
  "applications": [
@@ -76,7 +84,8 @@
    "role": "必需",
    "probe": "osascript -e 'tell application \"System Events\" to (name of processes)' 或检查 /Applications/Microsoft Word.app",
    "why": "净开探针、目录域更新、PDF 导出、页面审计全部走 Word 原生引擎。**LibreOffice 不可替代**:它忽略 w:w、公式字距也不同,据它判断会错(使用方定)。",
-   "sandbox": "Word 是沙盒应用,只能读写 ~/Library/Containers/com.microsoft.Word/Data/Documents/ 下的文件。包内所有 Word 交互都经该目录中转;探针会检查它可写。"
+   "sandbox": "Word 是沙盒应用,只能读写 ~/Library/Containers/com.microsoft.Word/Data/Documents/ 下的文件。包内所有 Word 交互都经该目录中转;探针会检查它可写。",
+   "capability": "compose"
   },
   {
    "name": "Adobe Acrobat",
@@ -86,7 +95,8 @@
    "altNames": [
     "Adobe Acrobat DC",
     "Acrobat"
-   ]
+   ],
+   "capability": "compose"
   }
  ],
  "fonts": {
@@ -105,5 +115,6 @@
  },
  "installWizard": "runtime/install_wizard.py —— 探测以上全部,列出缺项,逐项请求授权,授权后执行安装,写 runtime/probe-report.json;装好后自动触发 styles/render_catalog.py 渲染一次。",
  "_auditRule": "★声明的包与代码实际 import 必须一致,由 GATE_REQUIREMENTS_AUDIT 守。2026-08-16 沙盒实测抓出三种漂法:漏声明(Pillow——原机器恰好装着,五次「全新安装」都没暴露)、多声明(fontTools——声明了但没有任何代码 import,用户白装)、条件依赖(openpyxl——只在源文含图表时才 import)。sandbox 的干净 3.12 一跑就露;这就是沙盒的价值。",
- "_addedAt2026_08_20": "fontTools 此前未声明,而字形门 2.9.0 起依赖它。声明缺失时向导探不出,装机就少一个包——直到跑到那一步才炸。"
+ "_addedAt2026_08_20": "fontTools 此前未声明,而字形门 2.9.0 起依赖它。声明缺失时向导探不出,装机就少一个包——直到跑到那一步才炸。",
+ "_capabilityWhy": "★每一项属于哪个能力,写在这里而不是只写在工序表里。2026-08-22 实测:按能力导出的原子化单包,探针仍要求 Microsoft Word 与 Acrobat——「原子化不需要 Word」那句话当时只写在 steps.v1.json 的 capabilities 一节,requirements.json 不知道。**同一件事写在两处,而只有一处被读。**导出时按它裁剪:原子化那份 requirements 里就没有 Word。"
 }

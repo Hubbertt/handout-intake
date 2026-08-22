@@ -37,6 +37,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+EXEMPT_SNIPPETS = ("MACHINE_PATH = re.compile", "/System/Volumes/Data", "<pkg>", "<path>")
 MACHINE_PATH = re.compile(r'["\'](/Users/|/Volumes/|/home/)[^"\']*["\']')
 
 
@@ -142,6 +143,10 @@ def main() -> int:
     ap.add_argument("--include-grown", action="store_true")
     ap.add_argument("--i-understand-copyright", action="store_true")
     ap.add_argument("--workspace", type=Path)
+    ap.add_argument("--capability", choices=("atomise", "compose"),
+                    help="只导这个能力需要的东西。PM 2026-08-22 定:要的是**两个技能**。"
+                         "atomise 不需要 macOS + Word,也不需要 styles/——"
+                         "把它单独导出来,它就能在任何机器上装、任何机器上跑。")
     args = ap.parse_args()
 
     package = json.loads((product_root() / "PACKAGE.json").read_text(encoding="utf-8"))
@@ -174,10 +179,18 @@ def main() -> int:
         src = PRODUCT / name if (PRODUCT / name).exists() else ROOT / name
         if src.exists():
             shutil.copy2(src, staging / name); carried.append(name)
-    shutil.copytree(ROOT, staging / "skill",
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "SKILL.md", "PACKAGE.json", "VERSION"))
-    carried.append("skill/")
-    if (PRODUCT / "styles").exists():
+    # ★atomise 不带 vendor/:那 15,476 行是 Word/PDF 的编制与审计实现,
+    #   原子化的 14 步没有一步引用它(实测:步骤命令里 0 处,步骤代码里 0 处 import)。
+    #   带上它,一个「任何机器都能跑」的包里就躺着一半跑不了的东西——
+    #   而人会以为那是它的依赖,进而以为这个包也需要 Word。
+    _skip = ["__pycache__", "*.pyc", "SKILL.md", "PACKAGE.json", "VERSION"]
+    if args.capability == "atomise":
+        _skip.append("vendor")
+    shutil.copytree(ROOT, staging / "skill", ignore=shutil.ignore_patterns(*_skip))
+    carried.append("skill/" + ("(不含 vendor/)" if args.capability == "atomise" else ""))
+    # ★atomise 不带 styles/:样式是编制成册的事。带上它等于把 Word 那半的重量
+    #   压在一个「任何机器都能跑」的包上,而它一行都用不到。
+    if (PRODUCT / "styles").exists() and args.capability != "atomise":
         (staging / "styles").mkdir()
         # 样式库三层真源 + 工具进包;组合(compositions/)与渲染图(renders/)是投影,不进包——
         # 装好后 compose --all 与向导渲一次即可再生。带投影进包会让人改投影而不改真源。
@@ -193,6 +206,30 @@ def main() -> int:
     # runtime/:声明与向导进包;探测报告与 paths.json 是本机事实,不进。
     # ★重写 styles 段时把这一段连带切掉了——解压件没有 runtime/,向导根本没得跑。
     #   导出成功、包也能装,只是「安装向导」这个入口消失了;这种缺法最难发现。
+    # 工序表按能力裁剪:导出的表里只留这个能力的步骤,
+    # 并把它消费的、由另一个能力生产的产物**显式记下来**——
+    # 那是接口面,拆包之后它得由使用方自己提供,不能装作不存在。
+    if args.capability:
+        import json as _json
+        tbl = staging / "skill" / "method" / "steps.v1.json"
+        data = _json.loads(tbl.read_text(encoding="utf-8"))
+        keep = [s for s in data["steps"] if s.get("capability") == args.capability]
+        produced = {a.split("@")[0].rstrip("'") for s in keep for a in s.get("produces", [])}
+        needed = sorted({a.split("@")[0].rstrip("'") for s in keep for a in s.get("consumes", [])}
+                        - produced)
+        data["steps"] = keep
+        data["exportedCapability"] = {
+            "capability": args.capability,
+            "stepsKept": len(keep),
+            "stepsDropped": len(_json.loads((PRODUCT / "skill" / "method" / "steps.v1.json")
+                                            .read_text(encoding="utf-8"))["steps"]) - len(keep),
+            "mustBeProvided": needed,
+            "_why": "这些产物本包不生产,由使用方提供(册的输入,或另一个能力的产物)。"
+                    "★不列出来,就会在跑到那一步时报「输入不存在」——而那时人会以为是包坏了。",
+        }
+        tbl.write_text(_json.dumps(data, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+        carried.append(f"steps.v1.json(只留 {args.capability} 的 {len(keep)} 步)")
+
     if (PRODUCT / "runtime").exists():
         (staging / "runtime").mkdir(exist_ok=True)
         # ★白名单改成黑名单:runtime/ 里除「本机事实」之外**全部进包**。
@@ -200,7 +237,11 @@ def main() -> int:
         # 而这里写死了两个文件名,于是它没进包——安装树上那道门直接 FileNotFoundError。
         # 与上面记的 styles 段那次同形:**白名单漏一个,导出照样成功**,缺法最难发现。
         # 黑名单只列本机事实,新加的包内文件默认进包,不必再记得来改这里。
-        LOCAL_FACTS = {"probe-report.json", "paths.json"}
+        # ★本机事实:装好后在这台机器上长出来的东西,不随包分发。
+        #   vendor-consumers.json 记的是「消费方装在这台机器的哪个目录」——
+        #   2026-08-22 实测它进了包,里面躺着 /Users/Shared/ChengziClass/quiz/…。
+        #   随包发的是 .example(占位符版),真表由使用方自己填。
+        LOCAL_FACTS = {"probe-report.json", "paths.json", "vendor-consumers.json", "venv"}
         for f in sorted(p.name for p in (PRODUCT / "runtime").iterdir() if p.is_file()):
             if f in LOCAL_FACTS or f.startswith("."):
                 continue
@@ -215,6 +256,42 @@ def main() -> int:
                 grown += [str(p.relative_to(PRODUCT)) for p in sorted(src.rglob("*")) if p.is_file()]
 
     zipped = None
+    # ★最后一道扫描:扫 **staging 里实际会进包的每个文本文件**,不扫手列的目录清单。
+    #   门有洞的方式一直是同一种:清单是手列的,而进包的东西在变——
+    #   2026-08-21 seeds/ 与 styles/ 漏扫过一次(注释里写着「门有洞,和没有门一样」),
+    #   2026-08-22 runtime/ 又漏一次(vendor-consumers.json 带着本机路径进了包)。
+    #   两次都是补清单,补完下次换个目录照样漏。**扫产物,清单就不会漂。**
+    # requirements 按能力裁剪 —— 否则原子化单包的探针仍会要 Word。
+    if args.capability:
+        import json as _j
+        rq = staging / "runtime" / "requirements.json"
+        if rq.exists():
+            rd = _j.loads(rq.read_text(encoding="utf-8"))
+            keep = lambda x: x.get("capability", "both") in (args.capability, "both")
+            rd["pythonPackages"] = [x for x in rd.get("pythonPackages", []) if keep(x)]
+            rd["applications"] = [x for x in rd.get("applications", []) if keep(x)]
+            rd["_exportedCapability"] = args.capability
+            rq.write_text(_j.dumps(rd, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+            carried.append(f"requirements.json(只留 {args.capability} 需要的)")
+
+    staged_hits = []
+    for f in sorted(staging.rglob("*")):
+        if not f.is_file() or f.suffix not in (".py", ".json", ".md", ".txt", ".sh") \
+                or "__pycache__" in f.parts or "renders" in f.parts:
+            continue
+        rel = str(f.relative_to(staging))
+        for i, line in enumerate(f.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            if MACHINE_PATH.search(line) and not any(x in line for x in EXEMPT_SNIPPETS):
+                staged_hits.append({"file": rel, "line": i, "sample": line.strip()[:100]})
+    if staged_hits:
+        shutil.rmtree(staging, ignore_errors=True)
+        print(json.dumps({"status": "refused", "check": "staged-no-machine-paths",
+                          "hits": staged_hits[:10], "total": len(staged_hits),
+                          "why": "**进包的文件里有本机绝对路径。** 这一遍扫的是暂存区里"
+                                 "实际要打包的东西,不是手列的目录——所以它不会漏。"},
+                         ensure_ascii=False, indent=1))
+        return 1
+
     if args.out.suffix == ".zip":
         with zipfile.ZipFile(args.out, "w", zipfile.ZIP_DEFLATED) as zf:
             for p in sorted(staging.rglob("*")):
