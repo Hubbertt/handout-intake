@@ -223,6 +223,26 @@ python3 skill/method/scripts/check_vendored_consumers.py
 ★这道门可能长期为红,而且**不该由本包来消红**——重新 vendor 是消费方的事。
 红是交接信号,不是失败。
 
+## 两个能力,两个去处
+
+PM 2026-08-22 定:要的是**两个技能** —— 原子化、编制成册。切口不是设计出来的,是实测出来的:
+按 `consumes`/`produces` 算依赖闭包,接口面只有三个产物,**反向边 0 条**,
+由 `GATE_CAPABILITY_CUT` 守着(它守的不是「现在是不是 0 条」,而是「以后还是不是」)。
+
+| | 步数 | 需要 | 分发 |
+|---|---|---|---|
+| **原子化** | 14 | `lxml` / `Pillow` / `psycopg`。**不要 macOS + Word** | [`handout-atomizer`](https://github.com/Hubbertt/handout-atomizer)(private) |
+| **编制成册** | 28 | macOS + Word + Acrobat + `styles/` | 本仓 |
+
+```bash
+python3 skill/method/scripts/export_package.py --out <目录或.zip> --capability atomise
+python3 skill/method/scripts/run_chain.py --workspace <册> --volume <册> --capability atomise
+```
+
+★ **`handout-atomizer` 是分发仓,不是开发仓。** 代码、门、判据都在本仓守着;
+在那边改会被下一次导出覆盖,而且同一段逻辑就有了两个真源——
+那条学费 2026-08-22 刚付过一轮(题库那份 vendored 引擎已经分叉到 86 道题切法不同)。
+
 ## 给不同宿主的入口
 
 任何能开 shell、读文件的智能体或人都能用；包对智能体零依赖。宿主认哪个入口文件：
