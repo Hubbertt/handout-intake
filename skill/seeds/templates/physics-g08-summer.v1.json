@@ -388,5 +388,31 @@
   },
   "italicMeaning": "物理量符号与几何点名:f 焦距(51)、A(41)、u 物距(24)、v 像距(18)、O/S/B、AO/OO′"
  },
- "_evidenceAddedAt": "2026-08-22:v1 早于「判据必须带 evidence」那道门,15 条判据全无声明。补齐时逐条对着这份源实测,不套话——其中 编号项 的误吃(88 处小数)与 explanation 的 expectedZero,都是量出来的。"
+ "_evidenceAddedAt": "2026-08-22:v1 早于「判据必须带 evidence」那道门,15 条判据全无声明。补齐时逐条对着这份源实测,不套话——其中 编号项 的误吃(88 处小数)与 explanation 的 expectedZero,都是量出来的。",
+ "unitKindMapping": {
+  "_what": "引擎的角色名 → atomize.unit_kinds 的模块类型。落库(s4c7)时用。",
+  "_why": "角色名是**这张表**的词(讲义体例:讲解条目/即练题干/过关检测题/圈号项…),模块类型是跨学科通用的词(题/题干/选项/空/答案/解析)。两套词必须显式对起来。★2026-08-22 实测:v1 没有这一节,落库那一步**直接拒绝**而不是按名字猜——这正是想要的行为:换一份源换一套角色名,猜出来的映射会静默错到底。",
+  "atomKinds": {
+   "例题题干": "question",
+   "即练题干": "question",
+   "过关检测题": "question",
+   "讲解条目": "prose"
+  },
+  "blockRoles": {
+   "正文": "prose",
+   "选项行": "option",
+   "小问": "sub_question",
+   "圈号项": "sub_question",
+   "图片块": "figure",
+   "表格": "table",
+   "探究归纳": "prose",
+   "空段落": "prose"
+  },
+  "_derivedFields": {
+   "answer": "answer",
+   "explanation": "analysis",
+   "stem": "stem"
+  },
+  "_measured": "按本册实测的角色全集写,不抄 v2:v1 有「过关检测题」而 v2 没有,v2 有「编号项」「教科书体例·分析/答解」而 v1 这册没出现。抄一份过来就会多出永远用不到的映射,少的那个照样漏。"
+ }
 }

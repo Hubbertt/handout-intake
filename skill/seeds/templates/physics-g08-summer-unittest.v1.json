@@ -491,5 +491,28 @@
   "_noConceptLinksWhy": "PM 2026-08-21「删」:题不挂任何概念,包括讲/卷这一层。「这道题属于哪一讲」在 question_dimensions.document 里已有真源,再挂一条 question→topic 边就是同一事实的第二处记录,两处必漂(一事一真源)。★概念注册表本身不动:讲/卷仍作为**大纲登记**存在(PM 2026-08-20 已定「大纲登记相同」),只是题不挂上去。"
  },
  "answersInSameDocument": true,
- "_answersInSameDocumentWhy": "同讲义册,见其同名字段。本册改为从教师版一份切出 5 卷,不再用 5 个学生文件 + 内嵌解析配对。"
+ "_answersInSameDocumentWhy": "同讲义册,见其同名字段。本册改为从教师版一份切出 5 卷,不再用 5 个学生文件 + 内嵌解析配对。",
+ "unitKindMapping": {
+  "_what": "引擎的角色名 → atomize.unit_kinds 的模块类型。落库(s4c7)时用。",
+  "_why": "单元卷是**试卷**体例,角色集与讲义那两张表都不同:这里只有「编号项」和「讲解条目」,没有「例题题干/即练题干」(那是讲义的),也没有「过关检测题」。按本册实测的角色全集写,不抄别的表——抄来的会多出永远用不到的映射,而少的那个照样漏,且漏的时候是**静默**的。",
+  "atomKinds": {
+   "编号项": "question",
+   "讲解条目": "prose"
+  },
+  "blockRoles": {
+   "正文": "prose",
+   "选项行": "option",
+   "小问": "sub_question",
+   "圈号项": "sub_question",
+   "图片块": "figure",
+   "表格": "table",
+   "空段落": "prose"
+  },
+  "_derivedFields": {
+   "answer": "answer",
+   "explanation": "analysis",
+   "stem": "stem"
+  },
+  "_measured": "2026-08-22 实测本册:atomKinds 2 类、blockRoles 7 类,与上面逐一对应。"
+ }
 }

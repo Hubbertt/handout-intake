@@ -116,7 +116,9 @@ def main() -> int:
                      f"补进表里再跑——代码不替它们猜。", args.report)
 
     src_hash = sha256_file(args.source_file)
-    source_id = f"src-{src_hash[:16]}"
+    # ★身份是(文件, 册):同一份源可以是多册的源(教师版 → 讲册 + 单元卷册)。
+    #   只用文件哈希当 id,后跑的册会把先跑的册整个删掉重建,而两边各自都报 pass。
+    source_id = f"src-{src_hash[:16]}-{args.volume_key}"
     run_id = f"run-{src_hash[:8]}-{sha256_file(args.schema)[:8]}"
 
     report = {"gate": "GATE_ATOMIZE_PERSISTED", "sourceId": source_id, "runId": run_id,

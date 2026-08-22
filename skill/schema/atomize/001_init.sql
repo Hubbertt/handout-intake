@@ -55,14 +55,21 @@ INSERT INTO atomize.unit_kinds (kind, label, qti_equivalent, note) VALUES
 -- ─────────────────────────────────────────────────────────────────────
 CREATE TABLE atomize.sources (
   source_id     text PRIMARY KEY,
-  file_sha256   text NOT NULL UNIQUE,          -- 哈希才是「同一份源」的判据,文件名不是
+  file_sha256   text NOT NULL,                  -- 哈希才是「同一份文件」的判据,文件名不是
   file_name     text NOT NULL,
   role          text,                          -- 学生版 / 教师版 / 合并版 …
   subject       text, grade text, term text,
   volume_key    text NOT NULL,
   template_id   text,                          -- → atomize.templates
   schema_hash   text,                          -- 切这份源时用的判据版本
-  ingested_at   timestamptz NOT NULL DEFAULT now()
+  ingested_at   timestamptz NOT NULL DEFAULT now(),
+  -- ★身份是(文件, 册),不是文件。**一份源可以是多册的源**:
+  --   教师版那一份既切出 20 讲(讲册),也切出 5 份单元自测(单元卷册)——
+  --   模板表自己写着「一份源、两册」,两类用两张模板表,引擎一册只吃一张。
+  --   2026-08-22 实测踩到:source_id 只由文件哈希算,单元卷那册落库时
+  --   把讲册的数据**整个删掉重建了**,而两边各自都报 pass。
+  --   静默覆盖是最坏的一种错:没有任何一处会说话。
+  UNIQUE (file_sha256, volume_key)
 );
 
 -- ─────────────────────────────────────────────────────────────────────
